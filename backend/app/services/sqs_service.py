@@ -1,0 +1,75 @@
+"""
+NIX AI — SQS Service
+
+Publishes messages to the job queue for the Worker Lambda.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+
+from app.core.aws_clients import get_sqs_client
+from app.core.config import get_settings
+from app.core.exceptions import QueueError
+
+logger = logging.getLogger(__name__)
+
+
+def send_message(task: str, payload: dict) -> str:
+    """
+    Send a task message to the worker queue.
+
+    Args:
+        task:    Task type (e.g. GENERATE_SYNTHETIC, ANALYZE_DOCUMENT, SYNC_KB)
+        payload: Task-specific parameters
+
+    Returns:
+        SQS MessageId
+    """
+    settings = get_settings()
+    sqs = get_sqs_client()
+
+    if not settings.SQS_URL:
+        logger.warning("SQS_URL not configured — message not sent: %s", task)
+        return "local-mock-message-id"
+
+    message_body = {
+        "task": task,
+        **payload,
+    }
+
+    try:
+        send_params = {
+            "QueueUrl": settings.SQS_URL,
+            "MessageBody": json.dumps(message_body, default=str),
+        }
+        # MessageGroupId is only valid for FIFO queues
+        if settings.SQS_URL.endswith(".fifo"):
+            send_params["MessageGroupId"] = task
+
+        response = sqs.send_message(**send_params)
+        message_id = response["MessageId"]
+        logger.info("SQS message sent: task=%s, messageId=%s", task, message_id)
+        return message_id
+    except Exception as exc:
+        logger.error("SQS send failed: %s", exc)
+        raise QueueError(f"Failed to queue task {task}: {exc}")
+
+
+def send_analysis_task(job_id: str, doc_id: str, s3_key: str, user_id: str) -> str:
+    """Convenience: queue a document analysis job."""
+    return send_message("ANALYZE_DOCUMENT", {
+        "job_id": job_id,
+        "doc_id": doc_id,
+        "s3_key": s3_key,
+        "user_id": user_id,
+    })
+
+
+def send_kb_sync_task(job_id: str, user_id: str) -> str:
+    """Convenience: queue a Knowledge Base sync job."""
+    return send_message("SYNC_KB", {
+        "job_id": job_id,
+        "user_id": user_id,
+    })

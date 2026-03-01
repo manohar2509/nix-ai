@@ -1,0 +1,17 @@
+# SAM CLI configuration
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "nixai-backend"
+resolve_s3 = true
+s3_prefix = "nixai-backend"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=production CognitoUserPoolId=us-east-1_rjx3Fv6lg CognitoAppClientId=937sqn4ogsomo8d6stlapvpo9"
+
+[default.build.parameters]
+use_container = true
+
+[default.local_invoke.parameters]
+env_vars = ".env"

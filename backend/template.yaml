@@ -1,0 +1,159 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  NIX AI - Clinical Trial Intelligence Platform.
+  API Lambda (FastAPI) + Worker Lambda (SQS processor).
+  Infrastructure (DynamoDB, S3, SQS, Cognito, Bedrock KB) is managed
+  via AWS Console — this template only deploys Lambda functions and API Gateway.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [development, staging, production]
+  CognitoUserPoolId:
+    Type: String
+    Default: us-east-1_rjx3Fv6lg
+  CognitoAppClientId:
+    Type: String
+    Default: 937sqn4ogsomo8d6stlapvpo9
+  BedrockKBId:
+    Type: String
+    Default: R8HXMHF97R
+    Description: Bedrock Knowledge Base ID
+  BedrockModelId:
+    Type: String
+    Default: amazon.nova-lite-v1:0
+    Description: Bedrock foundation model ID for Converse API
+  CorsOrigins:
+    Type: String
+    Default: "https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    MemorySize: 512
+    Timeout: 30
+    Environment:
+      Variables:
+        ENV: !Ref Environment
+        DEBUG: "false"
+        LOG_LEVEL: INFO
+        BUCKET_NAME: nixai-clinical-uploads
+        KB_BUCKET_NAME: nixai-clinical-kb
+        SQS_URL: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/nixai-job-queue"
+        DYNAMODB_TABLE: nixai-core
+        COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
+        COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
+        BEDROCK_MODEL_ID: !Ref BedrockModelId
+        BEDROCK_KB_ID: !Ref BedrockKBId
+        BEDROCK_KB_MODEL_ARN: !Sub "arn:aws:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}"
+        CORS_ORIGINS: !Ref CorsOrigins
+
+Resources:
+  # ── REST API (existing ID: 9nffw9vxc5) ─────────────────────
+  NixAIRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowOrigins: "'*'"
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Request-Id'"
+        MaxAge: "'600'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}"
+
+  # ── API Lambda (existing: nixai-api) ────────────────────────
+  NixAIApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: nixai-api
+      Description: NIX AI API - FastAPI Lambda
+      CodeUri: .
+      Handler: app.main.handler
+      MemorySize: 1024
+      Timeout: 29
+      Events:
+        ApiCatchAll:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NixAIRestApi
+            Path: /{proxy+}
+            Method: ANY
+        ApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NixAIRestApi
+            Path: /
+            Method: GET
+            Auth:
+              Authorizer: NONE
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: nixai-core
+        - S3CrudPolicy:
+            BucketName: nixai-clinical-uploads
+        - S3CrudPolicy:
+            BucketName: nixai-clinical-kb
+        - SQSSendMessagePolicy:
+            QueueName: nixai-job-queue
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+                - bedrock:Converse
+                - bedrock:ConverseStream
+                - bedrock-agent-runtime:RetrieveAndGenerate
+                - bedrock-agent-runtime:Retrieve
+              Resource: "*"
+
+  # ── Worker Lambda (existing: nixai-worker) ──────────────────
+  NixAIWorkerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: nixai-worker
+      Description: NIX AI Worker - background processor
+      CodeUri: .
+      Handler: worker.handler.lambda_handler
+      MemorySize: 1024
+      Timeout: 900
+      ReservedConcurrentExecutions: 5
+      Events:
+        SQSTrigger:
+          Type: SQS
+          Properties:
+            Queue: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:nixai-job-queue"
+            BatchSize: 1
+            MaximumBatchingWindowInSeconds: 0
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: nixai-core
+        - S3CrudPolicy:
+            BucketName: nixai-clinical-uploads
+        - S3CrudPolicy:
+            BucketName: nixai-clinical-kb
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+                - bedrock:Converse
+                - bedrock:ConverseStream
+                - bedrock-agent:ListDataSources
+                - bedrock-agent:StartIngestionJob
+              Resource: "*"
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${NixAIRestApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  ApiFunctionArn:
+    Value: !GetAtt NixAIApiFunction.Arn
+  WorkerFunctionArn:
+    Value: !GetAtt NixAIWorkerFunction.Arn

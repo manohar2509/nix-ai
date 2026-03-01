@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════
+   NIX AI — Design Tokens (Tailwind v4 @theme)
+   ══════════════════════════════════════════════ */
+@theme {
+  /* ── Typography ── */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Merriweather', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* ── Brand (Indigo — Intelligence & Trust) ── */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+
+  /* ── Risk (Red — Regulator / Safety) ── */
+  --color-risk-50: #fef2f2;
+  --color-risk-100: #fee2e2;
+  --color-risk-200: #fecaca;
+  --color-risk-300: #fca5a5;
+  --color-risk-400: #f87171;
+  --color-risk-500: #ef4444;
+  --color-risk-600: #dc2626;
+  --color-risk-700: #b91c1c;
+  --color-risk-800: #991b1b;
+  --color-risk-900: #7f1d1d;
+
+  /* ── Money (Green — Payer / Cost) ── */
+  --color-money-50: #f0fdf4;
+  --color-money-100: #dcfce7;
+  --color-money-200: #bbf7d0;
+  --color-money-300: #86efac;
+  --color-money-400: #4ade80;
+  --color-money-500: #22c55e;
+  --color-money-600: #16a34a;
+  --color-money-700: #15803d;
+  --color-money-800: #166534;
+  --color-money-900: #14532d;
+
+  /* ── Shadows ── */
+  --shadow-glow: 0 0 20px -5px rgba(99, 102, 241, 0.4);
+  --shadow-glow-risk: 0 0 20px -5px rgba(239, 68, 68, 0.3);
+  --shadow-glow-money: 0 0 20px -5px rgba(34, 197, 94, 0.3);
+
+  /* ── Animations ── */
+  --animate-fade-in: fade-in 0.4s ease-out;
+  --animate-slide-up: slide-up 0.5s ease-out;
+  --animate-slide-in-right: slide-in-right 0.5s ease-out;
+  --animate-count-up: count-up 0.3s ease-out;
+  --animate-pulse-slow: pulse-slow 3s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════
+   Keyframes
+   ══════════════════════════════════════════════ */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes gradient-rotate {
+  0% { --gradient-angle: 0deg; }
+  100% { --gradient-angle: 360deg; }
+}
+
+/* ══════════════════════════════════════════════
+   Custom Scrollbar
+   ══════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ══════════════════════════════════════════════
+   Base Styles
+   ══════════════════════════════════════════════ */
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: #c7d2fe;
+  color: #312e81;
+}
+
+*:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ══════════════════════════════════════════════
+   Typing Dots Animation
+   ══════════════════════════════════════════════ */
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+.typing-dot {
+  animation: typing-bounce 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+/* ══════════════════════════════════════════════
+   Staggered Children
+   ══════════════════════════════════════════════ */
+.stagger-children > * {
+  animation: fade-in 0.4s ease-out both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 480ms; }
+
+/* ══════════════════════════════════════════════
+   Shimmer Loading Effect
+   ══════════════════════════════════════════════ */
+.shimmer {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
