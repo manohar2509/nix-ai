@@ -3,6 +3,7 @@ import {
   History, FileText, ShieldAlert, BadgeDollarSign, AlertTriangle,
   ChevronDown, ChevronRight, Search, Filter, CheckCircle, XCircle,
   AlertCircle, Clock, Eye, ArrowLeft, Download, BarChart3, Sparkles,
+  Info, HelpCircle,
 } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import { analyticsService } from '../services/analyticsService';
@@ -108,6 +109,9 @@ export default function PastAnalysisView() {
             Dashboard
           </button>
         </div>
+
+        {/* Guide Banner */}
+        <HistoryExplainer />
 
         {error && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
@@ -477,4 +481,46 @@ function formatDate(isoString) {
   } catch {
     return isoString;
   }
+}
+
+
+/* ── Explanation Components ── */
+
+function HistoryExplainer() {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="bg-brand-50/50 border border-brand-100 rounded-xl px-4 py-3">
+      <button onClick={() => setShow(!show)} className="flex items-center gap-2 w-full text-left">
+        <Info size={14} className="text-brand-500 shrink-0" />
+        <span className="text-xs font-semibold text-brand-700">Understanding Your Analysis History</span>
+        <ChevronDown size={12} className={cn('text-brand-400 ml-auto transition-transform', show && 'rotate-180')} />
+      </button>
+      {show && (
+        <div className="mt-3 pl-6 space-y-3 text-[11px] text-brand-600/80 leading-relaxed">
+          <div>
+            <span className="font-bold text-brand-700">Scores:</span> Each analysis produces two key scores —{' '}
+            <span className="font-bold">Regulatory Compliance</span> (FDA/EMA alignment) and{' '}
+            <span className="font-bold">Payer Viability</span> (reimbursement potential).{' '}
+            Green (≥60%) = acceptable, Amber (40-59%) = needs work, Red (&lt;40%) = significant concerns.
+          </div>
+          <div>
+            <span className="font-bold text-brand-700">Severity Levels:</span>{' '}
+            <span className="text-red-600 font-bold">Critical</span> = immediate regulatory risk that could halt approval.{' '}
+            <span className="text-orange-600 font-bold">High</span> = likely to cause significant objections.{' '}
+            <span className="text-amber-600 font-bold">Medium</span> = should address before submission.{' '}
+            <span className="text-green-600 font-bold">Low</span> = minor improvement opportunities.
+          </div>
+          <div>
+            <span className="font-bold text-brand-700">Filters:</span> Use "Critical" to see only protocols with critical findings,
+            "High" for critical+high, or "Low Risk" for protocols without severe issues.
+            Sort by score to find your weakest protocols first.
+          </div>
+          <div>
+            <span className="font-bold text-brand-700">Actions:</span> Click any analysis card to expand it and see detailed findings with
+            AI-generated suggestions. Use "View in Protocol" to open the document in the editor with its full analysis panel.
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

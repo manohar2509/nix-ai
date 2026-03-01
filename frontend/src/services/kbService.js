@@ -158,10 +158,89 @@ export const kbService = {
   getStats: async () => {
     try {
       const res = await apiClient.get('/kb/stats');
-      return res.data; // { total_documents, total_size, categories }
+      return res.data; // { total_documents, total_size, categories, synced_count, unsynced_count, ... }
     } catch (error) {
       throw {
         message: 'Failed to fetch KB stats',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Check if a filename is a duplicate in the KB.
+   */
+  checkDuplicate: async (filename) => {
+    try {
+      const res = await apiClient.get('/kb/duplicate-check', {
+        params: { filename },
+      });
+      return res.data; // { is_duplicate, existing_document, message }
+    } catch (error) {
+      throw {
+        message: 'Failed to check for duplicates',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Run comprehensive sanity checks on the entire KB.
+   */
+  runSanityCheck: async () => {
+    try {
+      const res = await apiClient.get('/kb/sanity-check');
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to run sanity check',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Unsync a KB document — exclude it from next Bedrock re-index.
+   */
+  unsyncDocument: async (kbDocId) => {
+    try {
+      const res = await apiClient.post(`/kb/documents/${kbDocId}/unsync`);
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to unsync KB document',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Re-sync a previously unsynced KB document.
+   */
+  resyncDocument: async (kbDocId) => {
+    try {
+      const res = await apiClient.post(`/kb/documents/${kbDocId}/resync`);
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to resync KB document',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Bulk delete multiple KB documents.
+   */
+  bulkDelete: async (documentIds) => {
+    try {
+      const res = await apiClient.post('/kb/bulk-delete', {
+        document_ids: documentIds,
+      });
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to bulk delete KB documents',
         details: error.message,
       };
     }

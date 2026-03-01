@@ -65,6 +65,27 @@ class KBSyncResponse(BaseModel):
     error: Optional[str] = None
 
 
+class KBDuplicateCheckResponse(BaseModel):
+    """Result of a duplicate check for a filename."""
+    is_duplicate: bool = False
+    existing_document: Optional[KBDocumentItem] = None
+    message: str = ""
+
+
+class KBSanityCheckResponse(BaseModel):
+    """Sanity check results for the entire Knowledge Base."""
+    total_documents: int = 0
+    duplicates: list[dict] = []
+    oversized_files: list[dict] = []
+    empty_files: list[dict] = []
+    unsupported_types: list[dict] = []
+    unsynced_documents: list[dict] = []
+    synced_documents: list[dict] = []
+    issues_count: int = 0
+    health_score: float = 100.0
+    recommendations: list[str] = []
+
+
 class KBStatsResponse(BaseModel):
     """Knowledge Base statistics."""
     total_documents: int = 0
@@ -72,3 +93,6 @@ class KBStatsResponse(BaseModel):
     last_sync: Optional[str] = None
     sync_status: Optional[str] = None
     categories: dict = {}
+    synced_count: int = 0
+    unsynced_count: int = 0
+    uploaded_by_admin: dict = {}

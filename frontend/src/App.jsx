@@ -10,6 +10,7 @@ import DashboardView from './components/DashboardView';
 import PastAnalysisView from './components/PastAnalysisView';
 import AdminAnalyticsView from './components/AdminAnalyticsView';
 import ConfigurationView from './components/ConfigurationView';
+import KnowledgeBaseView from './components/KnowledgeBaseView';
 import { UploadDialog } from './components/UploadDialog';
 import Toast from './components/Toast';
 import { useAppStore, useDocuments, useAnalysis } from './stores/useAppStore';
@@ -155,6 +156,10 @@ function DashboardLayout() {
         ) : activeView === 'admin-analytics' ? (
           <main className="flex-1 overflow-hidden">
             <AdminAnalyticsView />
+          </main>
+        ) : activeView === 'knowledge-base' ? (
+          <main className="flex-1 overflow-hidden">
+            <KnowledgeBaseView />
           </main>
         ) : activeView === 'settings' ? (
           <main className="flex-1 overflow-hidden">

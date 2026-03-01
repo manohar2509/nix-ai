@@ -21,7 +21,9 @@ from fastapi import APIRouter, Depends, Query
 from app.api.schemas.kb import (
     KBDocumentItem,
     KBDocumentListResponse,
+    KBDuplicateCheckResponse,
     KBPresignedUrlResponse,
+    KBSanityCheckResponse,
     KBStatsResponse,
     KBSyncResponse,
     RegisterKBDocumentRequest,
@@ -117,3 +119,56 @@ async def get_kb_stats(
 ):
     """Get Knowledge Base statistics (doc count, categories, etc.)."""
     return kb_service.get_kb_stats()
+
+
+@router.get("/duplicate-check", response_model=KBDuplicateCheckResponse)
+async def check_duplicate(
+    filename: str = Query(..., min_length=1),
+    user: CurrentUser = Depends(require_admin),
+):
+    """Check if a filename already exists in the Knowledge Base."""
+    return kb_service.check_duplicate(filename)
+
+
+@router.get("/sanity-check", response_model=KBSanityCheckResponse)
+async def run_sanity_check(
+    user: CurrentUser = Depends(require_admin),
+):
+    """Run comprehensive sanity checks on the entire Knowledge Base.
+
+    Checks for: duplicates, empty files, oversized files, unsupported types,
+    unsynced documents, and generates a health score with recommendations.
+    """
+    return kb_service.run_sanity_check()
+
+
+@router.post("/documents/{kb_doc_id}/unsync")
+async def unsync_kb_document(
+    kb_doc_id: str,
+    user: CurrentUser = Depends(require_admin),
+):
+    """Mark a KB document as unsynced (will be excluded on next sync).
+
+    The document remains in DynamoDB but its status is set to 'unsynced'.
+    On next Bedrock re-index, it will not be included.
+    """
+    return kb_service.unsync_kb_document(kb_doc_id)
+
+
+@router.post("/documents/{kb_doc_id}/resync")
+async def resync_kb_document(
+    kb_doc_id: str,
+    user: CurrentUser = Depends(require_admin),
+):
+    """Re-mark a previously unsynced KB document for indexing."""
+    return kb_service.resync_kb_document(kb_doc_id)
+
+
+@router.post("/bulk-delete")
+async def bulk_delete_kb_documents(
+    body: dict,
+    user: CurrentUser = Depends(require_admin),
+):
+    """Delete multiple KB documents at once."""
+    doc_ids = body.get("document_ids", [])
+    return kb_service.bulk_delete_kb_documents(doc_ids)

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FileText, ShieldAlert, BadgeDollarSign, AlertTriangle,
   TrendingUp, Activity, Clock, ChevronRight, RefreshCw, Zap, BarChart3,
   CheckCircle, XCircle, Loader2, Eye, Upload, ArrowUpRight, ArrowDownRight,
-  MessageSquare, BookOpen,
+  MessageSquare, BookOpen, Info, HelpCircle, ChevronDown,
 } from 'lucide-react';
 import { useAuth, useAppStore } from '../stores/useAppStore';
 import { analyticsService } from '../services/analyticsService';
@@ -118,6 +118,10 @@ export default function DashboardView() {
         )}
 
         {/* ── Summary Cards ── */}
+        <SectionExplainer
+          title="Key Metrics"
+          description="These six cards summarize your overall platform usage. Documents counts your uploaded protocols, Analyses shows how many have been reviewed by the AI council, Scores reflect average regulatory and payer alignment, Findings counts all detected issues, and Jobs tracks background processing tasks."
+        />
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <SummaryCard
             label="Documents"
@@ -125,6 +129,7 @@ export default function DashboardView() {
             icon={<FileText size={18} />}
             color="brand"
             subtitle="uploaded"
+            tooltip="Total number of clinical protocol documents you have uploaded to the platform for analysis."
           />
           <SummaryCard
             label="Analyses"
@@ -132,6 +137,7 @@ export default function DashboardView() {
             icon={<BarChart3 size={18} />}
             color="indigo"
             subtitle="completed"
+            tooltip="Number of completed AI-powered adversarial analyses run against your protocol documents."
           />
           <SummaryCard
             label="Reg. Score"
@@ -140,6 +146,7 @@ export default function DashboardView() {
             color={summary.avgRegulatorScore >= 60 ? 'green' : summary.avgRegulatorScore >= 40 ? 'amber' : 'red'}
             subtitle="avg"
             isScore
+            tooltip="Average Regulatory Compliance Score across all analyses. ≥60% is good, 40-59% needs improvement, <40% has significant issues. This measures alignment with FDA/EMA regulatory requirements."
           />
           <SummaryCard
             label="Payer Score"
@@ -148,6 +155,7 @@ export default function DashboardView() {
             color={summary.avgPayerScore >= 60 ? 'green' : summary.avgPayerScore >= 40 ? 'amber' : 'red'}
             subtitle="avg"
             isScore
+            tooltip="Average Payer Viability Score across all analyses. ≥60% suggests strong reimbursement potential, 40-59% flags cost concerns, <40% indicates significant payer objections."
           />
           <SummaryCard
             label="Findings"
@@ -155,6 +163,7 @@ export default function DashboardView() {
             icon={<AlertTriangle size={18} />}
             color="orange"
             subtitle="total"
+            tooltip="Total number of issues, conflicts, and recommendations detected across all your protocol analyses."
           />
           <SummaryCard
             label="Jobs"
@@ -162,6 +171,7 @@ export default function DashboardView() {
             icon={<Activity size={18} />}
             color="slate"
             subtitle="processed"
+            tooltip="Total background jobs processed including document analyses, KB syncs, and synthetic data generation tasks."
           />
         </div>
 
@@ -170,7 +180,7 @@ export default function DashboardView() {
 
           {/* Risk Distribution */}
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">Risk Distribution</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Findings by severity across all analyses</p>
@@ -179,12 +189,13 @@ export default function DashboardView() {
                 <ShieldAlert size={16} />
               </div>
             </div>
+            <InfoBanner text="Shows how your protocol findings break down by severity. Critical = immediate regulatory risk. High = likely rejection concern. Medium = should address before submission. Low = minor improvement suggested." />
             <RiskDistributionChart distribution={riskDistribution} total={summary.totalFindings} />
           </div>
 
           {/* Score Comparison */}
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">Score Overview</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Average regulatory &amp; payer viability</p>
@@ -193,6 +204,7 @@ export default function DashboardView() {
                 <TrendingUp size={16} />
               </div>
             </div>
+            <InfoBanner text="Regulatory Score measures FDA/EMA compliance (study design, endpoints, safety). Payer Score evaluates reimbursement potential (cost-effectiveness, comparators, real-world evidence). Both are generated by NIX AI's adversarial council." />
             <ScoreOverview
               regScore={summary.avgRegulatorScore}
               payScore={summary.avgPayerScore}
@@ -206,7 +218,7 @@ export default function DashboardView() {
 
           {/* Documents Needing Attention */}
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">Needs Attention</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Protocols with critical risk findings</p>
@@ -218,6 +230,7 @@ export default function DashboardView() {
                 View All <ChevronRight size={14} />
               </button>
             </div>
+            <InfoBanner text="Protocols flagged here have critical or high-severity findings that could lead to regulatory rejection. Prioritize reviewing these before submission." />
             {attentionRequired.length === 0 ? (
               <div className="text-center py-8">
                 <CheckCircle size={32} className="mx-auto text-green-400 mb-2" />
@@ -235,13 +248,14 @@ export default function DashboardView() {
 
           {/* Recent Activity */}
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">Recent Activity</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Latest jobs and analyses</p>
               </div>
               <Clock size={16} className="text-slate-300" />
             </div>
+            <InfoBanner text="Timeline of your recent platform actions — document analyses, KB syncs, and generation tasks. Statuses: green = complete, red = failed, amber = queued, spinning = in progress." />
             {recentActivity.length === 0 ? (
               <div className="text-center py-8">
                 <Activity size={32} className="mx-auto text-slate-300 mb-2" />
@@ -261,7 +275,7 @@ export default function DashboardView() {
         {/* ── Chat & RAG Usage ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">RAG Chat Usage</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Your interaction with the knowledge base</p>
@@ -270,6 +284,7 @@ export default function DashboardView() {
                 <MessageSquare size={16} />
               </div>
             </div>
+            <InfoBanner text="Tracks your Consultant Chat interactions. Citations indicate how many KB references grounded the AI's response — higher citation rates mean better factual grounding. Low citation rates may indicate the KB needs more content." />
             {chatUsage && chatUsage.totalMessages > 0 ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -319,7 +334,7 @@ export default function DashboardView() {
 
           {/* Document Comparison */}
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">Document Comparison</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Side-by-side protocol scores</p>
@@ -328,6 +343,7 @@ export default function DashboardView() {
                 <BarChart3 size={16} />
               </div>
             </div>
+            <InfoBanner text="Compare your protocol documents side-by-side. REG = Regulatory Compliance Score, PAY = Payer Viability Score. Use this to identify which protocols are strongest and which need the most work." />
             {documentComparison && documentComparison.length > 0 ? (
               <div className="space-y-3">
                 {documentComparison.map((doc, idx) => (
@@ -369,7 +385,7 @@ export default function DashboardView() {
         {/* ── Score Trend ── */}
         {scoreTrend && scoreTrend.length > 1 && (
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">Score Trend</h3>
                 <p className="text-xs text-slate-400 mt-0.5">How your protocol scores are changing over time</p>
@@ -378,6 +394,7 @@ export default function DashboardView() {
                 <TrendingUp size={16} />
               </div>
             </div>
+            <InfoBanner text="Track how your protocol scores evolve across analyses. Green arrows show improvement, red arrows indicate regression. Consistent improvement suggests your revisions are addressing the identified issues effectively." />
             <div className="space-y-2">
               {scoreTrend.map((point, idx) => {
                 const prevReg = idx > 0 ? scoreTrend[idx - 1].regulatorScore : null;
@@ -462,8 +479,9 @@ export default function DashboardView() {
    Sub-Components
    ════════════════════════════════════════════════════════════════ */
 
-function SummaryCard({ label, value, icon, color, subtitle, isScore }) {
+function SummaryCard({ label, value, icon, color, subtitle, isScore, tooltip }) {
   const displayValue = useCountUp(Math.round(value || 0), 800);
+  const [showTip, setShowTip] = useState(false);
   const colorMap = {
     brand: 'from-brand-500 to-brand-600',
     indigo: 'from-indigo-500 to-indigo-600',
@@ -484,12 +502,27 @@ function SummaryCard({ label, value, icon, color, subtitle, isScore }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow group">
+    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow group relative">
       <div className="flex items-center justify-between mb-3">
         <div className={cn('h-9 w-9 rounded-xl flex items-center justify-center', bgMap[color] || bgMap.brand)}>
           {icon}
         </div>
-        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{subtitle}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{subtitle}</span>
+          {tooltip && (
+            <div className="relative">
+              <button onMouseEnter={() => setShowTip(true)} onMouseLeave={() => setShowTip(false)} className="text-slate-300 hover:text-slate-500 transition-colors">
+                <HelpCircle size={12} />
+              </button>
+              {showTip && (
+                <div className="absolute right-0 top-full mt-2 w-56 p-3 bg-slate-900 text-white text-[11px] leading-relaxed rounded-xl shadow-xl z-50 pointer-events-none">
+                  {tooltip}
+                  <div className="absolute -top-1 right-3 w-2 h-2 bg-slate-900 rotate-45" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <div className="text-2xl font-bold text-slate-900 tabular-nums">
         {isScore ? `${displayValue}%` : displayValue}
@@ -710,4 +743,44 @@ function formatTimeAgo(isoString) {
   } catch {
     return '';
   }
+}
+
+
+/* ── Shared Explanation Components ── */
+
+function SectionExplainer({ title, description }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <button
+      onClick={() => setExpanded(!expanded)}
+      className="w-full text-left bg-brand-50/50 border border-brand-100 rounded-xl px-4 py-2.5 hover:bg-brand-50 transition-colors group"
+    >
+      <div className="flex items-center gap-2">
+        <Info size={14} className="text-brand-500 shrink-0" />
+        <span className="text-xs font-semibold text-brand-700">{title}</span>
+        <span className="text-[10px] text-brand-400 ml-1">— click to {expanded ? 'hide' : 'learn more'}</span>
+        <ChevronDown size={12} className={cn('text-brand-400 ml-auto transition-transform', expanded && 'rotate-180')} />
+      </div>
+      {expanded && (
+        <p className="text-[11px] text-brand-600/80 leading-relaxed mt-2 pl-5">{description}</p>
+      )}
+    </button>
+  );
+}
+
+function InfoBanner({ text }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="mb-4">
+      <button onClick={() => setShow(!show)} className="flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-slate-600 transition-colors">
+        <HelpCircle size={11} />
+        <span>{show ? 'Hide explanation' : 'What does this mean?'}</span>
+      </button>
+      {show && (
+        <div className="mt-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 text-[11px] text-slate-500 leading-relaxed">
+          {text}
+        </div>
+      )}
+    </div>
+  );
 }

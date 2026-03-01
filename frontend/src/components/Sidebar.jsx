@@ -174,7 +174,7 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
               <div className="text-[9px] font-bold text-purple-400/60 uppercase tracking-[0.2em] px-3 mb-3 hidden lg:block">
                 Admin Tools
               </div>
-              <NavItem icon={<Database size={20} />} label="Knowledge Base" adminItem onClick={() => { setActiveView('protocol'); setActiveTab('factory'); }} />
+              <NavItem icon={<Database size={20} />} label="Knowledge Base" adminItem active={activeView === 'knowledge-base'} onClick={() => setActiveView('knowledge-base')} />
               <NavItem icon={<BarChart3 size={20} />} label="Platform Analytics" adminItem active={activeView === 'admin-analytics'} onClick={() => setActiveView('admin-analytics')} />
               <NavItem icon={<FlaskConical size={20} />} label="Job Monitor" adminItem onClick={() => setActiveView('protocol')} />
 

@@ -75,18 +75,26 @@ export default function Topbar({ isAnalyzing, onAnalyze, onUpload, currentDocume
 
         <button
           onClick={onAnalyze}
-          disabled={isAnalyzing}
+          disabled={isAnalyzing || !currentDocument}
+          title={!currentDocument ? 'Upload a document first to run analysis' : ''}
           className={cn(
             'flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-300',
-            isAnalyzing
-              ? 'bg-slate-800 cursor-wait shadow-lg'
-              : 'bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 shadow-lg shadow-brand-600/25 hover:shadow-xl hover:shadow-brand-500/30'
+            !currentDocument
+              ? 'bg-slate-300 cursor-not-allowed shadow-none'
+              : isAnalyzing
+                ? 'bg-slate-800 cursor-wait shadow-lg'
+                : 'bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 shadow-lg shadow-brand-600/25 hover:shadow-xl hover:shadow-brand-500/30'
           )}
         >
           {isAnalyzing ? (
             <>
               <Loader2 size={15} className="animate-spin" />
               <span>Running Council...</span>
+            </>
+          ) : !currentDocument ? (
+            <>
+              <Upload size={14} />
+              <span>Upload to Analyze</span>
             </>
           ) : (
             <>

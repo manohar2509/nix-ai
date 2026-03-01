@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, FileText, ShieldAlert, BadgeDollarSign, AlertTriangle,
   TrendingUp, Activity, BarChart3, Database, MessageSquare, RefreshCw, Zap,
   CheckCircle, XCircle, Clock, Loader2, BookOpen, ArrowUpRight, ArrowDownRight,
-  Server, Cpu, HardDrive, ChevronRight, Award, Target, Sparkles,
+  Server, Cpu, HardDrive, ChevronRight, Award, Target, Sparkles, Info, HelpCircle, ChevronDown,
 } from 'lucide-react';
 import { useAuth, useAppStore } from '../stores/useAppStore';
 import { analyticsService } from '../services/analyticsService';
@@ -127,6 +127,10 @@ export default function AdminAnalyticsView() {
         {/* ═══════════════════════════════════════════════════════
             SECTION 1: PLATFORM SUMMARY CARDS
         ═══════════════════════════════════════════════════════ */}
+        <AdminSectionExplainer
+          title="Platform Summary"
+          description="Platform-wide metrics across ALL users. Active Users = users who uploaded or analyzed docs. Reg. Score and Payer Score are averages across the entire platform, giving you a bird's-eye view of protocol quality. Findings counts ALL detected issues platform-wide."
+        />
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
           <MetricCard label="Active Users" value={summary.activeUsers} icon={<Users size={18} />} color="purple" sub="users" />
           <MetricCard label="Documents" value={summary.totalDocuments} icon={<FileText size={18} />} color="brand" sub="total" />
@@ -141,6 +145,7 @@ export default function AdminAnalyticsView() {
             SECTION 2: RAG & KNOWLEDGE BASE HEALTH
         ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon={<Database size={18} />} title="RAG & Knowledge Base" subtitle="Content health, retrieval quality, and chat intelligence" color="purple" />
+        <AdminInfoBanner text="This section monitors the health of your Bedrock Knowledge Base. KB Health tracks document count and sync status. Chat Intelligence shows how users interact with the RAG system. Retrieval Quality measures citation grounding — higher citations mean AI responses are better supported by reference documents. Aim for ≥3 avg citations per response." />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* KB Health */}
@@ -263,6 +268,7 @@ export default function AdminAnalyticsView() {
             SECTION 3: SYSTEM PERFORMANCE — JOB PIPELINE
         ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon={<Cpu size={18} />} title="System Performance" subtitle="Job pipeline health, throughput, and failure tracking" color="indigo" />
+        <AdminInfoBanner text="Tracks all background jobs (analyses, KB syncs, synthetic generation). Success/Failure rates help identify system reliability. Recent failures show error details for debugging. High failure rates may indicate backend issues, S3 permission problems, or Bedrock service limits." />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Job Success/Failure */}
@@ -350,6 +356,7 @@ export default function AdminAnalyticsView() {
             SECTION 4: DOCUMENT INTELLIGENCE
         ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon={<Target size={18} />} title="Document Intelligence" subtitle="Platform-wide score distribution, risk landscape, and top findings" color="brand" />
+        <AdminInfoBanner text="Platform-wide analysis insights. Risk Distribution shows the severity breakdown of ALL findings. Score Distribution reveals how protocols cluster by quality. Top Finding Types highlight recurring issues across the platform — useful for identifying training needs. Lowest Scoring Protocols need immediate attention." />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Risk Distribution */}
@@ -451,6 +458,7 @@ export default function AdminAnalyticsView() {
             SECTION 5: USER ACTIVITY
         ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon={<Users size={18} />} title="User Activity" subtitle="Top users by documents uploaded and analyses completed" color="violet" />
+        <AdminInfoBanner text="Shows the most active users ranked by document uploads and analyses run. The activity bar visualizes relative engagement. Use this to identify power users, track adoption, and spot users who may need onboarding help." />
 
         <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
           {userActivity.length > 0 ? (
@@ -657,4 +665,43 @@ function formatDate(iso) {
 function formatJobType(type) {
   const map = { ANALYZE_DOCUMENT: 'Document Analysis', KB_SYNC: 'KB Sync', SYNTHETIC_GENERATION: 'Synthetic Gen' };
   return map[type] || type;
+}
+
+/* ── Admin Explanation Components ── */
+
+function AdminSectionExplainer({ title, description }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <button
+      onClick={() => setExpanded(!expanded)}
+      className="w-full text-left bg-purple-50/50 border border-purple-100 rounded-xl px-4 py-2.5 hover:bg-purple-50 transition-colors group"
+    >
+      <div className="flex items-center gap-2">
+        <Info size={14} className="text-purple-500 shrink-0" />
+        <span className="text-xs font-semibold text-purple-700">{title}</span>
+        <span className="text-[10px] text-purple-400 ml-1">— click to {expanded ? 'hide' : 'learn more'}</span>
+        <ChevronDown size={12} className={cn('text-purple-400 ml-auto transition-transform', expanded && 'rotate-180')} />
+      </div>
+      {expanded && (
+        <p className="text-[11px] text-purple-600/80 leading-relaxed mt-2 pl-5">{description}</p>
+      )}
+    </button>
+  );
+}
+
+function AdminInfoBanner({ text }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="mb-2">
+      <button onClick={() => setShow(!show)} className="flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-slate-600 transition-colors">
+        <HelpCircle size={11} />
+        <span>{show ? 'Hide explanation' : 'What does this section track?'}</span>
+      </button>
+      {show && (
+        <div className="mt-2 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2 text-[11px] text-purple-600 leading-relaxed">
+          {text}
+        </div>
+      )}
+    </div>
+  );
 }
