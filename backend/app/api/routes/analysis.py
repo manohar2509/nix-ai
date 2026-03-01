@@ -26,7 +26,8 @@ async def trigger_analysis(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Trigger analysis for a document. Returns a jobId for polling."""
-    return analysis_service.trigger_analysis(user, body.document_id)
+    prefs_dict = body.preferences.model_dump() if body.preferences else None
+    return analysis_service.trigger_analysis(user, body.document_id, preferences=prefs_dict)
 
 
 @router.get("/analyze/{job_id}", response_model=AnalysisStatusResponse)

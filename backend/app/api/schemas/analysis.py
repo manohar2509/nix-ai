@@ -8,9 +8,19 @@ from pydantic import BaseModel, Field
 
 
 # ── Requests ─────────────────────────────────────────────────────
+class AnalysisPreferences(BaseModel):
+    """User-configurable analysis preferences from ConfigurationView."""
+    risk_sensitivity: str = "balanced"       # conservative | balanced | aggressive
+    analysis_focus: str = "both"             # regulatory | payer | both
+    include_recommendations: bool = True
+    regulatory_threshold: int = 50           # Score below this = high risk
+    payer_threshold: int = 50
+
+
 class TriggerAnalysisRequest(BaseModel):
     """POST /analyze body."""
     document_id: str = Field(..., min_length=1)
+    preferences: Optional[AnalysisPreferences] = None
 
 
 # ── Responses ────────────────────────────────────────────────────

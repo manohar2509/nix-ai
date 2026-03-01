@@ -16,10 +16,32 @@ export const analysisService = {
    * 
    * This calls Worker Lambda via SQS, returns jobId immediately
    */
+  /**
+   * Load user preferences from localStorage
+   */
+  _getPreferences: () => {
+    try {
+      const stored = localStorage.getItem('nixai-user-preferences');
+      if (!stored) return undefined;
+      const prefs = JSON.parse(stored);
+      return {
+        risk_sensitivity: prefs.riskSensitivity || 'balanced',
+        analysis_focus: prefs.analysisFocus || 'both',
+        include_recommendations: prefs.includeRecommendations !== false,
+        regulatory_threshold: prefs.regulatoryThreshold || 50,
+        payer_threshold: prefs.payerThreshold || 50,
+      };
+    } catch {
+      return undefined;
+    }
+  },
+
   triggerAnalysis: async (docId) => {
     try {
+      const preferences = analysisService._getPreferences();
       const res = await apiClient.post('/analyze', {
         document_id: docId,
+        ...(preferences ? { preferences } : {}),
       });
       return res.data; // { jobId, status: 'QUEUED' }
     } catch (error) {

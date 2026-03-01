@@ -382,11 +382,45 @@ def _sanitize_document_name(filename: str) -> str:
     return name[:200] or "document"
 
 
+def _build_preference_instructions(preferences: dict | None) -> str:
+    """
+    Build additional analysis instructions from user preferences.
+    These come from the ConfigurationView in the frontend.
+    """
+    if not preferences:
+        return ""
+
+    parts = []
+    sensitivity = preferences.get("risk_sensitivity", "balanced")
+    focus = preferences.get("analysis_focus", "both")
+    include_recs = preferences.get("include_recommendations", True)
+    reg_threshold = preferences.get("regulatory_threshold", 50)
+    pay_threshold = preferences.get("payer_threshold", 50)
+
+    if sensitivity == "conservative":
+        parts.append("Use CONSERVATIVE risk sensitivity: flag more potential issues even with lower confidence. Prioritize safety — fewer false negatives.")
+    elif sensitivity == "aggressive":
+        parts.append("Use AGGRESSIVE risk sensitivity: only flag high-confidence issues. Prioritize precision — fewer false positives.")
+
+    if focus == "regulatory":
+        parts.append("FOCUS PRIMARILY on regulatory compliance (FDA/EMA). Payer analysis is secondary.")
+    elif focus == "payer":
+        parts.append("FOCUS PRIMARILY on payer/reimbursement viability. Regulatory analysis is secondary.")
+
+    if not include_recs:
+        parts.append("Do NOT include recommendation-type findings. Focus only on conflicts and risks.")
+
+    parts.append(f"Risk thresholds: regulatory scores below {reg_threshold}% should be flagged as HIGH RISK. Payer scores below {pay_threshold}% should be flagged as LOW VIABILITY.")
+
+    return "\n\nUser analysis preferences:\n" + "\n".join(f"- {p}" for p in parts) + "\n"
+
+
 def analyze_document_native(
     document_bytes: bytes,
     filename: str,
     max_tokens: int = 4000,
     temperature: float = 0.2,
+    preferences: dict | None = None,
 ) -> dict:
     """
     Send a document directly to Bedrock via the Converse API DocumentBlock.
@@ -421,7 +455,8 @@ def analyze_document_native(
         return None  # Caller should fall back to text-based analysis
 
     # ── Build Converse API request with DocumentBlock ────────────
-    analysis_prompt = """You are NIX AI, an expert clinical trial protocol analyst.
+    pref_instructions = _build_preference_instructions(preferences)
+    analysis_prompt = f"""You are NIX AI, an expert clinical trial protocol analyst.
 
 Analyze this clinical trial protocol document thoroughly and return a JSON response with:
 1. "regulatorScore" (0-100): FDA/EMA regulatory compliance score
@@ -443,7 +478,7 @@ Pay special attention to:
 - Statistical analysis plan details
 - Safety monitoring provisions
 - Regulatory compliance gaps
-
+{pref_instructions}
 Respond with ONLY valid JSON. No markdown, no explanation."""
 
     messages = [
@@ -514,12 +549,13 @@ Respond with ONLY valid JSON. No markdown, no explanation."""
         raise BedrockError(str(exc))
 
 
-def analyze_document(document_text: str) -> dict:
+def analyze_document(document_text: str, preferences: dict | None = None) -> dict:
     """
     LEGACY: Send extracted text to Bedrock for regulatory + payer analysis.
     Used as fallback when native DocumentBlock analysis is not available
     (unsupported format, oversized file, or model doesn't support documents).
     """
+    pref_instructions = _build_preference_instructions(preferences)
     prompt = f"""You are NIX AI, an expert clinical trial protocol analyst.
 
 Analyze this clinical trial protocol document and return a JSON response with:
@@ -535,7 +571,7 @@ Analyze this clinical trial protocol document and return a JSON response with:
    - "suggestion": recommended fix
 4. "summary": 2-3 sentence executive summary
 5. "extraction_method": "text_fallback"
-
+{pref_instructions}
 Document text:
 ---
 {document_text[:8000]}

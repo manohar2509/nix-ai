@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Upload, X, Loader2, AlertCircle } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import documentService from '../services/documentService';
+import { analysisService } from '../services/analysisService';
 import { cn } from '../utils/cn';
 
 /**
@@ -103,11 +104,28 @@ export function UploadDialog({ isOpen, onClose }) {
       addDocument(doc);
       setCurrentDocument(doc);
 
+      // Step 5: Auto-analyze if preference is enabled
+      let autoAnalyzed = false;
+      try {
+        const storedPrefs = localStorage.getItem('nixai-user-preferences');
+        if (storedPrefs) {
+          const prefs = JSON.parse(storedPrefs);
+          if (prefs.autoAnalyzeOnUpload && doc.id) {
+            await analysisService.triggerAnalysis(doc.id);
+            autoAnalyzed = true;
+          }
+        }
+      } catch (autoErr) {
+        console.warn('Auto-analyze failed:', autoErr);
+      }
+
       // Show success
       showToast({
         type: 'success',
         title: 'Upload successful',
-        message: `${file.name} is ready for analysis`,
+        message: autoAnalyzed
+          ? `${file.name} uploaded and analysis started automatically`
+          : `${file.name} is ready for analysis`,
       });
 
       // Close dialog

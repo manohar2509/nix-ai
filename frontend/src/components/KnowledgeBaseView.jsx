@@ -9,6 +9,7 @@ import {
 import { useAppStore, useAuth, useUI, useKB } from '../stores/useAppStore';
 import kbService from '../services/kbService';
 import jobService from '../services/jobService';
+import DetailDrawer, { DetailSection, DetailStat, DetailRow } from './DetailDrawer';
 import { cn } from '../utils/cn';
 
 /* ── Constants ── */
@@ -65,6 +66,11 @@ export default function KnowledgeBaseView() {
   // Delete
   const [deletingId, setDeletingId] = useState(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Drawer state
+  const [drawer, setDrawer] = useState({ open: false, type: null, context: null });
+  const openDrawer = (type, context = null) => setDrawer({ open: true, type, context });
+  const closeDrawer = () => setDrawer({ open: false, type: null, context: null });
 
   // Load on mount
   useEffect(() => {
@@ -354,12 +360,12 @@ export default function KnowledgeBaseView() {
 
         {/* ── Summary Cards ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
-          <KBMetricCard label="Total Documents" value={kbDocuments.length} icon={<FileText size={18} />} color="purple" />
-          <KBMetricCard label="Synced" value={syncedCount} icon={<CheckCircle size={18} />} color="green" />
-          <KBMetricCard label="Unsynced" value={unsyncedCount} icon={<EyeOff size={18} />} color={unsyncedCount > 0 ? 'amber' : 'slate'} />
-          <KBMetricCard label="Total Size" value={formatBytes(kbDocuments.reduce((s, d) => s + (d.size || 0), 0))} icon={<HardDrive size={18} />} color="indigo" isText />
-          <KBMetricCard label="Categories" value={new Set(kbDocuments.map((d) => d.category || 'general')).size} icon={<Filter size={18} />} color="brand" />
-          <KBMetricCard label="Health" value={sanityResults ? `${Math.round(sanityResults.health_score)}%` : '—'} icon={<Heart size={18} />} color={sanityResults?.health_score >= 80 ? 'green' : sanityResults?.health_score >= 50 ? 'amber' : 'red'} isText />
+          <KBMetricCard label="Total Documents" value={kbDocuments.length} icon={<FileText size={18} />} color="purple" onClick={() => openDrawer('totalDocs')} />
+          <KBMetricCard label="Synced" value={syncedCount} icon={<CheckCircle size={18} />} color="green" onClick={() => openDrawer('synced')} />
+          <KBMetricCard label="Unsynced" value={unsyncedCount} icon={<EyeOff size={18} />} color={unsyncedCount > 0 ? 'amber' : 'slate'} onClick={() => openDrawer('unsynced')} />
+          <KBMetricCard label="Total Size" value={formatBytes(kbDocuments.reduce((s, d) => s + (d.size || 0), 0))} icon={<HardDrive size={18} />} color="indigo" isText onClick={() => openDrawer('size')} />
+          <KBMetricCard label="Categories" value={new Set(kbDocuments.map((d) => d.category || 'general')).size} icon={<Filter size={18} />} color="brand" onClick={() => openDrawer('categories')} />
+          <KBMetricCard label="Health" value={sanityResults ? `${Math.round(sanityResults.health_score)}%` : '—'} icon={<Heart size={18} />} color={sanityResults?.health_score >= 80 ? 'green' : sanityResults?.health_score >= 50 ? 'amber' : 'red'} isText onClick={() => openDrawer('health')} />
         </div>
 
         {/* ── Action Bar ── */}
@@ -492,6 +498,326 @@ export default function KnowledgeBaseView() {
           </div>
         </div>
       </div>
+
+      {/* ════════════════════════════════════════════════════════
+          KB DRILLDOWN DRAWERS
+         ════════════════════════════════════════════════════════ */}
+
+      {/* Total Documents Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'totalDocs'}
+        onClose={closeDrawer}
+        title="All KB Documents"
+        subtitle={`${kbDocuments.length} documents in Knowledge Base`}
+        icon={<FileText size={20} />}
+        breadcrumb={[{ label: 'Knowledge Base' }, { label: 'All Documents' }]}
+        width="lg"
+      >
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <DetailStat label="Total" value={kbDocuments.length} color="text-purple-600" large />
+          <DetailStat label="Synced" value={syncedCount} color="text-green-600" />
+          <DetailStat label="Unsynced" value={unsyncedCount} color="text-amber-600" />
+        </div>
+        <DetailSection title="Document List">
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {kbDocuments.map((doc, idx) => {
+              const catStyle = getCategoryStyle(doc.category);
+              return (
+                <div key={doc.id || idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-purple-200 cursor-pointer transition-colors"
+                  onClick={() => openDrawer('docDetail', doc)}>
+                  <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center text-xs shrink-0', getFileIcon(doc.name))}>
+                    <FileText size={14} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-700 truncate">{doc.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-medium', catStyle.color)}>{catStyle.label}</span>
+                      <span className="text-[9px] text-slate-400">{formatBytes(doc.size)}</span>
+                      <span className="text-[9px] text-slate-400">{formatDate(doc.created_at)}</span>
+                    </div>
+                  </div>
+                  <span className={cn('text-[9px] font-bold px-2 py-0.5 rounded-full',
+                    doc.status === 'unsynced' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                  )}>
+                    {doc.status === 'unsynced' ? 'Unsynced' : 'Synced'}
+                  </span>
+                  <ChevronRight size={12} className="text-slate-300" />
+                </div>
+              );
+            })}
+          </div>
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Synced Docs Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'synced'}
+        onClose={closeDrawer}
+        title="Synced Documents"
+        subtitle={`${syncedCount} documents indexed in Bedrock`}
+        icon={<CheckCircle size={20} />}
+        breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Synced' }]}
+      >
+        <DetailStat label="Synced Count" value={syncedCount} color="text-green-600" large />
+        <p className="text-xs text-slate-400 mt-2 mb-6">These documents are indexed in Amazon Bedrock and available for RAG-powered chat queries.</p>
+        <DetailSection title="Synced Document List">
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {kbDocuments.filter(d => d.status !== 'unsynced').map((doc, idx) => {
+              const catStyle = getCategoryStyle(doc.category);
+              return (
+                <div key={doc.id || idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-green-50/50 border border-green-100 hover:border-green-200 cursor-pointer transition-colors"
+                  onClick={() => openDrawer('docDetail', doc)}>
+                  <CheckCircle size={14} className="text-green-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-700 truncate">{doc.name}</p>
+                    <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-medium', catStyle.color)}>{catStyle.label}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">{formatBytes(doc.size)}</span>
+                </div>
+              );
+            })}
+            {syncedCount === 0 && <p className="text-xs text-slate-400 text-center py-4">No synced documents yet.</p>}
+          </div>
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Unsynced Docs Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'unsynced'}
+        onClose={closeDrawer}
+        title="Unsynced Documents"
+        subtitle={`${unsyncedCount} documents pending sync`}
+        icon={<EyeOff size={20} />}
+        breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Unsynced' }]}
+      >
+        <DetailStat label="Unsynced Count" value={unsyncedCount} color="text-amber-600" large />
+        <p className="text-xs text-slate-400 mt-2 mb-6">These documents are uploaded but not yet indexed. Click "Sync Knowledge Base" to include them in Bedrock.</p>
+        <DetailSection title="Unsynced Document List">
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {kbDocuments.filter(d => d.status === 'unsynced').map((doc, idx) => {
+              const catStyle = getCategoryStyle(doc.category);
+              return (
+                <div key={doc.id || idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-amber-50/50 border border-amber-100 hover:border-amber-200 cursor-pointer transition-colors"
+                  onClick={() => openDrawer('docDetail', doc)}>
+                  <EyeOff size={14} className="text-amber-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-slate-700 truncate">{doc.name}</p>
+                    <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-medium', catStyle.color)}>{catStyle.label}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400">{formatBytes(doc.size)}</span>
+                </div>
+              );
+            })}
+            {unsyncedCount === 0 && <p className="text-xs text-slate-400 text-center py-4">All documents are synced! 🎉</p>}
+          </div>
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Size Breakdown Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'size'}
+        onClose={closeDrawer}
+        title="Storage Breakdown"
+        subtitle={`Total: ${formatBytes(kbDocuments.reduce((s, d) => s + (d.size || 0), 0))}`}
+        icon={<HardDrive size={20} />}
+        breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Storage' }]}
+      >
+        <DetailStat label="Total Size" value={formatBytes(kbDocuments.reduce((s, d) => s + (d.size || 0), 0))} color="text-indigo-600" large />
+        <DetailRow label="Document Count" value={kbDocuments.length} />
+        <DetailRow label="Average Size" value={formatBytes(kbDocuments.length > 0 ? kbDocuments.reduce((s, d) => s + (d.size || 0), 0) / kbDocuments.length : 0)} />
+        <DetailSection title="Largest Documents" className="mt-4">
+          <div className="space-y-2">
+            {[...kbDocuments].sort((a, b) => (b.size || 0) - (a.size || 0)).slice(0, 10).map((doc, idx) => {
+              const totalSize = kbDocuments.reduce((s, d) => s + (d.size || 0), 0) || 1;
+              const pct = ((doc.size || 0) / totalSize * 100).toFixed(1);
+              return (
+                <div key={doc.id || idx} className="flex items-center gap-3 py-2 border-b border-slate-50 cursor-pointer hover:bg-slate-50 rounded px-1 transition-colors"
+                  onClick={() => openDrawer('docDetail', doc)}>
+                  <span className="text-[10px] text-slate-400 w-5">#{idx + 1}</span>
+                  <span className="text-xs font-medium text-slate-700 flex-1 truncate">{doc.name}</span>
+                  <span className="text-xs font-bold text-indigo-600">{formatBytes(doc.size)}</span>
+                  <span className="text-[9px] text-slate-400 w-12 text-right">{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Categories Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'categories'}
+        onClose={closeDrawer}
+        title="Category Breakdown"
+        subtitle={`${new Set(kbDocuments.map(d => d.category || 'general')).size} categories in use`}
+        icon={<Filter size={20} />}
+        breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Categories' }]}
+      >
+        {(() => {
+          const catCounts = {};
+          kbDocuments.forEach(d => {
+            const cat = d.category || 'general';
+            catCounts[cat] = (catCounts[cat] || 0) + 1;
+          });
+          const sorted = Object.entries(catCounts).sort(([, a], [, b]) => b - a);
+          const maxCount = sorted[0]?.[1] || 1;
+          return (
+            <div className="space-y-3">
+              {sorted.map(([cat, count]) => {
+                const style = getCategoryStyle(cat);
+                return (
+                  <div key={cat} className="flex items-center gap-3">
+                    <span className={cn('text-[10px] px-2 py-1 rounded-full font-bold w-24 text-center', style.color)}>{style.label}</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                      <div className={cn('h-full rounded-full', style.color.includes('red') ? 'bg-red-400' : style.color.includes('blue') ? 'bg-blue-400' : style.color.includes('purple') ? 'bg-purple-400' : style.color.includes('green') ? 'bg-green-400' : 'bg-slate-400')}
+                        style={{ width: `${(count / maxCount) * 100}%` }} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 w-10 text-right">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+        <DetailSection title="Documents by Category" className="mt-6">
+          {CATEGORIES.map(cat => {
+            const docs = kbDocuments.filter(d => (d.category || 'general') === cat.value);
+            if (docs.length === 0) return null;
+            return (
+              <div key={cat.value} className="mb-4">
+                <h4 className={cn('text-[10px] font-bold uppercase tracking-wider mb-2 px-2 py-1 rounded-full inline-block', cat.color)}>{cat.label} ({docs.length})</h4>
+                <div className="space-y-1 ml-1">
+                  {docs.slice(0, 5).map((doc, idx) => (
+                    <div key={doc.id || idx} className="text-xs text-slate-600 truncate cursor-pointer hover:text-purple-600 transition-colors py-0.5"
+                      onClick={() => openDrawer('docDetail', doc)}>
+                      • {doc.name}
+                    </div>
+                  ))}
+                  {docs.length > 5 && <div className="text-[10px] text-slate-400">+ {docs.length - 5} more</div>}
+                </div>
+              </div>
+            );
+          })}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Health Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'health'}
+        onClose={closeDrawer}
+        title="KB Health Report"
+        subtitle={sanityResults ? `Health Score: ${Math.round(sanityResults.health_score)}%` : 'Run a health check first'}
+        icon={<Heart size={20} />}
+        breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Health' }]}
+        width="lg"
+      >
+        {sanityResults ? (
+          <>
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-slate-600">Health Score</span>
+                <span className={cn('text-2xl font-bold',
+                  sanityResults.health_score >= 80 ? 'text-green-600' :
+                  sanityResults.health_score >= 50 ? 'text-amber-600' : 'text-red-600'
+                )}>
+                  {Math.round(sanityResults.health_score)}%
+                </span>
+              </div>
+              <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+                <div className={cn('h-full rounded-full',
+                  sanityResults.health_score >= 80 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                  sanityResults.health_score >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                  'bg-gradient-to-r from-red-400 to-red-500'
+                )} style={{ width: `${Math.min(sanityResults.health_score, 100)}%` }} />
+              </div>
+            </div>
+            <DetailRow label="Total Documents" value={sanityResults.total_documents} />
+            <DetailRow label="Synced" value={sanityResults.synced_count} />
+            <DetailRow label="Unsynced" value={sanityResults.unsynced_count} />
+            {sanityResults.issues && sanityResults.issues.length > 0 && (
+              <DetailSection title="Issues Found" className="mt-4">
+                <div className="space-y-2">
+                  {sanityResults.issues.map((issue, idx) => (
+                    <div key={idx} className={cn('p-3 rounded-lg border text-xs',
+                      issue.severity === 'critical' ? 'bg-red-50 border-red-200 text-red-700' :
+                      issue.severity === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                      'bg-blue-50 border-blue-200 text-blue-700'
+                    )}>
+                      <div className="flex items-center gap-2 font-semibold mb-1">
+                        <AlertTriangle size={12} />
+                        {issue.type || issue.message}
+                      </div>
+                      {issue.details && <p className="text-[11px] opacity-80">{issue.details}</p>}
+                    </div>
+                  ))}
+                </div>
+              </DetailSection>
+            )}
+            {sanityResults.recommendations && sanityResults.recommendations.length > 0 && (
+              <DetailSection title="Recommendations" className="mt-4">
+                <div className="space-y-1">
+                  {sanityResults.recommendations.map((rec, idx) => (
+                    <div key={idx} className="text-xs text-slate-600 py-1">
+                      💡 {rec}
+                    </div>
+                  ))}
+                </div>
+              </DetailSection>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <Heart size={32} className="mx-auto text-slate-300 mb-3" />
+            <p className="text-sm text-slate-500 mb-4">No health check results yet</p>
+            <button onClick={() => { closeDrawer(); runSanityCheck(); }}
+              className="px-4 py-2 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+              Run Health Check
+            </button>
+          </div>
+        )}
+      </DetailDrawer>
+
+      {/* Individual Document Detail Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'docDetail'}
+        onClose={closeDrawer}
+        title={drawer.context?.name || 'Document Detail'}
+        subtitle="Knowledge Base document details"
+        icon={<FileText size={20} />}
+        breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Document' }]}
+        width="md"
+      >
+        {drawer.context && (() => {
+          const doc = drawer.context;
+          const catStyle = getCategoryStyle(doc.category);
+          return (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <DetailStat label="Size" value={formatBytes(doc.size)} color="text-indigo-600" />
+                <DetailStat label="Status" value={doc.status === 'unsynced' ? 'Unsynced' : 'Synced'} color={doc.status === 'unsynced' ? 'text-amber-600' : 'text-green-600'} />
+              </div>
+              <DetailRow label="Filename" value={doc.name} />
+              <DetailRow label="Category" value={
+                <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', catStyle.color)}>{catStyle.label}</span>
+              } />
+              <DetailRow label="Uploaded" value={formatDate(doc.created_at)} />
+              {doc.description && <DetailRow label="Description" value={doc.description} />}
+              {doc.s3_key && <DetailRow label="S3 Key" value={<span className="font-mono text-[10px]">{doc.s3_key}</span>} />}
+              {doc.id && <DetailRow label="Document ID" value={<span className="font-mono text-[10px]">{doc.id}</span>} />}
+              <div className={cn(
+                'mt-4 rounded-xl p-3 border text-xs',
+                doc.status === 'unsynced'
+                  ? 'bg-amber-50 border-amber-200 text-amber-700'
+                  : 'bg-green-50 border-green-200 text-green-700'
+              )}>
+                {doc.status === 'unsynced'
+                  ? '🔶 This document is not yet indexed. Sync the Knowledge Base to make it available for RAG queries.'
+                  : '✅ This document is indexed in Bedrock and available for RAG-powered chat.'}
+              </div>
+            </>
+          );
+        })()}
+      </DetailDrawer>
     </div>
   );
 }
@@ -1006,7 +1332,7 @@ function IssueCard({ title, count, items, icon, color }) {
 /* ════════════════════════════════════════════════════════════════
    SHARED SUB-COMPONENTS
    ════════════════════════════════════════════════════════════════ */
-function KBMetricCard({ label, value, icon, color, isText }) {
+function KBMetricCard({ label, value, icon, color, isText, onClick }) {
   const bgMap = {
     purple: 'bg-purple-50 text-purple-600',
     green: 'bg-green-50 text-green-600',
@@ -1018,11 +1344,20 @@ function KBMetricCard({ label, value, icon, color, isText }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-4 hover:shadow-md transition-shadow">
+    <div
+      className={cn(
+        'bg-white rounded-2xl border border-slate-200/60 shadow-sm p-4 transition-all',
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-purple-200 group' : 'hover:shadow-md'
+      )}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       <div className="flex items-center justify-between mb-2">
         <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center', bgMap[color] || bgMap.purple)}>
           {icon}
         </div>
+        {onClick && <ChevronRight size={14} className="text-slate-300 group-hover:text-purple-400 transition-colors" />}
       </div>
       <div className="text-xl font-bold text-slate-900 tabular-nums">{isText ? value : value}</div>
       <div className="text-[10px] text-slate-400 mt-0.5 font-medium">{label}</div>

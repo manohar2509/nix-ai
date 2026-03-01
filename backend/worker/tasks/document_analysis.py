@@ -39,6 +39,7 @@ def process_document_analysis(payload: dict) -> None:
     doc_id = payload["doc_id"]
     s3_key = payload["s3_key"]
     user_id = payload.get("user_id", "system")
+    preferences = payload.get("preferences")  # User analysis preferences from ConfigurationView
 
     start_time = time.time()
 
@@ -76,6 +77,7 @@ def process_document_analysis(payload: dict) -> None:
             analysis_result = bedrock_service.analyze_document_native(
                 document_bytes=document_bytes,
                 filename=filename,
+                preferences=preferences,
             )
         except Exception as exc:
             logger.warning(
@@ -104,7 +106,7 @@ def process_document_analysis(payload: dict) -> None:
                 "current_step": "Analyzing regulatory compliance (text mode)...",
             })
 
-            analysis_result = bedrock_service.analyze_document(document_text)
+            analysis_result = bedrock_service.analyze_document(document_text, preferences=preferences)
             extraction_method = "text_fallback"
         else:
             extraction_method = "native_document_block"

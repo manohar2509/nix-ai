@@ -4,9 +4,11 @@ import {
   TrendingUp, Activity, BarChart3, Database, MessageSquare, RefreshCw, Zap,
   CheckCircle, XCircle, Clock, Loader2, BookOpen, ArrowUpRight, ArrowDownRight,
   Server, Cpu, HardDrive, ChevronRight, Award, Target, Sparkles, Info, HelpCircle, ChevronDown,
+  Briefcase, Eye,
 } from 'lucide-react';
 import { useAuth, useAppStore } from '../stores/useAppStore';
 import { analyticsService } from '../services/analyticsService';
+import DetailDrawer, { DetailSection, DetailStat, DetailRow, DetailList } from './DetailDrawer';
 import { cn } from '../utils/cn';
 
 /* ── Animated counter ── */
@@ -36,6 +38,11 @@ export default function AdminAnalyticsView() {
   const [rag, setRag] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Drilldown drawer state
+  const [drawer, setDrawer] = useState({ open: false, type: null, context: null });
+  const openDrawer = (type, context = null) => setDrawer({ open: true, type, context });
+  const closeDrawer = () => setDrawer({ open: false, type: null, context: null });
 
   useEffect(() => { loadAll(); }, []);
 
@@ -132,13 +139,13 @@ export default function AdminAnalyticsView() {
           description="Platform-wide metrics across ALL users. Active Users = users who uploaded or analyzed docs. Reg. Score and Payer Score are averages across the entire platform, giving you a bird's-eye view of protocol quality. Findings counts ALL detected issues platform-wide."
         />
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
-          <MetricCard label="Active Users" value={summary.activeUsers} icon={<Users size={18} />} color="purple" sub="users" />
-          <MetricCard label="Documents" value={summary.totalDocuments} icon={<FileText size={18} />} color="brand" sub="total" />
-          <MetricCard label="Analyses" value={summary.totalAnalyses} icon={<BarChart3 size={18} />} color="indigo" sub="completed" />
-          <MetricCard label="Reg. Score" value={summary.avgRegulatorScore} icon={<ShieldAlert size={18} />} color={summary.avgRegulatorScore >= 60 ? 'green' : summary.avgRegulatorScore >= 40 ? 'amber' : 'red'} sub="platform avg" isScore />
-          <MetricCard label="Payer Score" value={summary.avgPayerScore} icon={<BadgeDollarSign size={18} />} color={summary.avgPayerScore >= 60 ? 'green' : summary.avgPayerScore >= 40 ? 'amber' : 'red'} sub="platform avg" isScore />
-          <MetricCard label="Findings" value={summary.totalFindings} icon={<AlertTriangle size={18} />} color="orange" sub="total" />
-          <MetricCard label="Jobs" value={summary.totalJobs} icon={<Activity size={18} />} color="slate" sub="processed" />
+          <MetricCard label="Active Users" value={summary.activeUsers} icon={<Users size={18} />} color="purple" sub="users" onClick={() => openDrawer('users')} />
+          <MetricCard label="Documents" value={summary.totalDocuments} icon={<FileText size={18} />} color="brand" sub="total" onClick={() => openDrawer('platformDocs')} />
+          <MetricCard label="Analyses" value={summary.totalAnalyses} icon={<BarChart3 size={18} />} color="indigo" sub="completed" onClick={() => openDrawer('platformAnalyses')} />
+          <MetricCard label="Reg. Score" value={summary.avgRegulatorScore} icon={<ShieldAlert size={18} />} color={summary.avgRegulatorScore >= 60 ? 'green' : summary.avgRegulatorScore >= 40 ? 'amber' : 'red'} sub="platform avg" isScore onClick={() => openDrawer('platformRegScore')} />
+          <MetricCard label="Payer Score" value={summary.avgPayerScore} icon={<BadgeDollarSign size={18} />} color={summary.avgPayerScore >= 60 ? 'green' : summary.avgPayerScore >= 40 ? 'amber' : 'red'} sub="platform avg" isScore onClick={() => openDrawer('platformPayScore')} />
+          <MetricCard label="Findings" value={summary.totalFindings} icon={<AlertTriangle size={18} />} color="orange" sub="total" onClick={() => openDrawer('platformFindings')} />
+          <MetricCard label="Jobs" value={summary.totalJobs} icon={<Activity size={18} />} color="slate" sub="processed" onClick={() => openDrawer('platformJobs')} />
         </div>
 
         {/* ═══════════════════════════════════════════════════════
@@ -423,7 +430,7 @@ export default function AdminAnalyticsView() {
             {worstDocuments.length > 0 ? (
               <div className="space-y-3">
                 {worstDocuments.slice(0, 6).map((doc, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                  <div key={idx} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-red-200 hover:bg-red-50/30 cursor-pointer transition-colors group" onClick={() => openDrawer('worstDocDetail', doc)}>
                     <div className="h-7 w-7 bg-red-100 rounded-lg flex items-center justify-center text-red-500 text-[10px] font-bold shrink-0">
                       #{idx + 1}
                     </div>
@@ -517,6 +524,367 @@ export default function AdminAnalyticsView() {
           </div>
         </div>
       </div>
+
+      {/* ════════════════════════════════════════════════════════
+          ADMIN DRILLDOWN DRAWERS
+         ════════════════════════════════════════════════════════ */}
+
+      {/* Active Users Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'users'}
+        onClose={closeDrawer}
+        title="Active Users"
+        subtitle={`${summary.activeUsers} users have uploaded or analyzed documents`}
+        icon={<Users size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Active Users' }]}
+      >
+        <DetailSection title="User Activity Table">
+          {userActivity.length > 0 ? (
+            <div className="space-y-2">
+              {userActivity.map((u, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-purple-200 cursor-pointer transition-colors"
+                  onClick={() => openDrawer('userDetail', u)}>
+                  <div className="h-9 w-9 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-xs font-bold shrink-0">
+                    #{idx + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-700 font-mono truncate">{u.userId}</div>
+                    <div className="text-[10px] text-slate-400">{u.documentCount} docs &middot; {u.analysisCount} analyses</div>
+                  </div>
+                  <ChevronRight size={14} className="text-slate-300" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-8">No user activity data available.</p>
+          )}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* User Detail Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'userDetail'}
+        onClose={closeDrawer}
+        title="User Details"
+        subtitle={drawer.context?.userId || ''}
+        icon={<Users size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Users', onClick: () => openDrawer('users') }, { label: 'Detail' }]}
+        width="md"
+      >
+        {drawer.context && (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <DetailStat label="Documents" value={drawer.context.documentCount} color="text-brand-600" />
+              <DetailStat label="Analyses" value={drawer.context.analysisCount} color="text-indigo-600" />
+            </div>
+            <DetailRow label="User ID" value={drawer.context.userId} />
+            <DetailRow label="Engagement Level" value={
+              drawer.context.analysisCount >= 5 ? 'Power User' :
+              drawer.context.analysisCount >= 2 ? 'Active' :
+              drawer.context.documentCount >= 1 ? 'Getting Started' : 'Inactive'
+            } />
+          </>
+        )}
+      </DetailDrawer>
+
+      {/* Platform Documents Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'platformDocs'}
+        onClose={closeDrawer}
+        title="Platform Documents"
+        subtitle={`${summary.totalDocuments} documents uploaded across all users`}
+        icon={<FileText size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Documents' }]}
+      >
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <DetailStat label="Total Documents" value={summary.totalDocuments} color="text-brand-600" large />
+          <DetailStat label="Active Users" value={summary.activeUsers} color="text-purple-600" large />
+        </div>
+        <DetailSection title="Documents per User">
+          {userActivity.length > 0 ? (
+            <div className="space-y-2">
+              {userActivity.map((u, idx) => (
+                <div key={idx} className="flex items-center gap-3 py-2 border-b border-slate-50">
+                  <span className="text-xs text-slate-400 w-6">{idx + 1}</span>
+                  <span className="text-xs font-mono text-slate-600 flex-1 truncate">{u.userId.substring(0, 24)}...</span>
+                  <span className="text-xs font-bold text-brand-600">{u.documentCount} docs</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-4">No data</p>
+          )}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Platform Analyses Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'platformAnalyses'}
+        onClose={closeDrawer}
+        title="Platform Analyses"
+        subtitle={`${summary.totalAnalyses} analyses completed platform-wide`}
+        icon={<BarChart3 size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Analyses' }]}
+      >
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <DetailStat label="Total Analyses" value={summary.totalAnalyses} color="text-indigo-600" />
+          <DetailStat label="Avg Reg Score" value={`${summary.avgRegulatorScore}%`} color={summary.avgRegulatorScore >= 60 ? 'text-green-600' : 'text-amber-600'} />
+          <DetailStat label="Avg Payer Score" value={`${summary.avgPayerScore}%`} color={summary.avgPayerScore >= 60 ? 'text-green-600' : 'text-amber-600'} />
+        </div>
+        <DetailSection title="Analyses per User">
+          {userActivity.length > 0 ? (
+            <div className="space-y-2">
+              {userActivity.map((u, idx) => (
+                <div key={idx} className="flex items-center gap-3 py-2 border-b border-slate-50">
+                  <span className="text-xs text-slate-400 w-6">{idx + 1}</span>
+                  <span className="text-xs font-mono text-slate-600 flex-1 truncate">{u.userId.substring(0, 24)}...</span>
+                  <span className="text-xs font-bold text-indigo-600">{u.analysisCount} analyses</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-4">No data</p>
+          )}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Platform Reg Score Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'platformRegScore'}
+        onClose={closeDrawer}
+        title="Platform Regulatory Score"
+        subtitle={`Average: ${summary.avgRegulatorScore}% across all users`}
+        icon={<ShieldAlert size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Regulatory Score' }]}
+      >
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-slate-600">Platform Average</span>
+            <span className={cn('text-2xl font-bold', summary.avgRegulatorScore >= 60 ? 'text-green-600' : summary.avgRegulatorScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+              {summary.avgRegulatorScore}%
+            </span>
+          </div>
+          <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+            <div className={cn('h-full rounded-full',
+              summary.avgRegulatorScore >= 60 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+              summary.avgRegulatorScore >= 40 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+              'bg-gradient-to-r from-red-400 to-red-500'
+            )} style={{ width: `${Math.min(summary.avgRegulatorScore, 100)}%` }} />
+          </div>
+        </div>
+        {Object.keys(scoreDistribution).length > 0 && (
+          <DetailSection title="Score Distribution">
+            <div className="space-y-2">
+              {Object.entries(scoreDistribution).map(([bucket, count]) => {
+                const maxVal = Math.max(...Object.values(scoreDistribution), 1);
+                const barColor = bucket === '0-25' ? 'bg-red-500' : bucket === '26-50' ? 'bg-orange-500' : bucket === '51-75' ? 'bg-amber-400' : 'bg-green-500';
+                return (
+                  <div key={bucket} className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-slate-500 w-14 text-right">{bucket}%</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                      <div className={cn('h-full rounded-full', barColor)} style={{ width: `${Math.max((count / maxVal) * 100, count > 0 ? 8 : 0)}%` }} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 w-8">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </DetailSection>
+        )}
+        <DetailSection title="Lowest Scoring Protocols">
+          {worstDocuments.length > 0 ? (
+            <div className="space-y-2">
+              {worstDocuments.slice(0, 5).map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer" onClick={() => openDrawer('worstDocDetail', doc)}>
+                  <span className="text-xs font-bold text-red-500">#{idx + 1}</span>
+                  <span className="text-xs font-semibold text-slate-700 flex-1 truncate">{doc.documentName}</span>
+                  <span className={cn('text-xs font-bold', doc.regulatorScore >= 60 ? 'text-green-600' : doc.regulatorScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+                    {Math.round(doc.regulatorScore)}%
+                  </span>
+                  <ChevronRight size={12} className="text-slate-300" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-4">No data</p>
+          )}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Platform Payer Score Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'platformPayScore'}
+        onClose={closeDrawer}
+        title="Platform Payer Score"
+        subtitle={`Average: ${summary.avgPayerScore}% across all users`}
+        icon={<BadgeDollarSign size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Payer Score' }]}
+      >
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-slate-600">Platform Average</span>
+            <span className={cn('text-2xl font-bold', summary.avgPayerScore >= 60 ? 'text-green-600' : summary.avgPayerScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+              {summary.avgPayerScore}%
+            </span>
+          </div>
+          <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+            <div className={cn('h-full rounded-full',
+              summary.avgPayerScore >= 60 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+              summary.avgPayerScore >= 40 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+              'bg-gradient-to-r from-red-400 to-red-500'
+            )} style={{ width: `${Math.min(summary.avgPayerScore, 100)}%` }} />
+          </div>
+        </div>
+        <DetailSection title="Lowest Payer Scores">
+          {worstDocuments.length > 0 ? (
+            <div className="space-y-2">
+              {[...worstDocuments].sort((a, b) => a.payerScore - b.payerScore).slice(0, 5).map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer" onClick={() => openDrawer('worstDocDetail', doc)}>
+                  <span className="text-xs font-bold text-amber-600">#{idx + 1}</span>
+                  <span className="text-xs font-semibold text-slate-700 flex-1 truncate">{doc.documentName}</span>
+                  <span className={cn('text-xs font-bold', doc.payerScore >= 60 ? 'text-green-600' : doc.payerScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+                    {Math.round(doc.payerScore)}%
+                  </span>
+                  <ChevronRight size={12} className="text-slate-300" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-4">No data</p>
+          )}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Platform Findings Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'platformFindings'}
+        onClose={closeDrawer}
+        title="Platform Findings"
+        subtitle={`${summary.totalFindings} findings detected across all analyses`}
+        icon={<AlertTriangle size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Findings' }]}
+      >
+        <div className="grid grid-cols-4 gap-3 mb-6">
+          <DetailStat label="Critical" value={riskDistribution.critical} color="text-red-600" />
+          <DetailStat label="High" value={riskDistribution.high} color="text-orange-600" />
+          <DetailStat label="Medium" value={riskDistribution.medium} color="text-amber-600" />
+          <DetailStat label="Low" value={riskDistribution.low} color="text-green-600" />
+        </div>
+        {topFindingTypes.length > 0 && (
+          <DetailSection title="Top Finding Types">
+            <div className="space-y-2">
+              {topFindingTypes.map((item, idx) => {
+                const maxCount = topFindingTypes[0]?.count || 1;
+                return (
+                  <div key={idx} className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-slate-500 w-28 text-right truncate">{item.type}</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full" style={{ width: `${(item.count / maxCount) * 100}%` }} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 w-8">{item.count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </DetailSection>
+        )}
+      </DetailDrawer>
+
+      {/* Platform Jobs Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'platformJobs'}
+        onClose={closeDrawer}
+        title="Platform Job Pipeline"
+        subtitle={`${jobPipeline.totalJobs} total jobs processed`}
+        icon={<Activity size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Jobs' }]}
+      >
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <DetailStat label="Success Rate" value={`${jobPipeline.successRate}%`} color="text-green-600" large />
+          <DetailStat label="Failure Rate" value={`${jobPipeline.failureRate}%`} color="text-red-600" large />
+        </div>
+        <DetailRow label="Total Jobs" value={jobPipeline.totalJobs} />
+        <DetailRow label="Successful" value={jobPipeline.successCount} />
+        <DetailRow label="Failed" value={jobPipeline.failureCount} />
+        <DetailRow label="In Progress" value={jobPipeline.inProgressCount} />
+        <DetailRow label="Queued" value={jobPipeline.queuedCount} />
+        {Object.keys(jobPipeline.jobsByType).length > 0 && (
+          <DetailSection title="Jobs by Type" className="mt-6">
+            <div className="space-y-2">
+              {Object.entries(jobPipeline.jobsByType).map(([type, count]) => (
+                <div key={type} className="flex items-center justify-between py-2 border-b border-slate-50">
+                  <span className="text-xs font-medium text-slate-600">{formatJobType(type)}</span>
+                  <span className="text-xs font-bold text-indigo-600">{count}</span>
+                </div>
+              ))}
+            </div>
+          </DetailSection>
+        )}
+        {jobPipeline.recentFailures.length > 0 && (
+          <DetailSection title="Recent Failures" className="mt-4">
+            <div className="space-y-2">
+              {jobPipeline.recentFailures.map((f, idx) => (
+                <div key={idx} className="bg-red-50 border border-red-100 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <XCircle size={12} className="text-red-500" />
+                    <span className="text-xs font-semibold text-red-700">{formatJobType(f.type)}</span>
+                    <span className="text-[9px] text-red-400 ml-auto">{formatDate(f.createdAt)}</span>
+                  </div>
+                  <p className="text-[11px] text-red-600">{f.error}</p>
+                </div>
+              ))}
+            </div>
+          </DetailSection>
+        )}
+      </DetailDrawer>
+
+      {/* Worst Document Detail Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'worstDocDetail'}
+        onClose={closeDrawer}
+        title={drawer.context?.documentName || 'Document Detail'}
+        subtitle="Protocol analysis details"
+        icon={<FileText size={20} />}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Lowest Scoring' }, { label: drawer.context?.documentName || '' }]}
+        width="md"
+      >
+        {drawer.context && (() => {
+          const doc = drawer.context;
+          return (
+            <>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <DetailStat
+                  label="Regulatory Score"
+                  value={`${Math.round(doc.regulatorScore)}%`}
+                  color={doc.regulatorScore >= 60 ? 'text-green-600' : doc.regulatorScore >= 40 ? 'text-amber-600' : 'text-red-600'}
+                  large
+                />
+                <DetailStat
+                  label="Payer Score"
+                  value={`${Math.round(doc.payerScore)}%`}
+                  color={doc.payerScore >= 60 ? 'text-green-600' : doc.payerScore >= 40 ? 'text-amber-600' : 'text-red-600'}
+                  large
+                />
+              </div>
+              <DetailRow label="Document" value={doc.documentName} />
+              <DetailRow label="Findings" value={doc.findingsCount} />
+              {doc.userId && <DetailRow label="Owner" value={doc.userId.substring(0, 24) + '...'} />}
+              <div className={cn(
+                'mt-4 rounded-xl p-3 border text-xs',
+                doc.regulatorScore < 40 ? 'bg-red-50 border-red-200 text-red-700' :
+                doc.regulatorScore < 60 ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                'bg-green-50 border-green-200 text-green-700'
+              )}>
+                {doc.regulatorScore < 40
+                  ? '⚠️ This protocol has significant regulatory compliance issues that need immediate attention.'
+                  : doc.regulatorScore < 60
+                    ? '🔶 This protocol needs improvements before submission. Review the findings for details.'
+                    : '✅ This protocol shows acceptable regulatory alignment.'}
+              </div>
+            </>
+          );
+        })()}
+      </DetailDrawer>
     </div>
   );
 }
@@ -526,7 +894,7 @@ export default function AdminAnalyticsView() {
    Sub-Components
    ════════════════════════════════════════════════════════════════ */
 
-function MetricCard({ label, value, icon, color, sub, isScore }) {
+function MetricCard({ label, value, icon, color, sub, isScore, onClick }) {
   const displayValue = useCountUp(Math.round(value || 0), 800);
   const bgMap = {
     purple: 'bg-purple-50 text-purple-600',
@@ -540,17 +908,30 @@ function MetricCard({ label, value, icon, color, sub, isScore }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-4 hover:shadow-md transition-shadow">
+    <div
+      className={cn(
+        'bg-white rounded-2xl border border-slate-200/60 shadow-sm p-4 transition-all',
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-brand-200 group' : 'hover:shadow-md'
+      )}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       <div className="flex items-center justify-between mb-2">
         <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center', bgMap[color] || bgMap.brand)}>
           {icon}
         </div>
-        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">{sub}</span>
+        {onClick ? (
+          <ChevronRight size={14} className="text-slate-300 group-hover:text-brand-400 transition-colors" />
+        ) : (
+          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">{sub}</span>
+        )}
       </div>
       <div className="text-xl font-bold text-slate-900 tabular-nums">
         {isScore ? `${displayValue}%` : displayValue}
       </div>
       <div className="text-[10px] text-slate-400 mt-0.5 font-medium">{label}</div>
+      {onClick && sub && <div className="text-[8px] font-bold text-slate-300 uppercase tracking-wider mt-1">{sub}</div>}
     </div>
   );
 }

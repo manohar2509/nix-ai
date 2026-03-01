@@ -5,6 +5,7 @@ import {
   BarChart3, ShieldAlert, BadgeDollarSign, RotateCcw,
 } from 'lucide-react';
 import { useAuth, useAppStore } from '../stores/useAppStore';
+import { applyCurrentTheme } from '../hooks/useTheme';
 import { cn } from '../utils/cn';
 
 const STORAGE_KEY = 'nixai-user-preferences';
@@ -66,6 +67,7 @@ export default function ConfigurationView() {
   const handleSave = () => {
     savePreferences(prefs);
     setSaved(true);
+    applyCurrentTheme(); // Apply theme change immediately
     showToast({ type: 'success', title: 'Settings saved', message: 'Your preferences have been updated' });
   };
 
@@ -307,6 +309,18 @@ function AnalysisSection({ prefs, updatePref }) {
           />
         </div>
       </SectionCard>
+
+      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <Check size={16} className="text-green-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-green-800">Preferences are active</p>
+            <p className="text-xs text-green-600 mt-1">
+              These settings are automatically applied when you trigger a new document analysis. The AI model will adjust its sensitivity, focus area, and threshold scoring based on your preferences.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

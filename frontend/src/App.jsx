@@ -16,9 +16,11 @@ import Toast from './components/Toast';
 import { useAppStore, useDocuments, useAnalysis } from './stores/useAppStore';
 import { analysisService } from './services/analysisService';
 import { documentService } from './services/documentService';
+import { useThemeInit } from './hooks/useTheme';
 
 /* ── Main Dashboard Layout (Authenticated) ── */
 function DashboardLayout() {
+  useThemeInit(); // Apply light/dark/system theme from user preferences
   const [activeTab, setActiveTab] = useState('analysis');
   const [showUpload, setShowUpload] = useState(false);
 

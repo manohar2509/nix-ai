@@ -18,7 +18,7 @@ from app.services import dynamo_service, sqs_service
 logger = logging.getLogger(__name__)
 
 
-def trigger_analysis(user: CurrentUser, document_id: str) -> dict:
+def trigger_analysis(user: CurrentUser, document_id: str, preferences: dict | None = None) -> dict:
     """
     Trigger a new analysis job for a document.
 
@@ -49,10 +49,13 @@ def trigger_analysis(user: CurrentUser, document_id: str) -> dict:
         dynamo_service.update_document(document_id, {"status": "uploaded"})
 
     # Create job record
+    job_params = {"document_id": document_id, "s3_key": doc.get("s3_key", "")}
+    if preferences:
+        job_params["preferences"] = preferences
     job = dynamo_service.create_job(
         user_id=user.user_id,
         job_type="ANALYZE_DOCUMENT",
-        params={"document_id": document_id, "s3_key": doc.get("s3_key", "")},
+        params=job_params,
     )
 
     # Create analysis record linked to this job
@@ -75,16 +78,17 @@ def trigger_analysis(user: CurrentUser, document_id: str) -> dict:
             doc_id=document_id,
             s3_key=doc.get("s3_key", ""),
             user_id=user.user_id,
+            preferences=preferences,
         )
         logger.info("Analysis job %s queued to SQS", job["id"])
         return {"jobId": job["id"], "status": "QUEUED"}
     else:
         # Local dev path: execute analysis directly (no SQS/Lambda worker)
         logger.info("Running analysis job %s inline (local dev mode)", job["id"])
-        return _execute_analysis_inline(job, document_id, doc.get("s3_key", ""), user.user_id)
+        return _execute_analysis_inline(job, document_id, doc.get("s3_key", ""), user.user_id, preferences)
 
 
-def _execute_analysis_inline(job: dict, doc_id: str, s3_key: str, user_id: str) -> dict:
+def _execute_analysis_inline(job: dict, doc_id: str, s3_key: str, user_id: str, preferences: dict | None = None) -> dict:
     """
     Execute the document analysis task directly in the API process.
     Used in local dev where there is no SQS → Lambda worker.
@@ -93,12 +97,15 @@ def _execute_analysis_inline(job: dict, doc_id: str, s3_key: str, user_id: str) 
     try:
         from worker.tasks.document_analysis import process_document_analysis
 
-        process_document_analysis({
+        payload = {
             "job_id": job_id,
             "doc_id": doc_id,
             "s3_key": s3_key,
             "user_id": user_id,
-        })
+        }
+        if preferences:
+            payload["preferences"] = preferences
+        process_document_analysis(payload)
 
         # Re-read the job to get final status
         updated = dynamo_service.get_job(job_id)

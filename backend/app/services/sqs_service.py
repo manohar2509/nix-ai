@@ -57,14 +57,20 @@ def send_message(task: str, payload: dict) -> str:
         raise QueueError(f"Failed to queue task {task}: {exc}")
 
 
-def send_analysis_task(job_id: str, doc_id: str, s3_key: str, user_id: str) -> str:
+def send_analysis_task(
+    job_id: str, doc_id: str, s3_key: str, user_id: str,
+    preferences: dict | None = None,
+) -> str:
     """Convenience: queue a document analysis job."""
-    return send_message("ANALYZE_DOCUMENT", {
+    payload = {
         "job_id": job_id,
         "doc_id": doc_id,
         "s3_key": s3_key,
         "user_id": user_id,
-    })
+    }
+    if preferences:
+        payload["preferences"] = preferences
+    return send_message("ANALYZE_DOCUMENT", payload)
 
 
 def send_kb_sync_task(job_id: str, user_id: str) -> str:

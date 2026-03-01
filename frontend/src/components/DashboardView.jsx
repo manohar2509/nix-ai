@@ -3,10 +3,14 @@ import {
   LayoutDashboard, FileText, ShieldAlert, BadgeDollarSign, AlertTriangle,
   TrendingUp, Activity, Clock, ChevronRight, RefreshCw, Zap, BarChart3,
   CheckCircle, XCircle, Loader2, Eye, Upload, ArrowUpRight, ArrowDownRight,
-  MessageSquare, BookOpen, Info, HelpCircle, ChevronDown,
+  MessageSquare, BookOpen, Info, HelpCircle, ChevronDown, Hash, Briefcase,
+  AlertCircle, Sparkles, Download,
 } from 'lucide-react';
 import { useAuth, useAppStore } from '../stores/useAppStore';
 import { analyticsService } from '../services/analyticsService';
+import { documentService } from '../services/documentService';
+import jobService from '../services/jobService';
+import DetailDrawer, { DetailSection, DetailStat, DetailList, DetailRow } from './DetailDrawer';
 import { cn } from '../utils/cn';
 
 /* ── Animated counter hook ── */
@@ -32,9 +36,21 @@ function useCountUp(target, duration = 1000) {
 export default function DashboardView() {
   const { user } = useAuth();
   const setActiveView = useAppStore((s) => s.setActiveView);
+  const setCurrentDocument = useAppStore((s) => s.setCurrentDocument);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Drilldown drawer state
+  const [drawer, setDrawer] = useState({ open: false, type: null, context: null });
+  const openDrawer = (type, context = null) => setDrawer({ open: true, type, context });
+  const closeDrawer = () => setDrawer({ open: false, type: null, context: null });
+
+  // Extra data loaded on demand for drawers
+  const [allDocuments, setAllDocuments] = useState([]);
+  const [allJobs, setAllJobs] = useState([]);
+  const [docsLoaded, setDocsLoaded] = useState(false);
+  const [jobsLoaded, setJobsLoaded] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -64,6 +80,60 @@ export default function DashboardView() {
       setLoading(false);
     }
   };
+
+  // Load full document list on demand
+  const loadDocuments = async () => {
+    if (docsLoaded) return allDocuments;
+    try {
+      const docs = await documentService.listDocuments();
+      setAllDocuments(docs);
+      setDocsLoaded(true);
+      return docs;
+    } catch { return []; }
+  };
+
+  // Load full job list on demand
+  const loadJobs = async () => {
+    if (jobsLoaded) return allJobs;
+    try {
+      const jobs = await jobService.listJobs(100);
+      setAllJobs(jobs);
+      setJobsLoaded(true);
+      return jobs;
+    } catch { return []; }
+  };
+
+  // Open drawer handlers
+  const handleOpenDocuments = async () => {
+    openDrawer('documents');
+    await loadDocuments();
+  };
+  const handleOpenAnalyses = () => { setActiveView('history'); };
+  const handleOpenJobs = async () => {
+    openDrawer('jobs');
+    await loadJobs();
+  };
+  const handleOpenFindings = () => { openDrawer('findings'); };
+  const handleOpenRegScore = () => { openDrawer('regScore'); };
+  const handleOpenPayScore = () => { openDrawer('payScore'); };
+  const handleOpenRiskDetail = (severity) => { openDrawer('riskSeverity', severity); };
+  const handleOpenDocComparison = (doc) => {
+    setCurrentDocument({ id: doc.documentId, name: doc.documentName, status: 'analyzed' });
+    setActiveView('protocol');
+  };
+  const handleOpenScoreTrendItem = (point) => {
+    openDrawer('scoreTrendItem', point);
+  };
+  const handleOpenActivityItem = async (item) => {
+    if (item.jobId) {
+      openDrawer('jobDetail', item);
+      try {
+        const jobDetail = await jobService.getJobStatus(item.jobId);
+        setDrawer(prev => ({ ...prev, context: { ...item, ...jobDetail } }));
+      } catch { /* keep original */ }
+    }
+  };
+  const handleOpenChatUsage = () => { openDrawer('chatUsage'); };
 
   if (loading) {
     return (
@@ -130,6 +200,7 @@ export default function DashboardView() {
             color="brand"
             subtitle="uploaded"
             tooltip="Total number of clinical protocol documents you have uploaded to the platform for analysis."
+            onClick={handleOpenDocuments}
           />
           <SummaryCard
             label="Analyses"
@@ -138,6 +209,7 @@ export default function DashboardView() {
             color="indigo"
             subtitle="completed"
             tooltip="Number of completed AI-powered adversarial analyses run against your protocol documents."
+            onClick={handleOpenAnalyses}
           />
           <SummaryCard
             label="Reg. Score"
@@ -147,6 +219,7 @@ export default function DashboardView() {
             subtitle="avg"
             isScore
             tooltip="Average Regulatory Compliance Score across all analyses. ≥60% is good, 40-59% needs improvement, <40% has significant issues. This measures alignment with FDA/EMA regulatory requirements."
+            onClick={handleOpenRegScore}
           />
           <SummaryCard
             label="Payer Score"
@@ -156,6 +229,7 @@ export default function DashboardView() {
             subtitle="avg"
             isScore
             tooltip="Average Payer Viability Score across all analyses. ≥60% suggests strong reimbursement potential, 40-59% flags cost concerns, <40% indicates significant payer objections."
+            onClick={handleOpenPayScore}
           />
           <SummaryCard
             label="Findings"
@@ -164,6 +238,7 @@ export default function DashboardView() {
             color="orange"
             subtitle="total"
             tooltip="Total number of issues, conflicts, and recommendations detected across all your protocol analyses."
+            onClick={handleOpenFindings}
           />
           <SummaryCard
             label="Jobs"
@@ -172,6 +247,7 @@ export default function DashboardView() {
             color="slate"
             subtitle="processed"
             tooltip="Total background jobs processed including document analyses, KB syncs, and synthetic data generation tasks."
+            onClick={handleOpenJobs}
           />
         </div>
 
@@ -190,7 +266,7 @@ export default function DashboardView() {
               </div>
             </div>
             <InfoBanner text="Shows how your protocol findings break down by severity. Critical = immediate regulatory risk. High = likely rejection concern. Medium = should address before submission. Low = minor improvement suggested." />
-            <RiskDistributionChart distribution={riskDistribution} total={summary.totalFindings} />
+            <RiskDistributionChart distribution={riskDistribution} total={summary.totalFindings} onBarClick={handleOpenRiskDetail} />
           </div>
 
           {/* Score Comparison */}
@@ -240,7 +316,10 @@ export default function DashboardView() {
             ) : (
               <div className="space-y-3">
                 {attentionRequired.map((item, idx) => (
-                  <AttentionCard key={idx} item={item} />
+                  <AttentionCard key={idx} item={item} onViewAnalysis={() => {
+                    setCurrentDocument({ id: item.documentId, name: item.documentName, status: 'analyzed' });
+                    setActiveView('protocol');
+                  }} />
                 ))}
               </div>
             )}
@@ -265,7 +344,7 @@ export default function DashboardView() {
             ) : (
               <div className="space-y-1">
                 {recentActivity.map((item, idx) => (
-                  <ActivityItem key={idx} item={item} />
+                  <ActivityItem key={idx} item={item} onClick={() => handleOpenActivityItem(item)} />
                 ))}
               </div>
             )}
@@ -274,14 +353,17 @@ export default function DashboardView() {
 
         {/* ── Chat & RAG Usage ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
+          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow group" onClick={handleOpenChatUsage}>
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-800">RAG Chat Usage</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Your interaction with the knowledge base</p>
               </div>
-              <div className="h-8 w-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500">
-                <MessageSquare size={16} />
+              <div className="flex items-center gap-2">
+                <ChevronRight size={14} className="text-slate-300 group-hover:text-brand-500 transition-colors" />
+                <div className="h-8 w-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500">
+                  <MessageSquare size={16} />
+                </div>
               </div>
             </div>
             <InfoBanner text="Tracks your Consultant Chat interactions. Citations indicate how many KB references grounded the AI's response — higher citation rates mean better factual grounding. Low citation rates may indicate the KB needs more content." />
@@ -347,7 +429,7 @@ export default function DashboardView() {
             {documentComparison && documentComparison.length > 0 ? (
               <div className="space-y-3">
                 {documentComparison.map((doc, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
+                  <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-colors cursor-pointer group" onClick={() => handleOpenDocComparison(doc)}>
                     <div className="h-8 w-8 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 text-[10px] font-bold shrink-0">
                       {idx + 1}
                     </div>
@@ -368,6 +450,7 @@ export default function DashboardView() {
                         </div>
                         <div className="text-[8px] text-slate-400">PAY</div>
                       </div>
+                      <ChevronRight size={14} className="text-slate-300 group-hover:text-brand-500 transition-colors" />
                     </div>
                   </div>
                 ))}
@@ -402,7 +485,7 @@ export default function DashboardView() {
                 const regDelta = prevReg !== null ? point.regulatorScore - prevReg : 0;
                 const payDelta = prevPay !== null ? point.payerScore - prevPay : 0;
                 return (
-                  <div key={idx} className="flex items-center gap-4 py-2.5 px-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                  <div key={idx} className="flex items-center gap-4 py-2.5 px-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 cursor-pointer group" onClick={() => handleOpenScoreTrendItem(point)}>
                     <div className="text-[10px] text-slate-400 w-28 shrink-0">
                       {point.date ? new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
                     </div>
@@ -470,6 +553,492 @@ export default function DashboardView() {
           </div>
         </div>
       </div>
+
+      {/* ════════════════════════════════════════════════════════
+          DRILLDOWN DRAWERS
+         ════════════════════════════════════════════════════════ */}
+
+      {/* Documents Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'documents'}
+        onClose={closeDrawer}
+        title="All Documents"
+        subtitle={`${allDocuments.length} documents uploaded`}
+        icon={<FileText size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Documents' }]}
+      >
+        <DetailSection title="Document List">
+          <DetailList
+            items={allDocuments}
+            emptyText="No documents uploaded yet"
+            renderItem={(doc) => (
+              <div
+                key={doc.id}
+                className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-brand-200 cursor-pointer transition-colors"
+                onClick={() => { closeDrawer(); setCurrentDocument(doc); setActiveView('protocol'); }}
+              >
+                <div className="h-9 w-9 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 shrink-0">
+                  <FileText size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-slate-800 truncate">{doc.name}</div>
+                  <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                    <span>{formatBytes(doc.size)}</span>
+                    <span>&middot;</span>
+                    <span>{formatTimeAgo(doc.createdAt || doc.created_at)}</span>
+                    {doc.status && (
+                      <span className={cn(
+                        'px-1.5 py-0.5 rounded text-[9px] font-bold uppercase',
+                        doc.status === 'analyzed' ? 'bg-green-100 text-green-700' :
+                        doc.status === 'analyzing' ? 'bg-amber-100 text-amber-700' :
+                        doc.status === 'error' ? 'bg-red-100 text-red-700' :
+                        'bg-slate-100 text-slate-500'
+                      )}>{doc.status}</span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight size={14} className="text-slate-300 shrink-0" />
+              </div>
+            )}
+          />
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Jobs Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'jobs'}
+        onClose={closeDrawer}
+        title="All Jobs"
+        subtitle={`${allJobs.length} jobs processed`}
+        icon={<Activity size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Jobs' }]}
+      >
+        <DetailSection title="Job History">
+          <DetailList
+            items={allJobs}
+            emptyText="No jobs found"
+            renderItem={(job) => (
+              <div key={job.id || job.jobId} className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 cursor-pointer transition-colors"
+                onClick={() => openDrawer('jobDetail', job)}>
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    'h-8 w-8 rounded-lg flex items-center justify-center shrink-0',
+                    job.status === 'COMPLETE' ? 'bg-green-100 text-green-600' :
+                    job.status === 'FAILED' ? 'bg-red-100 text-red-600' :
+                    job.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-600' :
+                    'bg-amber-100 text-amber-600'
+                  )}>
+                    {job.status === 'COMPLETE' ? <CheckCircle size={16} /> :
+                     job.status === 'FAILED' ? <XCircle size={16} /> :
+                     job.status === 'IN_PROGRESS' ? <Loader2 size={16} className="animate-spin" /> :
+                     <Clock size={16} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-700">{formatJobType(job.type || job.jobType)}</div>
+                    <div className="text-[10px] text-slate-400">
+                      {job.id || job.jobId} &middot; {formatTimeAgo(job.createdAt || job.created_at)}
+                    </div>
+                  </div>
+                  <span className={cn(
+                    'text-[9px] font-bold uppercase px-2 py-1 rounded-full',
+                    job.status === 'COMPLETE' ? 'bg-green-100 text-green-700' :
+                    job.status === 'FAILED' ? 'bg-red-100 text-red-700' :
+                    job.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                    'bg-amber-100 text-amber-700'
+                  )}>{job.status}</span>
+                </div>
+                {job.error && (
+                  <div className="mt-2 text-[11px] text-red-600 bg-red-50 rounded-lg p-2 border border-red-100">
+                    {job.error}
+                  </div>
+                )}
+              </div>
+            )}
+          />
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Job Detail Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'jobDetail'}
+        onClose={closeDrawer}
+        title="Job Details"
+        subtitle={drawer.context?.id || drawer.context?.jobId || ''}
+        icon={<Briefcase size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Jobs', onClick: () => openDrawer('jobs') }, { label: 'Detail' }]}
+      >
+        {drawer.context && (() => {
+          const job = drawer.context;
+          return (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <DetailStat label="Status" value={job.status || 'Unknown'} color={
+                  job.status === 'COMPLETE' ? 'text-green-600' : job.status === 'FAILED' ? 'text-red-600' : 'text-amber-600'
+                } />
+                <DetailStat label="Type" value={formatJobType(job.type || job.jobType)} />
+              </div>
+              <DetailRow label="Job ID" value={job.id || job.jobId || '—'} />
+              <DetailRow label="Created" value={job.createdAt || job.created_at || '—'} />
+              {job.completedAt && <DetailRow label="Completed" value={job.completedAt} />}
+              {job.progress && (
+                <>
+                  <DetailRow label="Progress" value={`${job.progress.percent || 0}%`} />
+                  {job.progress.current != null && (
+                    <DetailRow label="Steps" value={`${job.progress.current} / ${job.progress.total}`} />
+                  )}
+                </>
+              )}
+              {job.currentStep && <DetailRow label="Current Step" value={job.currentStep} />}
+              {job.error && (
+                <DetailSection title="Error" className="mt-4">
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+                    {job.error}
+                  </div>
+                </DetailSection>
+              )}
+              {job.params && (
+                <DetailSection title="Parameters" className="mt-4">
+                  <pre className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-600 overflow-x-auto font-mono">
+                    {JSON.stringify(job.params, null, 2)}
+                  </pre>
+                </DetailSection>
+              )}
+            </>
+          );
+        })()}
+      </DetailDrawer>
+
+      {/* Findings Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'findings'}
+        onClose={closeDrawer}
+        title="Findings Overview"
+        subtitle={`${summary.totalFindings} total findings across all analyses`}
+        icon={<AlertTriangle size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Findings' }]}
+      >
+        <DetailSection title="Severity Breakdown">
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <DetailStat label="Critical" value={riskDistribution.critical} color="text-red-600" />
+            <DetailStat label="High" value={riskDistribution.high} color="text-orange-600" />
+            <DetailStat label="Medium" value={riskDistribution.medium} color="text-amber-600" />
+            <DetailStat label="Low" value={riskDistribution.low} color="text-green-600" />
+          </div>
+        </DetailSection>
+        {typeDistribution && Object.keys(typeDistribution).length > 0 && (
+          <DetailSection title="Finding Types">
+            <div className="space-y-2">
+              {Object.entries(typeDistribution).map(([type, count]) => {
+                const maxVal = Math.max(...Object.values(typeDistribution), 1);
+                return (
+                  <div key={type} className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-slate-500 w-28 text-right truncate">{type}</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-brand-400 to-brand-500 rounded-full" style={{ width: `${(count / maxVal) * 100}%` }} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 w-8">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </DetailSection>
+        )}
+        {documentComparison && documentComparison.length > 0 && (
+          <DetailSection title="Findings per Document">
+            <div className="space-y-2">
+              {[...documentComparison].sort((a, b) => b.findingsCount - a.findingsCount).map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                  onClick={() => handleOpenDocComparison(doc)}>
+                  <span className="text-xs font-semibold text-slate-700 flex-1 truncate">{doc.documentName}</span>
+                  <span className="text-xs font-bold text-orange-600">{doc.findingsCount} findings</span>
+                  <ChevronRight size={12} className="text-slate-300" />
+                </div>
+              ))}
+            </div>
+          </DetailSection>
+        )}
+      </DetailDrawer>
+
+      {/* Risk Severity Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'riskSeverity'}
+        onClose={closeDrawer}
+        title={`${drawer.context ? drawer.context.charAt(0).toUpperCase() + drawer.context.slice(1) : ''} Findings`}
+        subtitle={`${riskDistribution[drawer.context] || 0} findings at ${drawer.context} severity`}
+        icon={<AlertTriangle size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Risk Distribution' }, { label: drawer.context || '' }]}
+      >
+        <div className={cn(
+          'rounded-xl p-4 border mb-6',
+          drawer.context === 'critical' ? 'bg-red-50 border-red-200' :
+          drawer.context === 'high' ? 'bg-orange-50 border-orange-200' :
+          drawer.context === 'medium' ? 'bg-amber-50 border-amber-200' :
+          'bg-green-50 border-green-200'
+        )}>
+          <p className="text-sm font-medium text-slate-800 mb-1">
+            {drawer.context === 'critical' ? '🔴 Critical — Immediate regulatory risk. Could halt approval.' :
+             drawer.context === 'high' ? '🟠 High — Likely to cause significant reviewer objections.' :
+             drawer.context === 'medium' ? '🟡 Medium — Should address before submission for best outcome.' :
+             '🟢 Low — Minor improvement opportunities. Not blocking.'}
+          </p>
+          <p className="text-xs text-slate-500">
+            {riskDistribution[drawer.context] || 0} out of {summary.totalFindings} total findings are at this severity level
+            ({summary.totalFindings > 0 ? Math.round(((riskDistribution[drawer.context] || 0) / summary.totalFindings) * 100) : 0}%).
+          </p>
+        </div>
+        <DetailSection title="Affected Documents">
+          <p className="text-xs text-slate-400 mb-3">
+            Click a document to view its full analysis and findings.
+          </p>
+          {documentComparison && documentComparison.length > 0 ? (
+            <div className="space-y-2">
+              {documentComparison.map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                  onClick={() => handleOpenDocComparison(doc)}>
+                  <FileText size={14} className="text-brand-500 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-700 flex-1 truncate">{doc.documentName}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={cn('text-[10px] font-bold', doc.regulatorScore >= 60 ? 'text-green-600' : doc.regulatorScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+                      REG {Math.round(doc.regulatorScore)}%
+                    </span>
+                    <ChevronRight size={12} className="text-slate-300" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-6">No documents with analyses yet.</p>
+          )}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Reg Score Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'regScore'}
+        onClose={closeDrawer}
+        title="Regulatory Compliance Score"
+        subtitle={`Average: ${summary.avgRegulatorScore}% across ${summary.totalAnalyses} analyses`}
+        icon={<ShieldAlert size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Regulatory Score' }]}
+      >
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-slate-600">Platform Average</span>
+            <span className={cn('text-2xl font-bold', summary.avgRegulatorScore >= 60 ? 'text-green-600' : summary.avgRegulatorScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+              {summary.avgRegulatorScore}%
+            </span>
+          </div>
+          <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+            <div className={cn('h-full rounded-full',
+              summary.avgRegulatorScore >= 60 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+              summary.avgRegulatorScore >= 40 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+              'bg-gradient-to-r from-red-400 to-red-500'
+            )} style={{ width: `${Math.min(summary.avgRegulatorScore, 100)}%` }} />
+          </div>
+          <p className="text-xs text-slate-400 mt-2">
+            {summary.avgRegulatorScore >= 60 ? 'Your protocols show acceptable regulatory alignment. Minor revisions may still be needed.' :
+             summary.avgRegulatorScore >= 40 ? 'Moderate regulatory risk detected. Several issues need to be addressed before submission.' :
+             'High regulatory risk. Significant compliance concerns detected across your protocols.'}
+          </p>
+        </div>
+        <DetailSection title="Score Thresholds">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50 border border-green-100">
+              <div className="h-3 w-3 rounded-full bg-green-500" />
+              <span className="text-xs font-medium text-green-700">≥60% — Acceptable</span>
+            </div>
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 border border-amber-100">
+              <div className="h-3 w-3 rounded-full bg-amber-500" />
+              <span className="text-xs font-medium text-amber-700">40–59% — Needs Improvement</span>
+            </div>
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-red-50 border border-red-100">
+              <div className="h-3 w-3 rounded-full bg-red-500" />
+              <span className="text-xs font-medium text-red-700">&lt;40% — High Risk</span>
+            </div>
+          </div>
+        </DetailSection>
+        {scoreBuckets && Object.keys(scoreBuckets).length > 0 && (
+          <DetailSection title="Score Distribution">
+            <div className="space-y-2">
+              {Object.entries(scoreBuckets).map(([bucket, count]) => {
+                const maxVal = Math.max(...Object.values(scoreBuckets), 1);
+                const barColor = bucket === '0-25' ? 'bg-red-500' : bucket === '26-50' ? 'bg-orange-500' : bucket === '51-75' ? 'bg-amber-400' : 'bg-green-500';
+                return (
+                  <div key={bucket} className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-slate-500 w-14 text-right">{bucket}%</span>
+                    <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                      <div className={cn('h-full rounded-full', barColor)} style={{ width: `${Math.max((count / maxVal) * 100, count > 0 ? 8 : 0)}%` }} />
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 w-8">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </DetailSection>
+        )}
+        <DetailSection title="Per-Document Scores">
+          {documentComparison.length > 0 ? (
+            <div className="space-y-2">
+              {[...documentComparison].sort((a, b) => a.regulatorScore - b.regulatorScore).map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                  onClick={() => handleOpenDocComparison(doc)}>
+                  <span className="text-xs font-semibold text-slate-700 flex-1 truncate">{doc.documentName}</span>
+                  <span className={cn('text-xs font-bold', doc.regulatorScore >= 60 ? 'text-green-600' : doc.regulatorScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+                    {Math.round(doc.regulatorScore)}%
+                  </span>
+                  <ChevronRight size={12} className="text-slate-300" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-4">No analyses yet</p>
+          )}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Payer Score Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'payScore'}
+        onClose={closeDrawer}
+        title="Payer Viability Score"
+        subtitle={`Average: ${summary.avgPayerScore}% across ${summary.totalAnalyses} analyses`}
+        icon={<BadgeDollarSign size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Payer Score' }]}
+      >
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-slate-600">Platform Average</span>
+            <span className={cn('text-2xl font-bold', summary.avgPayerScore >= 60 ? 'text-green-600' : summary.avgPayerScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+              {summary.avgPayerScore}%
+            </span>
+          </div>
+          <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
+            <div className={cn('h-full rounded-full',
+              summary.avgPayerScore >= 60 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+              summary.avgPayerScore >= 40 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+              'bg-gradient-to-r from-red-400 to-red-500'
+            )} style={{ width: `${Math.min(summary.avgPayerScore, 100)}%` }} />
+          </div>
+          <p className="text-xs text-slate-400 mt-2">
+            {summary.avgPayerScore >= 60 ? 'Strong payer alignment across your protocols. Reimbursement potential is favorable.' :
+             summary.avgPayerScore >= 40 ? 'Moderate payer viability. Cost-effectiveness concerns have been flagged.' :
+             'Low payer viability. Significant payer objections expected across your protocol portfolio.'}
+          </p>
+        </div>
+        <DetailSection title="Per-Document Payer Scores">
+          {documentComparison.length > 0 ? (
+            <div className="space-y-2">
+              {[...documentComparison].sort((a, b) => a.payerScore - b.payerScore).map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                  onClick={() => handleOpenDocComparison(doc)}>
+                  <span className="text-xs font-semibold text-slate-700 flex-1 truncate">{doc.documentName}</span>
+                  <span className={cn('text-xs font-bold', doc.payerScore >= 60 ? 'text-green-600' : doc.payerScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
+                    {Math.round(doc.payerScore)}%
+                  </span>
+                  <ChevronRight size={12} className="text-slate-300" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 text-center py-4">No analyses yet</p>
+          )}
+        </DetailSection>
+      </DetailDrawer>
+
+      {/* Score Trend Item Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'scoreTrendItem'}
+        onClose={closeDrawer}
+        title={drawer.context?.documentName || 'Analysis Detail'}
+        subtitle={drawer.context?.date ? new Date(drawer.context.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+        icon={<TrendingUp size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Score Trend' }, { label: drawer.context?.documentName || '' }]}
+        width="md"
+      >
+        {drawer.context && (
+          <>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <DetailStat
+                label="Regulatory Score"
+                value={`${Math.round(drawer.context.regulatorScore)}%`}
+                color={drawer.context.regulatorScore >= 60 ? 'text-green-600' : drawer.context.regulatorScore >= 40 ? 'text-amber-600' : 'text-red-600'}
+                large
+              />
+              <DetailStat
+                label="Payer Score"
+                value={`${Math.round(drawer.context.payerScore)}%`}
+                color={drawer.context.payerScore >= 60 ? 'text-green-600' : drawer.context.payerScore >= 40 ? 'text-amber-600' : 'text-red-600'}
+                large
+              />
+            </div>
+            <DetailRow label="Document" value={drawer.context.documentName} />
+            <DetailRow label="Analyzed" value={drawer.context.date ? new Date(drawer.context.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'} />
+            <div className="mt-6">
+              <button
+                onClick={() => { closeDrawer(); setActiveView('history'); }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition-colors"
+              >
+                <Eye size={16} /> View Full Analysis
+              </button>
+            </div>
+          </>
+        )}
+      </DetailDrawer>
+
+      {/* Chat Usage Drawer */}
+      <DetailDrawer
+        open={drawer.open && drawer.type === 'chatUsage'}
+        onClose={closeDrawer}
+        title="RAG Chat Analytics"
+        subtitle="Detailed chat interaction metrics"
+        icon={<MessageSquare size={20} />}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Chat Usage' }]}
+      >
+        {chatUsage && (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <DetailStat label="Total Conversations" value={chatUsage.totalConversations} color="text-blue-600" />
+              <DetailStat label="Total Messages" value={chatUsage.totalMessages} color="text-indigo-600" />
+              <DetailStat label="Your Questions" value={chatUsage.userMessages} />
+              <DetailStat label="AI Responses" value={chatUsage.assistantMessages} />
+            </div>
+            <DetailRow label="Avg Messages / Conversation" value={chatUsage.avgMessagesPerConversation} />
+            <DetailRow label="Total Citations Retrieved" value={chatUsage.totalCitations} />
+            <DetailRow label="Avg Citations / Response" value={chatUsage.avgCitationsPerResponse} />
+            {chatUsage.mostActiveDocument && (
+              <DetailRow label="Most Active Document" value={chatUsage.mostActiveDocument} />
+            )}
+            <DetailSection title="Citation Quality" className="mt-6">
+              <div className={cn(
+                'rounded-xl p-4 border',
+                chatUsage.avgCitationsPerResponse >= 3 ? 'bg-green-50 border-green-200' :
+                chatUsage.avgCitationsPerResponse >= 1 ? 'bg-amber-50 border-amber-200' :
+                'bg-red-50 border-red-200'
+              )}>
+                <p className="text-sm font-medium mb-1">
+                  {chatUsage.avgCitationsPerResponse >= 3 ? '✅ Excellent Retrieval Quality' :
+                   chatUsage.avgCitationsPerResponse >= 1 ? '⚠️ Moderate Retrieval Quality' :
+                   '🔴 Low Retrieval Quality'}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {chatUsage.avgCitationsPerResponse >= 3
+                    ? 'AI responses are well-grounded with multiple knowledge base references. Great factual reliability.'
+                    : chatUsage.avgCitationsPerResponse >= 1
+                      ? 'Responses have some grounding but could benefit from more KB content or more specific questions.'
+                      : 'AI responses have limited KB grounding. Consider uploading more reference documents to the Knowledge Base.'}
+                </p>
+              </div>
+            </DetailSection>
+            <DetailSection title="What This Means" className="mt-4">
+              <div className="space-y-3 text-xs text-slate-500 leading-relaxed">
+                <p><strong className="text-slate-700">Conversations:</strong> Each time you start a new chat session about a document.</p>
+                <p><strong className="text-slate-700">Citations:</strong> References from the Knowledge Base that the AI uses to ground its answers. Higher = more reliable responses.</p>
+                <p><strong className="text-slate-700">Most Active:</strong> The document you've asked the most questions about through RAG chat.</p>
+              </div>
+            </DetailSection>
+          </>
+        )}
+      </DetailDrawer>
     </div>
   );
 }
@@ -479,7 +1048,7 @@ export default function DashboardView() {
    Sub-Components
    ════════════════════════════════════════════════════════════════ */
 
-function SummaryCard({ label, value, icon, color, subtitle, isScore, tooltip }) {
+function SummaryCard({ label, value, icon, color, subtitle, isScore, tooltip, onClick }) {
   const displayValue = useCountUp(Math.round(value || 0), 800);
   const [showTip, setShowTip] = useState(false);
   const colorMap = {
@@ -502,12 +1071,19 @@ function SummaryCard({ label, value, icon, color, subtitle, isScore, tooltip }) 
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-shadow group relative">
+    <div
+      className={cn(
+        'bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 transition-all group relative',
+        onClick ? 'cursor-pointer hover:shadow-md hover:border-brand-200 hover:-translate-y-0.5' : 'hover:shadow-md'
+      )}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between mb-3">
         <div className={cn('h-9 w-9 rounded-xl flex items-center justify-center', bgMap[color] || bgMap.brand)}>
           {icon}
         </div>
         <div className="flex items-center gap-1.5">
+          {onClick && <ChevronRight size={12} className="text-slate-300 group-hover:text-brand-500 transition-colors" />}
           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{subtitle}</span>
           {tooltip && (
             <div className="relative">
@@ -533,7 +1109,7 @@ function SummaryCard({ label, value, icon, color, subtitle, isScore, tooltip }) 
 }
 
 
-function RiskDistributionChart({ distribution, total }) {
+function RiskDistributionChart({ distribution, total, onBarClick }) {
   const items = [
     { key: 'critical', label: 'Critical', color: 'bg-red-500', count: distribution.critical || 0 },
     { key: 'high', label: 'High', color: 'bg-orange-500', count: distribution.high || 0 },
@@ -555,8 +1131,8 @@ function RiskDistributionChart({ distribution, total }) {
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <div key={item.key} className="flex items-center gap-3">
-          <span className="text-xs font-medium text-slate-500 w-14 text-right">{item.label}</span>
+        <div key={item.key} className={cn('flex items-center gap-3', onBarClick && item.count > 0 && 'cursor-pointer group')} onClick={() => onBarClick && item.count > 0 && onBarClick(item.key)}>
+          <span className="text-xs font-medium text-slate-500 w-14 text-right group-hover:text-brand-600 transition-colors">{item.label}</span>
           <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
             <div
               className={cn('h-full rounded-full transition-all duration-700 ease-out', item.color)}
@@ -664,11 +1240,10 @@ function ScoreOverview({ regScore, payScore, totalAnalyses }) {
 }
 
 
-function AttentionCard({ item }) {
-  const setActiveView = useAppStore((s) => s.setActiveView);
+function AttentionCard({ item, onViewAnalysis }) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-red-50/50 border border-red-100 hover:border-red-200 transition-colors group cursor-pointer"
-      onClick={() => setActiveView('history')}>
+      onClick={onViewAnalysis}>
       <div className="h-9 w-9 bg-red-100 rounded-lg flex items-center justify-center text-red-500 shrink-0">
         <AlertTriangle size={16} />
       </div>
@@ -694,7 +1269,7 @@ function AttentionCard({ item }) {
 }
 
 
-function ActivityItem({ item }) {
+function ActivityItem({ item, onClick }) {
   const statusIcon = {
     COMPLETE: <CheckCircle size={14} className="text-green-500" />,
     FAILED: <XCircle size={14} className="text-red-500" />,
@@ -710,7 +1285,7 @@ function ActivityItem({ item }) {
   const timeAgo = item.createdAt ? formatTimeAgo(item.createdAt) : '';
 
   return (
-    <div className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+    <div className={cn('flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 transition-colors', onClick && 'cursor-pointer')} onClick={onClick}>
       <div className="shrink-0">
         {typeIcon[item.type] || <Activity size={14} className="text-slate-400" />}
       </div>
@@ -783,4 +1358,17 @@ function InfoBanner({ text }) {
       )}
     </div>
   );
+}
+
+function formatJobType(type) {
+  const map = { ANALYZE_DOCUMENT: 'Document Analysis', KB_SYNC: 'KB Sync', SYNTHETIC_GENERATION: 'Synthetic Generation' };
+  return map[type] || type || 'Unknown';
+}
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
