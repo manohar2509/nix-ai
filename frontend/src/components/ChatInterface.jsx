@@ -1,14 +1,48 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Sparkles, ArrowUpRight } from 'lucide-react';
+import { Send, User, Sparkles, ArrowUpRight, ExternalLink, BookOpen, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 import { useAppStore, useChat } from '../stores/useAppStore';
 import { chatService } from '../services/chatService';
 import { cn } from '../utils/cn';
 
 const SUGGESTIONS = [
-  'How do I satisfy the FDA without exceeding budget?',
-  "What's the risk if I keep N=50?",
-  'Draft an amendment for the Eastern Europe pivot',
+  'What are the main regulatory risks in this protocol that could trigger an FDA clinical hold?',
+  'How does my sample size compare to similar Phase III trials, and what is the statistical power?',
+  'Which protocol amendments would improve our chances of favorable HTA reimbursement decisions?',
 ];
+
+// Clinical trial relevance keywords — at least one must be present to accept the question
+const CLINICAL_KEYWORDS = [
+  'trial', 'clinical', 'protocol', 'regulatory', 'fda', 'ema', 'ich', 'gcp',
+  'endpoint', 'sample size', 'randomiz', 'placebo', 'blinding', 'blind',
+  'phase', 'arm', 'cohort', 'dose', 'safety', 'efficacy', 'adverse',
+  'inclusion', 'exclusion', 'eligibility', 'criteria', 'consent',
+  'irb', 'ethics', 'dsmb', 'interim', 'futility', 'adaptive',
+  'biomarker', 'surrogate', 'primary', 'secondary', 'outcome',
+  'enrollment', 'recruit', 'site', 'investigator', 'sponsor',
+  'submission', 'ind', 'nda', 'bla', 'cta', 'ema', 'pmda', 'nmpa',
+  'compliance', 'audit', 'inspection', 'finding', 'risk',
+  'amendment', 'deviation', 'waiver', 'payer', 'reimbursement',
+  'hta', 'nice', 'iqwig', 'cadth', 'pbac', 'amnog', 'qaly',
+  'comparator', 'control', 'superiority', 'non-inferiority', 'equivalence',
+  'power', 'alpha', 'p-value', 'confidence interval', 'statistical',
+  'oncology', 'cardio', 'neuro', 'immuno', 'rare disease', 'orphan',
+  'recist', 'mace', 'overall survival', 'progression', 'response rate',
+  'quality of life', 'pro', 'eq-5d', 'patient reported',
+  'monitor', 'sae', 'susar', 'cspr', 'csr', 'ctd',
+  'drug', 'biologic', 'therapy', 'treatment', 'intervention', 'medication',
+  'pharmaceutical', 'medicine', 'therapeutic', 'indication', 'disease',
+  'patient', 'subject', 'participant', 'population', 'demographic',
+  'analysis', 'benchmark', 'score', 'guideline', 'guidance', 'regulation',
+  'document', 'protocol', 'report', 'section', 'study', 'design',
+  'nix', 'help', 'what can', 'how do', 'explain', 'summarize', 'summary',
+];
+
+const isRelevantQuestion = (text) => {
+  const lower = text.toLowerCase();
+  // Very short questions (< 4 words) are likely greetings/commands — allow them
+  if (lower.split(/\s+/).length < 4) return true;
+  return CLINICAL_KEYWORDS.some((kw) => lower.includes(kw));
+};
 
 export default function ChatInterface({ currentDocument }) {
   const { messages, isLoading: isChatLoading } = useChat();
@@ -25,6 +59,26 @@ export default function ChatInterface({ currentDocument }) {
   const historyLoadedRef = useRef(false);
 
   const docId = currentDocument?.id || 'global';
+
+  const handleClearChat = async () => {
+    try {
+      await chatService.clearChatHistory(docId);
+      setChatMessages([]);
+      setShowSuggestions(true);
+      showToast({ type: 'success', title: 'Conversation cleared', message: 'Chat history has been removed.' });
+    } catch {
+      showToast({ type: 'error', title: 'Clear failed', message: 'Could not clear conversation history.' });
+    }
+  };
+
+  const handleFeedback = async (messageId, rating) => {
+    try {
+      await chatService.submitFeedback(messageId, rating);
+      showToast({ type: 'info', title: 'Thanks for your feedback', message: rating === 'positive' ? 'Glad that was helpful!' : 'We\'ll work to improve.' });
+    } catch {
+      // Silently fail on feedback
+    }
+  };
 
   // Load chat history on mount or doc change
   useEffect(() => {
@@ -62,6 +116,16 @@ export default function ChatInterface({ currentDocument }) {
   const handleSend = async (text) => {
     const msgText = text || input;
     if (!msgText.trim() || isChatLoading) return;
+
+    // Validate clinical trial relevance
+    if (!isRelevantQuestion(msgText)) {
+      showToast({
+        type: 'warning',
+        title: 'Off-topic question',
+        message: 'NIX AI is specialized for clinical trial protocol analysis. Please ask questions related to regulatory compliance, trial design, endpoints, payer strategy, or your protocol.',
+      });
+      return;
+    }
 
     // Add user message optimistically
     const userMsg = { id: `user-${Date.now()}`, role: 'user', text: msgText, time: 'Just now' };
@@ -139,25 +203,36 @@ export default function ChatInterface({ currentDocument }) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-5 py-3 border-b border-slate-100 bg-white/80 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-brand-50 rounded-lg border border-brand-100">
-            <Sparkles size={14} className="text-brand-600" />
-          </div>
-          <div>
-            <span className="text-xs font-bold text-slate-700">NIX Adversarial Consultant</span>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              <span className="text-[10px] text-slate-400">Online · Protocol NX-202</span>
+      <div className="px-5 py-3 border-b border-slate-100 bg-white/90 shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-brand-50 rounded-lg border border-brand-100">
+              <Sparkles size={14} className="text-brand-600" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-800">Regulatory AI Assistant</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[11px] text-slate-500">Online · Powered by regulatory knowledge base</span>
+              </div>
             </div>
           </div>
+          {messages.length > 0 && (
+            <button
+              onClick={handleClearChat}
+              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              title="Clear conversation history"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} msg={msg} />
+          <MessageBubble key={msg.id} msg={msg} onFeedback={handleFeedback} />
         ))}
 
         {/* Show typing indicator only when loading and no streaming message exists yet */}
@@ -166,7 +241,7 @@ export default function ChatInterface({ currentDocument }) {
         {/* Suggestion Chips */}
         {showSuggestions && !isChatLoading && (
           <div className="space-y-2 pt-2 animate-fade-in">
-            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Suggested Questions</span>
+            <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Ask About Your Protocol</span>
             {SUGGESTIONS.map((s, i) => (
               <button
                 key={i}
@@ -195,7 +270,7 @@ export default function ChatInterface({ currentDocument }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask the Adversarial Council..."
+            placeholder="Ask about regulatory compliance, trial design, endpoints, or payer strategy..."
             disabled={isChatLoading}
             className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all disabled:opacity-50"
           />
@@ -207,16 +282,20 @@ export default function ChatInterface({ currentDocument }) {
             <Send size={14} />
           </button>
         </div>
-        <p className="text-[10px] text-slate-400 mt-2 text-center">AI analysis only · Not clinical or legal advice</p>
+        <p className="text-[11px] text-slate-400 mt-2 text-center">AI-assisted analysis only · Does not constitute regulatory or legal advice · Always consult your regulatory affairs team</p>
       </div>
     </div>
   );
 }
 
 /* ── Message Bubble ── */
-function MessageBubble({ msg }) {
+function MessageBubble({ msg, onFeedback }) {
   const isAI = msg.role === 'ai';
   const isStreaming = msg.isStreaming && isAI;
+  const [showCitations, setShowCitations] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState(null);
+  const hasCitations = isAI && msg.citations && msg.citations.length > 0;
+
   return (
     <div className={cn('flex gap-3 animate-fade-in', !isAI && 'flex-row-reverse')}>
       <div
@@ -233,7 +312,7 @@ function MessageBubble({ msg }) {
             'px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap',
             isAI
               ? 'bg-slate-50 border border-slate-100 text-slate-700 rounded-tl-md'
-              : 'bg-slate-900 text-white rounded-tr-md shadow-md'
+              : 'bg-slate-800 text-white rounded-tr-md shadow-md'
           )}
         >
           {msg.text || (isStreaming ? '' : msg.text)}
@@ -241,11 +320,97 @@ function MessageBubble({ msg }) {
             <span className="inline-block w-0.5 h-4 bg-brand-500 ml-0.5 animate-pulse align-text-bottom" />
           )}
         </div>
+
+        {/* Citation pills */}
+        {hasCitations && !isStreaming && (
+          <div className="px-1">
+            <button
+              onClick={() => setShowCitations(!showCitations)}
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-800 transition-colors py-1"
+            >
+              <BookOpen size={11} />
+              <span>{msg.citations.length} reference{msg.citations.length !== 1 ? 's' : ''}</span>
+              {showCitations ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+            </button>
+            {showCitations && (
+              <div className="mt-1 space-y-1 animate-fade-in">
+                {msg.citations.map((cit, i) => (
+                  <CitationPill key={i} citation={cit} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Feedback buttons for AI messages */}
+        {isAI && !isStreaming && msg.text && (
+          <div className="flex items-center gap-1 px-1 mt-1">
+            {feedbackGiven ? (
+              <span className="text-[10px] text-slate-400">Thanks for your feedback</span>
+            ) : (
+              <>
+                <button
+                  onClick={() => { setFeedbackGiven('positive'); onFeedback?.(msg.id, 'positive'); }}
+                  className="p-1 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 rounded transition-colors"
+                  title="Helpful response"
+                >
+                  <ThumbsUp size={11} />
+                </button>
+                <button
+                  onClick={() => { setFeedbackGiven('negative'); onFeedback?.(msg.id, 'negative'); }}
+                  className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                  title="Not helpful"
+                >
+                  <ThumbsDown size={11} />
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         <div className={cn('text-[10px] text-slate-400 px-1', !isAI && 'text-right')}>
           {msg.time}
         </div>
       </div>
     </div>
+  );
+}
+
+/* ── Citation Pill ── */
+function CitationPill({ citation }) {
+  const sourceType = citation.source_type || 'knowledge_base';
+  const typeColors = {
+    ICH: 'bg-blue-50 border-blue-200 text-blue-700',
+    FDA: 'bg-indigo-50 border-indigo-200 text-indigo-700',
+    EMA: 'bg-violet-50 border-violet-200 text-violet-700',
+    HTA: 'bg-amber-50 border-amber-200 text-amber-700',
+    knowledge_base: 'bg-slate-50 border-slate-200 text-slate-600',
+  };
+  const colorClass = typeColors[sourceType] || typeColors.knowledge_base;
+
+  const hasUrl = citation.url && citation.url !== '#';
+  const Tag = hasUrl ? 'a' : 'div';
+  const linkProps = hasUrl ? { href: citation.url, target: '_blank', rel: 'noopener noreferrer' } : {};
+
+  return (
+    <Tag
+      {...linkProps}
+      className={cn(
+        'flex items-start gap-2 px-2.5 py-1.5 rounded-lg border text-[11px] transition-colors',
+        colorClass,
+        hasUrl && 'hover:opacity-80 cursor-pointer'
+      )}
+      title={citation.text || citation.source}
+    >
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold truncate">{citation.source || 'Source'}</div>
+        {citation.section && <span className="text-[10px] opacity-70">§ {citation.section}</span>}
+        {citation.text && (
+          <p className="text-[10px] opacity-70 line-clamp-2 mt-0.5">{citation.text}</p>
+        )}
+      </div>
+      {hasUrl && <ExternalLink size={10} className="shrink-0 mt-0.5 opacity-50" />}
+    </Tag>
   );
 }
 

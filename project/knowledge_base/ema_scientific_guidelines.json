@@ -1,0 +1,469 @@
+{
+  "metadata": {
+    "title": "EMA Scientific Guidelines — Clinical Trial Requirements",
+    "version": "2.0",
+    "last_updated": "2026-03-01",
+    "description": "Comprehensive EMA/CHMP scientific guidelines for clinical trial design, conduct, and regulatory submissions in the EU."
+  },
+  "eu_regulatory_framework": {
+    "clinical_trials_regulation": {
+      "regulation": "EU CTR 536/2014",
+      "effective_date": "2022-01-31",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32014R0536",
+      "key_requirements": [
+        "Mandatory registration in EU Clinical Trials Information System (CTIS)",
+        "Single submission for multi-state trials via Reporting Member State",
+        "Transparency: results must be submitted within 12 months of trial end",
+        "Risk-proportionate approach to trial oversight",
+        "Informed consent requirements (Articles 28-35)",
+        "Data protection per GDPR (Regulation 2016/679)",
+        "Safety reporting: SUSARs within 7 days (fatal/life-threatening) or 15 days (other serious)"
+      ]
+    },
+    "gmp_imp": {
+      "regulation": "GMP for Investigational Medicinal Products",
+      "url": "https://www.ema.europa.eu/en/human-regulatory-overview/research-development/compliance-research-development/good-manufacturing-practice",
+      "requirements": ["Annex 13 compliance", "Qualified Person release", "Blinding and randomisation controls"]
+    }
+  },
+  "chmp_efficacy_guidelines": {
+    "biostatistics": {
+      "title": "Guideline on Adjustment for Baseline Covariates in Clinical Trials",
+      "reference": "EMA/CHMP/295050/2013",
+      "url": "https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-adjustment-baseline-covariates-clinical-trials_en.pdf",
+      "key_points": [
+        "Pre-specification of covariates mandatory",
+        "Primary analysis should include baseline value of primary endpoint as covariate",
+        "ANCOVA preferred over change-from-baseline analysis",
+        "Stratification factors from randomisation should be included in analysis"
+      ]
+    },
+    "multiplicity": {
+      "title": "Guideline on Multiplicity Issues in Clinical Trials",
+      "reference": "EMA/CHMP/44762/2017",
+      "url": "https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-multiplicity-issues-clinical-trials_en.pdf",
+      "key_points": [
+        "Strong FWER control required for confirmatory claims",
+        "Graphical approaches (Bretz et al.) acceptable",
+        "Pre-specified testing hierarchy mandatory",
+        "Secondary endpoints: distinguish confirmatory vs exploratory"
+      ]
+    },
+    "missing_data": {
+      "title": "Guideline on Missing Data in Confirmatory Clinical Trials",
+      "reference": "EMA/CPMP/EWP/1776/99 Rev. 1",
+      "url": "https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-missing-data-confirmatory-clinical-trials_en.pdf",
+      "key_points": [
+        "Trial design should minimise missing data",
+        "Describe anticipated missing data mechanisms: MCAR, MAR, MNAR",
+        "Primary analysis should be valid under MAR at minimum",
+        "Sensitivity analyses under MNAR assumptions required",
+        "Tipping point analyses recommended for robustness"
+      ]
+    },
+    "dose_response": {
+      "title": "Guideline on the Investigation of Drug Interactions",
+      "key_points": [
+        "Dose-response relationship should be explored in Phase II",
+        "At least 3 dose levels recommended plus control",
+        "Exposure-response modelling encouraged"
+      ]
+    },
+    "subgroup_analyses": {
+      "title": "Guideline on the Investigation of Subgroups in Confirmatory Clinical Trials",
+      "reference": "EMA/CHMP/539146/2013",
+      "url": "https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-investigation-subgroups-confirmatory-clinical-trials_en.pdf",
+      "key_points": [
+        "Pre-specify subgroups in protocol and SAP",
+        "Quantitative interaction tests preferred",
+        "Forest plots for treatment effects across subgroups",
+        "Clinical plausibility assessment required"
+      ]
+    },
+    "clinical_study_reports": {
+      "title": "Guideline on the Content and Format of Clinical Study Reports",
+      "key_points": [
+        "Aligned with ICH E3",
+        "Module 2.7 Clinical Summary structure",
+        "Module 5.3 Study Reports organisation",
+        "Electronic CTD (eCTD) format required"
+      ]
+    }
+  },
+  "therapeutic_area_guidelines": {
+    "oncology": {
+      "solid_tumors": {
+        "title": "Guideline on the Evaluation of Anticancer Medicinal Products in Man",
+        "reference": "EMA/CHMP/205/95/Rev.6",
+        "url": "https://www.ema.europa.eu/en/evaluation-anticancer-medicinal-products-man-scientific-guideline",
+        "requirements": [
+          "OS or validated surrogate endpoints",
+          "RECIST v1.1 for response assessment preferred",
+          "PFS acceptable as co-primary or in specific settings",
+          "Biomarker-selected populations: companion diagnostic required",
+          "Minimum 12-month follow-up for OS in confirmatory trials",
+          "Active comparator or best available therapy (not placebo alone in later lines)",
+          "Quality of life data highly recommended"
+        ]
+      },
+      "haematological_malignancies": {
+        "additional_considerations": [
+          "Response criteria specific to disease (Lugano for lymphoma, IMWG for myeloma)",
+          "MRD negativity as potential surrogate endpoint",
+          "Event-free survival (EFS) accepted in some settings"
+        ]
+      },
+      "conditional_approval": {
+        "mechanism": "Conditional Marketing Authorisation (CMA)",
+        "requirements": [
+          "Positive benefit-risk based on early data",
+          "Unmet medical need in serious/life-threatening condition",
+          "Specific obligations for confirmatory data",
+          "Annual renewal required until conditions fulfilled"
+        ]
+      }
+    },
+    "cardiovascular": {
+      "title": "Guideline on Clinical Investigation of Medicinal Products for Treatment of Lipid Disorders",
+      "key_requirements": [
+        "MACE (CV death, non-fatal MI, non-fatal stroke) as composite endpoint",
+        "Event-driven design for CV outcome trials",
+        "Independent blinded adjudication committee for events",
+        "Long-term safety data (minimum 2 years of treatment exposure)",
+        "Pre-specified hierarchy of MACE components"
+      ]
+    },
+    "neurology": {
+      "alzheimers": {
+        "title": "Guideline on the Clinical Investigation of Medicines for Alzheimer's Disease",
+        "reference": "EMA/CHMP/539931/2014",
+        "requirements": [
+          "Cognitive AND functional co-primary endpoints",
+          "Clinically meaningful change on CDR-SB, ADAS-Cog, ADCS-ADL",
+          "Biomarker confirmation of Alzheimer's pathology",
+          "Minimum 18-month treatment duration for disease modification claims",
+          "Amyloid PET or CSF biomarkers for patient selection"
+        ]
+      }
+    },
+    "rare_diseases": {
+      "considerations": [
+        "Orphan designation: prevalence < 5/10,000 in EU",
+        "Flexibility on trial design (single-arm may be acceptable)",
+        "Natural history data as external comparator",
+        "Patient-relevant endpoints prioritised",
+        "Protocol assistance available from EMA",
+        "10-year market exclusivity incentive"
+      ]
+    }
+  },
+  "special_pathways": {
+    "PRIME": {
+      "title": "PRIority MEdicines Scheme",
+      "url": "https://www.ema.europa.eu/en/human-regulatory-overview/research-and-development/prime-priority-medicines",
+      "benefits": [
+        "Early dialogue with EMA CHMP rapporteur",
+        "Accelerated assessment eligibility",
+        "Rolling review option",
+        "Scientific advice at reduced fees"
+      ],
+      "eligibility": "Medicines targeting unmet medical need with preliminary clinical evidence of major therapeutic advantage"
+    },
+    "accelerated_assessment": {
+      "description": "Reduced MAA assessment timeline (150 vs 210 days)",
+      "eligibility": "Major interest from public health perspective and therapeutic innovation"
+    },
+    "conditional_MA": {
+      "description": "Approval based on less comprehensive clinical data",
+      "conditions": [
+        "Serious/life-threatening disease",
+        "Unmet medical need",
+        "Positive benefit-risk on available data",
+        "Applicant can provide comprehensive data post-authorisation"
+      ]
+    },
+    "paediatric_regulation": {
+      "regulation": "EC 1901/2006",
+      "requirements": [
+        "Paediatric Investigation Plan (PIP) mandatory unless waiver/deferral",
+        "PIP agreed with Paediatric Committee (PDCO)",
+        "Must cover all paediatric subsets unless justified",
+        "6-month SPC extension or 2-year orphan extension as incentive"
+      ]
+    }
+  },
+  "ema_scientific_advice": {
+    "description": "EMA Scientific Advice provides guidance on clinical development strategies",
+    "url": "https://www.ema.europa.eu/en/human-regulatory-overview/research-development/scientific-advice-and-protocol-assistance",
+    "key_areas": [
+      "Study design and endpoints",
+      "Comparator selection",
+      "Statistical methodology",
+      "Biomarker qualification",
+      "Paediatric development",
+      "Pharmacovigilance planning"
+    ],
+    "parallel_consultation": {
+      "description": "Joint EMA/HTA body scientific advice",
+      "available_with": ["NICE (UK)", "HAS (France)", "G-BA (Germany)", "AIFA (Italy)", "AEMPS (Spain)"],
+      "benefit": "Aligned regulatory and HTA requirements reduce development risk"
+    }
+  },
+  "biosimilar_guidelines": {
+    "framework": {
+      "title": "Guideline on Similar Biological Medicinal Products",
+      "reference": "CHMP/437/04 Rev 1",
+      "url": "https://www.ema.europa.eu/en/similar-biological-medicinal-products-scientific-guideline",
+      "status": "Final",
+      "key_requirements": [
+        "EMA pioneered the global biosimilar regulatory framework (first biosimilar approved in 2006)",
+        "Stepwise comparability approach: quality → non-clinical → clinical",
+        "Totality of evidence for demonstrating biosimilarity",
+        "Reference product must be EU-authorised",
+        "Comparative quality studies: physicochemical, biological activity, impurity profiles",
+        "PK/PD equivalence study design requirements",
+        "Comparative clinical efficacy/safety trial in sensitive population",
+        "Immunogenicity comparative assessment: mandatory, parallel design, 12+ months",
+        "Extrapolation to other indications: based on totality of evidence, mechanism of action"
+      ],
+      "protocol_requirements": [
+        "Comprehensive analytical characterisation package (>30 quality attributes)",
+        "PK bioequivalence study: crossover or parallel, 80-125% acceptance range for primary PK parameters",
+        "Clinical study in most sensitive population (highest probability of detecting differences)",
+        "Immunogenicity study: pre-specified anti-drug antibody analysis schedule",
+        "Switching study data may support interchangeability claims"
+      ]
+    },
+    "monoclonal_antibodies": {
+      "title": "Guideline on Similar Biological Medicinal Products Containing Monoclonal Antibodies",
+      "reference": "EMA/CHMP/BMWP/403543/2010",
+      "url": "https://www.ema.europa.eu/en/similar-biological-medicinal-products-containing-monoclonal-antibodies-non-clinical-clinical-issues",
+      "requirements": [
+        "Fc-mediated functions: ADCC, CDC, FcRn binding characterisation",
+        "Glycosylation pattern comparison critical for efficacy",
+        "Clinical study: typically equivalence design, margin justified",
+        "PK study: single-dose crossover or steady-state parallel design"
+      ]
+    }
+  },
+  "advanced_therapy_guidelines": {
+    "atmp_regulation": {
+      "title": "Regulation on Advanced Therapy Medicinal Products",
+      "regulation": "EC 1394/2007",
+      "url": "https://www.ema.europa.eu/en/human-regulatory-overview/advanced-therapies-overview",
+      "description": "ATMPs: Gene therapy, somatic cell therapy, tissue-engineered products, and combined ATMPs",
+      "key_requirements": [
+        "Centralised procedure mandatory for all ATMPs in EU",
+        "Committee for Advanced Therapies (CAT) assessment",
+        "ATMP classification by EMA required before development",
+        "Risk-based approach to non-clinical and clinical requirements",
+        "Long-term safety follow-up mandatory: risk of insertional mutagenesis, immunogenicity",
+        "Hospital exemption for ATMPs prepared on a non-routine basis",
+        "Specific GMP requirements for ATMPs (different from conventional medicines)"
+      ]
+    },
+    "gene_therapy_ema": {
+      "title": "Guideline on Quality, Non-clinical and Clinical Aspects of Gene Therapy Medicinal Products",
+      "reference": "EMA/CAT/80183/2014",
+      "url": "https://www.ema.europa.eu/en/quality-non-clinical-clinical-aspects-gene-therapy-medicinal-products-scientific-guideline",
+      "requirements": [
+        "Vector characterisation: identity, potency, purity, replication competence testing",
+        "Biodistribution and shedding studies",
+        "Integration site analysis for integrating vectors",
+        "Long-term efficacy follow-up: evidence of durable transgene expression",
+        "Immunogenicity against vector and transgene product",
+        "Dose selection based on non-clinical and Phase I/II data",
+        "Conditional marketing authorisation pathway commonly used"
+      ]
+    },
+    "cell_therapy_ema": {
+      "title": "Guideline on Human Cell-Based Medicinal Products",
+      "reference": "EMEA/CHMP/410869/2006",
+      "requirements": [
+        "Cell characterisation: phenotype, viability, potency, identity",
+        "Manufacturing: starting material sourcing, expansion, differentiation, cryopreservation",
+        "Tumorigenicity assessment: especially for stem cell-derived products",
+        "Biodistribution of administered cells",
+        "Immune rejection considerations: autologous vs allogeneic",
+        "Traceability requirements: donation to administration"
+      ]
+    }
+  },
+  "real_world_evidence_ema": {
+    "rwe_framework": {
+      "title": "Data Quality Framework for EU Medicines Regulation",
+      "url": "https://www.ema.europa.eu/en/about-us/how-we-work/big-data",
+      "year": 2024,
+      "key_points": [
+        "DARWIN EU® (Data Analysis and Real World Interrogation Network) for post-authorisation studies",
+        "EMA Big Data strategy: integration of RWD into regulatory decision-making",
+        "Fitness-for-purpose criteria for RWD: relevance, reliability, transparency",
+        "Applications: natural history studies, external comparators, safety monitoring, effectiveness studies",
+        "EHDS (European Health Data Space) Regulation: cross-border health data access for research",
+        "RWE accepted for: conditional MA renewal, post-authorisation safety studies (PASS), effectiveness studies (PAES)",
+        "Target trial emulation framework for RWE studies"
+      ]
+    }
+  },
+  "eu_hta_regulation": {
+    "joint_clinical_assessment": {
+      "title": "EU Health Technology Assessment Regulation",
+      "regulation": "EU 2021/2282",
+      "effective_date": "2025-01-12",
+      "url": "https://eur-lex.europa.eu/eli/reg/2021/2282/oj",
+      "description": "Mandatory joint clinical assessments at EU level — the biggest change to EU HTA in decades",
+      "key_requirements": [
+        "Joint Clinical Assessments (JCAs) for: oncology and ATMPs from January 2025, all new active substances from January 2030",
+        "EU Coordination Group on HTA coordinates assessments",
+        "Assessment scope: relative clinical effectiveness (not cost-effectiveness — remains national)",
+        "PICO framework: Population, Intervention, Comparator, Outcomes — defined by EU Coordination Group",
+        "Member States cannot duplicate clinical assessment covered by JCA",
+        "Member States retain pricing and reimbursement decisions",
+        "Manufacturers submit single clinical evidence dossier at EU level",
+        "Horizon scanning: early identification of technologies for assessment"
+      ],
+      "protocol_implications": [
+        "Comparator must satisfy both regulatory (EMA) and JCA requirements",
+        "Endpoints must include patient-relevant outcomes accepted across EU HTA bodies",
+        "Evidence dossier preparation must anticipate JCA requirements from early development",
+        "Parallel scientific advice (EMA + HTA) even more critical post-2025",
+        "Subgroup analyses must address EU-wide and national-level populations"
+      ]
+    },
+    "eu_pharma_legislation_reform": {
+      "title": "EU Pharmaceutical Legislation Reform",
+      "year": 2025,
+      "status": "Proposed / Under Negotiation",
+      "key_points": [
+        "New regulatory data protection periods: base 6 years (vs current 8), extendable up to 12 with incentives",
+        "Market exclusivity incentives for unmet medical need, comparative clinical trials, new therapeutic indications",
+        "Antimicrobial resistance: transferable exclusivity voucher for novel antibiotics",
+        "Environmental Risk Assessment mandatory for all new authorisations",
+        "Paediatric regulation reform: more flexibility, alignment with real-world paediatric needs",
+        "Orphan regulation reform: revised prevalence criteria, conditional incentives",
+        "Expedited pathways strengthened: PRIME, conditional MA, accelerated assessment"
+      ]
+    }
+  },
+  "additional_therapeutic_guidelines": {
+    "immunology_inflammation": {
+      "rheumatoid_arthritis": {
+        "title": "Guideline on Clinical Investigation of Medicinal Products for the Treatment of Rheumatoid Arthritis",
+        "reference": "CPMP/EWP/556/95 Rev 2",
+        "requirements": [
+          "ACR response criteria (ACR20/50/70) as primary endpoint",
+          "DAS28 remission as key secondary",
+          "Structural damage: modified Total Sharp Score via radiograph",
+          "Physical function: HAQ-DI",
+          "Active comparator required (methotrexate backbone)",
+          "At least 24 weeks for symptom endpoints, 52 weeks for structural damage"
+        ]
+      },
+      "inflammatory_bowel_disease": {
+        "title": "Guideline on the Development of Medicinal Products for the Treatment of Crohn's Disease and Ulcerative Colitis",
+        "reference": "EMA/CHMP/483890/2024",
+        "requirements": [
+          "Endoscopic endpoints: SES-CD (Crohn's), Mayo endoscopic subscore (UC)",
+          "Clinical remission: CDAI < 150 (Crohn's), adapted Mayo score (UC)",
+          "Mucosal healing as co-primary endpoint increasingly expected",
+          "Histological remission emerging as additional endpoint",
+          "Active comparator recommended for established mechanisms",
+          "Induction (8-12 weeks) and maintenance (52 weeks) study design"
+        ]
+      }
+    },
+    "respiratory": {
+      "asthma": {
+        "title": "Guideline on the Clinical Investigation of Medicinal Products for the Treatment of Asthma",
+        "reference": "CHMP/EWP/2922/01 Rev 1",
+        "requirements": [
+          "Primary endpoint: FEV1 improvement from baseline",
+          "Exacerbation rate as co-primary or key secondary",
+          "ACQ (Asthma Control Questionnaire) for symptom assessment",
+          "AQLQ (Asthma Quality of Life Questionnaire)",
+          "Step-down design for assessing steroid-sparing effect",
+          "Minimum 12-week treatment for bronchodilator, 52 weeks for controller"
+        ]
+      },
+      "copd": {
+        "title": "Guideline on Clinical Investigation of Medicinal Products for COPD",
+        "reference": "CHMP/EWP/562/98 Rev 1",
+        "requirements": [
+          "FEV1 trough as primary endpoint for bronchodilators",
+          "Exacerbation rate reduction for anti-inflammatory agents",
+          "SGRQ or CAT for symptom assessment",
+          "Exercise capacity (6MWT or ESWT) as secondary",
+          "Minimum 12 weeks for bronchodilator, 52 weeks for exacerbation prevention"
+        ]
+      }
+    },
+    "infectious_diseases": {
+      "antibacterial_agents": {
+        "title": "Guideline on the Evaluation of Medicinal Products Indicated for Treatment of Bacterial Infections",
+        "reference": "CPMP/EWP/558/95 Rev 3",
+        "requirements": [
+          "Non-inferiority design with appropriate margin",
+          "Clinical and microbiological endpoints",
+          "Test-of-cure visit timing specified per infection type",
+          "PK/PD relationship characterisation",
+          "Resistance monitoring during and after treatment"
+        ]
+      },
+      "antiviral_agents": {
+        "requirements": [
+          "Virological endpoints: sustained virological response (HCV), viral load suppression (HIV)",
+          "HIV: resistance testing at baseline and failure",
+          "Hepatitis: SVR12 (sustained virological response at 12 weeks post-treatment)"
+        ]
+      }
+    },
+    "diabetes": {
+      "title": "Guideline on Clinical Investigation of Medicinal Products in the Treatment or Prevention of Diabetes Mellitus",
+      "reference": "CPMP/EWP/1080/00 Rev 2",
+      "requirements": [
+        "HbA1c change from baseline as primary endpoint (24-26 weeks)",
+        "Fasting plasma glucose as key secondary",
+        "CVOT data: regulatory alignment with FDA MACE requirement",
+        "Hypoglycaemia assessment per ADA/EASD classification",
+        "Body weight as secondary endpoint",
+        "Renal outcomes for SGLT2 inhibitors and GLP-1 RAs",
+        "Long-term safety data (≥2 years for CV assessment)"
+      ]
+    }
+  },
+  "pharmacovigilance_gvp": {
+    "description": "EMA Good Pharmacovigilance Practice (GVP) Modules — framework for safety monitoring",
+    "url": "https://www.ema.europa.eu/en/human-regulatory-overview/post-authorisation/pharmacovigilance/good-pharmacovigilance-practices",
+    "modules": {
+      "GVP_Module_V": {
+        "title": "Risk Management Systems",
+        "key_points": [
+          "Risk Management Plan (RMP) required for all new MAAs",
+          "Safety specification: known/potential risks, missing information",
+          "Pharmacovigilance plan: routine and additional measures",
+          "Risk minimisation measures: routine and additional (e.g., educational materials)",
+          "RMP update throughout product lifecycle"
+        ]
+      },
+      "GVP_Module_VIII": {
+        "title": "Post-Authorisation Safety Studies (PASS)",
+        "key_points": [
+          "PASS: non-interventional or interventional safety studies post-approval",
+          "Protocol must be submitted to PRAC for imposed PASS",
+          "EU PAS Register for transparency",
+          "Study design: cohort, case-control, self-controlled",
+          "Results submitted to PRAC within 12 months of data lock"
+        ]
+      },
+      "GVP_Module_XVI": {
+        "title": "Risk Minimisation Measures",
+        "key_points": [
+          "Routine measures: SmPC, package leaflet, pack size, legal status",
+          "Additional measures: educational programmes, controlled access, pregnancy prevention",
+          "Effectiveness evaluation of risk minimisation measures",
+          "Healthcare professional and patient surveys for measure evaluation"
+        ]
+      }
+    }
+  }
+}

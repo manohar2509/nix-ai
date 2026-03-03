@@ -78,10 +78,10 @@ export default function ConfigurationView() {
 
   const sections = [
     { id: 'profile', label: 'Profile', icon: <User size={16} /> },
-    { id: 'analysis', label: 'Analysis Preferences', icon: <Sliders size={16} /> },
+    { id: 'analysis', label: 'Analysis Settings', icon: <Sliders size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
     { id: 'display', label: 'Display', icon: <Monitor size={16} /> },
-    { id: 'about', label: 'About NIX AI', icon: <Info size={16} /> },
+    { id: 'about', label: 'About', icon: <Info size={16} /> },
   ];
 
   return (
@@ -93,9 +93,9 @@ export default function ConfigurationView() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
               <Settings size={24} className="text-brand-600" />
-              Configuration
+              Settings
             </h1>
-            <p className="text-sm text-slate-400 mt-1">Manage your analysis preferences and account settings</p>
+            <p className="text-sm text-slate-400 mt-1">Configure how the AI analyzes your clinical trial protocols and displays results</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -246,13 +246,13 @@ function ProfileSection({ user, isAdmin }) {
 function AnalysisSection({ prefs, updatePref }) {
   return (
     <div className="space-y-6">
-      <SectionCard title="Risk Sensitivity" description="Control how aggressively NIX AI flags potential issues">
+      <SectionCard title="Regulatory Risk Sensitivity" description="Control how cautiously the AI flags potential compliance and safety issues in your protocol">
         <div className="space-y-4">
           <OptionGroup
             options={[
-              { value: 'conservative', label: 'Conservative', desc: 'Flag more issues, fewer false negatives. Best for Phase III trials.' },
-              { value: 'balanced', label: 'Balanced', desc: 'Standard sensitivity. Recommended for most protocols.' },
-              { value: 'aggressive', label: 'Aggressive', desc: 'Only flag high-confidence issues. Fewer findings, higher precision.' },
+              { value: 'conservative', label: 'Conservative (Recommended for Phase III/Pivotal)', desc: 'Flag all potential issues including low-confidence findings. Minimizes risk of missing a compliance gap. Best for registration-enabling trials.' },
+              { value: 'balanced', label: 'Balanced (Standard)', desc: 'Flag medium and high-confidence issues. Appropriate for most clinical trial protocols across all phases.' },
+              { value: 'aggressive', label: 'Focused (High Confidence Only)', desc: 'Only flag high-confidence, well-documented regulatory issues. Fewer findings but higher precision. Suitable for early-phase or exploratory studies.' },
             ]}
             selected={prefs.riskSensitivity}
             onChange={(v) => updatePref('riskSensitivity', v)}
@@ -260,13 +260,13 @@ function AnalysisSection({ prefs, updatePref }) {
         </div>
       </SectionCard>
 
-      <SectionCard title="Analysis Focus" description="Choose which aspects to prioritize during analysis">
+      <SectionCard title="Analysis Focus Area" description="Choose which regulatory dimensions to prioritize during protocol analysis">
         <div className="space-y-4">
           <OptionGroup
             options={[
-              { value: 'regulatory', label: 'Regulatory Focus', desc: 'Emphasize FDA/EMA compliance, safety signals, and protocol design.' },
-              { value: 'payer', label: 'Payer Focus', desc: 'Emphasize reimbursement viability, cost-effectiveness, and payer objections.' },
-              { value: 'both', label: 'Both (Recommended)', desc: 'Balanced adversarial review from both regulatory and payer perspectives.' },
+              { value: 'regulatory', label: 'Regulatory Compliance Only', desc: 'Focus on FDA/EMA/ICH compliance, GCP adherence, safety monitoring, and protocol design against regulatory requirements.' },
+              { value: 'payer', label: 'Payer & Reimbursement Only', desc: 'Focus on Health Technology Assessment (HTA) body requirements, cost-effectiveness evidence, and reimbursement readiness (NICE, IQWiG, CADTH, PBAC).' },
+              { value: 'both', label: 'Comprehensive Review (Recommended)', desc: 'Full analysis from both regulatory compliance and payer/reimbursement perspectives. Identifies friction points between regulatory approval and market access.' },
             ]}
             selected={prefs.analysisFocus}
             onChange={(v) => updatePref('analysisFocus', v)}
@@ -274,36 +274,36 @@ function AnalysisSection({ prefs, updatePref }) {
         </div>
       </SectionCard>
 
-      <SectionCard title="Thresholds" description="Define risk thresholds for alerts and dashboard flags">
+      <SectionCard title="Risk Score Thresholds" description="Set the score cutoffs that determine when a protocol is flagged as high risk on your dashboard">
         <div className="grid grid-cols-2 gap-6">
           <ThresholdSlider
             icon={<ShieldAlert size={14} className="text-red-500" />}
-            label="Regulatory Risk Threshold"
+            label="Regulatory Compliance Threshold"
             value={prefs.regulatoryThreshold}
             onChange={(v) => updatePref('regulatoryThreshold', v)}
-            description="Scores below this are flagged as high risk"
+            description="Protocols scoring below this are flagged for regulatory review"
           />
           <ThresholdSlider
             icon={<BadgeDollarSign size={14} className="text-amber-500" />}
-            label="Payer Viability Threshold"
+            label="Payer Readiness Threshold"
             value={prefs.payerThreshold}
             onChange={(v) => updatePref('payerThreshold', v)}
-            description="Scores below this are flagged as low viability"
+            description="Protocols scoring below this need stronger reimbursement evidence"
           />
         </div>
       </SectionCard>
 
-      <SectionCard title="Automation" description="Configure automatic behaviors">
+      <SectionCard title="Workflow Automation" description="Configure automatic behaviors when working with protocols">
         <div className="space-y-4">
           <ToggleRow
             label="Auto-analyze on upload"
-            description="Automatically start analysis when a new document is uploaded"
+            description="Automatically start regulatory analysis when a new protocol is uploaded to your workspace"
             checked={prefs.autoAnalyzeOnUpload}
             onChange={(v) => updatePref('autoAnalyzeOnUpload', v)}
           />
           <ToggleRow
-            label="Include recommendations"
-            description="Include AI-generated pivot recommendations alongside findings"
+            label="Include actionable recommendations"
+            description="Include AI-generated recommended actions and suggested protocol language alongside each finding"
             checked={prefs.includeRecommendations}
             onChange={(v) => updatePref('includeRecommendations', v)}
           />
@@ -314,9 +314,9 @@ function AnalysisSection({ prefs, updatePref }) {
         <div className="flex items-start gap-3">
           <Check size={16} className="text-green-500 mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-green-800">Preferences are active</p>
+            <p className="text-sm font-medium text-green-800">Settings are active</p>
             <p className="text-xs text-green-600 mt-1">
-              These settings are automatically applied when you trigger a new document analysis. The AI model will adjust its sensitivity, focus area, and threshold scoring based on your preferences.
+              These settings apply to all new protocol analyses. The AI will adjust its regulatory sensitivity, focus area, and risk scoring based on your configuration. Changes do not affect previously completed analyses.
             </p>
           </div>
         </div>
@@ -333,19 +333,19 @@ function NotificationSection({ prefs, updatePref }) {
         <div className="space-y-4">
           <ToggleRow
             label="Analysis complete"
-            description="Get notified when a document analysis finishes"
+            description="Get notified when a protocol regulatory analysis finishes processing"
             checked={prefs.emailOnComplete}
             onChange={(v) => updatePref('emailOnComplete', v)}
           />
           <ToggleRow
-            label="Critical findings alert"
-            description="Immediate alert when critical-severity findings are detected"
+            label="Critical finding alert"
+            description="Immediate notification when critical-severity regulatory or safety findings are identified in your protocol"
             checked={prefs.emailOnCritical}
             onChange={(v) => updatePref('emailOnCritical', v)}
           />
           <ToggleRow
-            label="Weekly digest"
-            description="Summary of all analyses and findings from the past week"
+            label="Weekly summary"
+            description="Weekly digest of all protocol analyses, findings, and compliance score changes"
             checked={prefs.weeklyDigest}
             onChange={(v) => updatePref('weeklyDigest', v)}
           />
@@ -429,7 +429,7 @@ function AboutSection() {
           <Shield size={28} className="text-white" />
         </div>
         <h2 className="text-xl font-bold text-slate-900 mb-1">NIX AI</h2>
-        <p className="text-sm text-slate-400 mb-4">Adversarial Protocol Intelligence Platform</p>
+        <p className="text-sm text-slate-400 mb-4">Regulatory Protocol Intelligence Platform</p>
         <div className="inline-flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-500">
           Version 1.0.0
         </div>
@@ -444,22 +444,22 @@ function AboutSection() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Capabilities" description="What NIX AI can do">
+      <SectionCard title="Capabilities" description="How NIX AI helps your clinical trial program">
         <div className="space-y-3">
           <CapabilityItem
             icon={<ShieldAlert size={16} className="text-red-500" />}
-            title="Regulatory Risk Analysis"
-            description="Simulates FDA/EMA reviewer objections and identifies compliance gaps"
+            title="Regulatory Compliance Analysis"
+            description="Evaluates your protocol against ICH E6(R2)/E8/E9 guidelines, FDA 21 CFR requirements, and EMA scientific guidance to identify compliance gaps before submission"
           />
           <CapabilityItem
             icon={<BadgeDollarSign size={16} className="text-amber-500" />}
-            title="Payer Viability Assessment"
-            description="Models payer cost objections and reimbursement likelihood"
+            title="Payer & Reimbursement Readiness"
+            description="Assesses your protocol against HTA body requirements (NICE, IQWiG, CADTH, PBAC, AMNOG) to identify evidence gaps that could affect market access"
           />
           <CapabilityItem
             icon={<BarChart3 size={16} className="text-brand-500" />}
-            title="Smart Pivot Recommendations"
-            description="AI-generated strategies to resolve regulatory-payer friction points"
+            title="Actionable Recommendations"
+            description="AI-generated protocol amendments, suggested clause language, and strategic recommendations to resolve regulatory-payer friction points"
           />
         </div>
       </SectionCard>

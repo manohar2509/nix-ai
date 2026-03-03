@@ -1,0 +1,373 @@
+CLINICAL TRIAL PROTOCOL
+
+Protocol Number: NIX-CV-2026-002
+Version: 2.0
+Date: February 10, 2026
+
+TITLE: A Phase 2, Randomized, Double-Blind, Dose-Ranging Study to Evaluate
+the Efficacy, Safety, and Pharmacokinetics of Cardionix (NIX-7290) in Patients
+with Heart Failure with Reduced Ejection Fraction (HFrEF)
+
+Short Title: RESTORE-HF
+
+Sponsor: NixBio Therapeutics, Inc.
+1200 Innovation Drive, Cambridge, MA 02142, USA
+
+IND Number: 193847
+EudraCT Number: 2025-007290-18
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SYNOPSIS
+
+Study Title:        RESTORE-HF
+Phase:              Phase 2
+Study Design:       Randomized, double-blind, dose-ranging, placebo-controlled
+Indication:         Heart failure with reduced ejection fraction (HFrEF), NYHA II-III
+Study Population:   Adults ≥ 18 years with LVEF ≤ 40%, on stable background therapy
+Target Enrollment:  360 patients (90 per arm across 4 arms)
+Number of Sites:    ~60 sites in North America and Europe
+
+Treatment Arms:
+  Arm A: Cardionix 50 mg PO QD + Standard of Care (SoC)
+  Arm B: Cardionix 100 mg PO QD + SoC
+  Arm C: Cardionix 200 mg PO QD + SoC
+  Arm D: Placebo PO QD + SoC
+
+Primary Endpoint:   Change from baseline in NT-proBNP at Week 24
+Key Secondary:      Change in LVEF (echocardiography), 6-Minute Walk Distance (6MWD),
+                    KCCQ-12 composite score, composite of CV death or HF hospitalization
+
+Study Duration:     ~36 months (18 months enrollment + 6 months treatment + 12 months FU)
+Treatment Duration: 24 weeks
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2. INTRODUCTION AND BACKGROUND
+
+2.1 Disease Background
+
+Heart failure (HF) affects over 64 million people globally. Despite guideline-directed
+medical therapy (GDMT) including ACE inhibitors/ARBs, beta-blockers, mineralocorticoid
+receptor antagonists, and SGLT2 inhibitors, residual morbidity and mortality remain
+substantial. The 5-year mortality rate for HFrEF is approximately 50%.
+
+2.2 Investigational Product: Cardionix (NIX-7290)
+
+Cardionix is a first-in-class, orally bioavailable activator of mitochondrial
+complex I in cardiomyocytes. It targets the NDUFS4 subunit to enhance oxidative
+phosphorylation efficiency, reducing reactive oxygen species (ROS) generation
+while improving ATP production in failing myocardium.
+
+Mechanism of Action:
+- Allosteric activation of mitochondrial Complex I (NADH:ubiquinone oxidoreductase)
+- Enhanced ATP synthesis efficiency (+25-35% in preclinical models)
+- Reduced mitochondrial ROS generation (-40% in vitro)
+- Improved calcium handling in cardiomyocytes
+- Anti-fibrotic effects via TGF-β pathway modulation
+
+2.3 Preclinical Data
+
+In canine tachypacing-induced HF model:
+- LVEF improvement: +12% (Cardionix) vs. +2% (vehicle), p < 0.001
+- BNP reduction: -55% (Cardionix) vs. -8% (vehicle), p < 0.001
+- Exercise capacity: +35% increase in treadmill time
+- Myocardial fibrosis: -40% (collagen volume fraction)
+
+In rat MI model (post-LAD ligation):
+- Cardionix (10 mg/kg) prevented adverse remodeling at 8 weeks
+- LV end-diastolic diameter: 5.8 mm vs. 7.2 mm (vehicle), p < 0.01
+- Survival at 12 weeks: 89% vs. 62%, p = 0.03
+
+2.4 Phase 1 Data (Study NIX-CV-2024-001)
+
+Single Ascending Dose (SAD, n=40, healthy volunteers):
+- Well tolerated up to 400 mg single dose
+- Tmax: 2-3 hours; T1/2: 14-18 hours (supports QD dosing)
+- No QTc prolongation at supratherapeutic doses
+
+Multiple Ascending Dose (MAD, n=36, HFrEF patients):
+- 50 mg, 100 mg, 200 mg QD × 14 days
+- Dose-proportional PK
+- NT-proBNP reduction: -18% (50 mg), -32% (100 mg), -41% (200 mg) at Day 14
+- No dose-limiting toxicities
+- Most common AEs: mild headache (15%), dizziness (8%), nausea (6%)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3. STUDY OBJECTIVES AND ENDPOINTS
+
+3.1 Primary Objective
+To evaluate the dose-response of Cardionix on NT-proBNP reduction in HFrEF patients.
+
+Primary Endpoint: Percent change from baseline in NT-proBNP at Week 24.
+
+3.2 Key Secondary Objectives and Endpoints
+
+  Objective                                    Endpoint
+  ─────────────────────────────────────────    ──────────────────────────────
+  Evaluate cardiac function                    Change in LVEF at Week 24 (echo)
+  Evaluate functional capacity                 Change in 6MWD at Week 24
+  Assess patient symptoms/QoL                  KCCQ-12 score change at Week 24
+  Evaluate clinical events                     Composite: CV death or HF hosp.
+  Characterize PK                              Population PK model (Cmin, AUC)
+  Evaluate safety & tolerability               AEs, SAEs, vital signs, ECG
+
+3.3 Exploratory Objectives
+
+- Cardiac biomarkers: hs-cTnT, sST2, galectin-3 kinetics
+- Echocardiographic remodeling: LVEDVi, LVESVi, GLS
+- Cardiac MRI substudy (n=60): myocardial energetics via 31P-MRS
+- Wearable device-derived metrics: daily step count, HR variability
+- Dose-exposure-response modeling for Phase 3 dose selection
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4. STUDY DESIGN
+
+4.1 Overall Design
+
+Phase 2, randomized, double-blind, placebo-controlled, dose-ranging study.
+360 patients randomized 1:1:1:1 to Cardionix 50 mg, 100 mg, 200 mg, or placebo.
+
+Randomization stratified by:
+- Baseline NT-proBNP (< 1000 vs. ≥ 1000 pg/mL)
+- NYHA class (II vs. III)
+- Background SGLT2i use (yes vs. no)
+
+4.2 Study Periods
+
+Screening:         Up to 4 weeks (includes GDMT optimization period)
+Treatment:         24 weeks (with visits at Weeks 2, 4, 8, 12, 16, 20, 24)
+Safety Follow-up:  4 weeks after last dose (Week 28)
+Extended Follow-up: 12 months after last dose for clinical events
+
+4.3 Adaptive Design Element
+
+A pre-planned interim analysis after 50% of patients complete Week 12
+will be conducted by an independent Data Monitoring Committee (DMC).
+The DMC may:
+1. Recommend dropping a dose arm for futility (conditional power < 20%)
+2. Recommend increasing sample size (up to 480 total) for promising doses
+3. Recommend study termination for safety concerns
+
+This adaptive element follows FDA Guidance on Adaptive Designs (2019).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5. STUDY POPULATION
+
+5.1 Inclusion Criteria
+
+  1. Age ≥ 18 years
+  2. Chronic HF (NYHA Class II or III) for ≥ 3 months
+  3. LVEF ≤ 40% documented by echocardiography within 6 months
+  4. NT-proBNP ≥ 400 pg/mL (≥ 800 pg/mL if atrial fibrillation)
+  5. Stable, optimized GDMT for ≥ 4 weeks prior to randomization:
+     a. ACEi/ARB/ARNI at ≥ 50% target dose (unless contraindicated/intolerant)
+     b. Evidence-based beta-blocker at ≥ 50% target dose
+     c. MRA (unless contraindicated)
+     d. SGLT2i recommended but not required
+  6. eGFR ≥ 30 mL/min/1.73 m² (CKD-EPI)
+  7. Systolic BP ≥ 100 mmHg
+  8. Written informed consent
+
+5.2 Exclusion Criteria
+
+  1. Acute decompensated HF requiring IV therapy within 4 weeks
+  2. Cardiac surgery or PCI within 3 months
+  3. Planned cardiac device implantation (CRT, LVAD) during study
+  4. Existing CRT with optimization < 3 months prior
+  5. Primary hypertrophic, restrictive, or infiltrative cardiomyopathy
+  6. Severe uncorrected valvular disease
+  7. Sustained ventricular tachycardia or ventricular fibrillation within 3 months
+  8. Severe hepatic impairment (Child-Pugh C)
+  9. Known mitochondrial disease
+  10. Active malignancy (non-melanoma skin cancer excepted)
+  11. Life expectancy < 12 months for non-cardiac reasons
+  12. Pregnancy, breastfeeding, or planning to become pregnant
+  13. Participation in another interventional trial within 30 days
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6. TREATMENT PLAN
+
+6.1 Investigational Medicinal Product
+
+Drug:               Cardionix (NIX-7290)
+Formulations:       Capsule, 50 mg and 100 mg
+Doses:              50 mg QD, 100 mg QD, 200 mg QD
+Route:              Oral
+Schedule:           Once daily, with breakfast
+Duration:           24 weeks
+
+6.2 Background Standard of Care
+
+All patients must remain on stable GDMT throughout the treatment period.
+Dose adjustments to background HF therapy are permitted only for safety reasons
+and must be documented in the eCRF.
+
+Required background therapy (unless documented contraindication/intolerance):
+- ACEi/ARB/ARNI
+- Beta-blocker (carvedilol, bisoprolol, or metoprolol succinate)
+- MRA (spironolactone or eplerenone)
+- SGLT2i (dapagliflozin or empagliflozin) — strongly recommended
+
+6.3 Prohibited Medications
+
+- Other investigational drugs
+- IV inotropes (except for acute decompensation management)
+- Other mitochondrial-targeted therapies (CoQ10 supplements > 200 mg/day)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7. SAFETY ASSESSMENTS
+
+7.1 Adverse Event Monitoring
+
+All AEs graded per CTCAE v5.0. Collection from first dose through 28 days
+after last dose. SAEs collected through 12 months follow-up.
+
+7.2 Cardiac Safety
+
+- Continuous Holter monitoring at baseline, Week 4, and Week 24 (48 hours)
+- 12-lead ECG at each visit (pre-dose)
+- Troponin (hs-cTnT) at each study visit
+- Echocardiography: baseline, Week 12, Week 24 (central reading)
+
+7.3 Hepatic Safety
+
+- Liver function tests (ALT, AST, ALP, bilirubin) at each visit
+- Hy's Law monitoring per FDA DILI guidance
+- If ALT > 3× ULN: recheck within 72 hours and weekly until resolved
+
+7.4 Renal Safety
+
+- Serum creatinine and eGFR at each visit
+- If eGFR declines > 25% from baseline: increase monitoring frequency
+- If eGFR < 20 mL/min: consider dose modification or discontinuation
+
+7.5 Clinical Events Committee (CEC)
+
+An independent, blinded CEC will adjudicate:
+- All deaths (CV vs. non-CV)
+- All hospitalizations (HF vs. non-HF)
+- All stroke events
+- All MI events
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+8. EFFICACY ASSESSMENTS
+
+8.1 NT-proBNP (Primary)
+
+- Central laboratory measurement at: screening, baseline, Weeks 2, 4, 8, 12, 16, 20, 24
+- Fasting morning sample (before daily dose)
+- Roche Elecsys proBNP II assay
+
+8.2 Echocardiography
+
+- 2D transthoracic echocardiography per ASE/EACVI guidelines
+- Measurements: LVEF (biplane Simpson's), LVEDVi, LVESVi, GLS
+- Central core lab reading (blinded)
+- Schedule: screening, Week 12, Week 24
+
+8.3 Functional Capacity
+
+- 6-Minute Walk Test per ATS guidelines
+- Schedule: baseline, Week 12, Week 24
+- Performed before other study procedures on visit day
+
+8.4 Patient-Reported Outcomes
+
+- KCCQ-12 (Kansas City Cardiomyopathy Questionnaire): baseline, Weeks 4, 12, 24
+- EQ-5D-5L: baseline, Weeks 12, 24
+- PGI-S and PGI-C (Patient Global Impression): Weeks 12, 24
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+9. STATISTICAL CONSIDERATIONS
+
+9.1 Sample Size
+
+Primary endpoint: Percent change from baseline in NT-proBNP at Week 24
+Assumptions:
+- Placebo change: -5% (natural variability on GDMT)
+- Clinically meaningful difference: ≥ 20% additional reduction
+- SD of percent change: ~45%
+- Type I error: 0.05 (two-sided, Dunnett adjustment for 3 comparisons)
+- Power: 80% for each pairwise comparison
+
+Required: 80 evaluable patients per arm → 90 randomized per arm (10% dropout)
+Total: 360 patients
+
+9.2 Analysis Populations
+
+- mITT: All randomized patients who received ≥ 1 dose and have ≥ 1 post-baseline NT-proBNP
+- Safety: All patients who received ≥ 1 dose
+- PK: All patients with ≥ 1 evaluable PK sample
+
+9.3 Primary Analysis
+
+MMRM (Mixed Model for Repeated Measures) with:
+- Fixed effects: treatment group, visit, treatment × visit, baseline NT-proBNP (log), stratification factors
+- Unstructured covariance matrix
+- Primary contrast: each Cardionix dose vs. placebo at Week 24
+- Dunnett's procedure for multiplicity control
+
+9.4 Key Secondary Analyses
+
+- LVEF, 6MWD, KCCQ-12: MMRM similar to primary
+- Composite endpoint (CV death or HF hospitalization): Cox proportional hazards,
+  stratified by randomization factors
+- All tested in hierarchical order following primary endpoint significance
+
+9.5 Dose-Response Modeling
+
+- MCP-Mod methodology per FDA/EMA qualification guidance
+- Candidate dose-response shapes: linear, Emax, exponential, logistic
+- Used to inform dose selection for Phase 3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+10. REGULATORY AND ETHICAL CONSIDERATIONS
+
+10.1 Regulatory Compliance
+
+This study will be conducted per:
+- ICH E6(R2) Good Clinical Practice
+- ICH E14 QTc evaluation
+- ICH E17 Multi-Regional Clinical Trials
+- FDA 21 CFR Parts 11, 50, 56, 312
+- EU Clinical Trial Regulation (EU) 2014/536
+- EMA Scientific Advice received October 2025
+
+10.2 Data Safety Monitoring Board (DSMB)
+
+An independent DSMB will:
+- Review unblinded safety data every 6 months
+- Conduct the pre-planned interim analysis
+- Have authority to recommend study termination for safety
+
+10.3 Regulatory Interactions
+
+- FDA Pre-IND meeting: April 2024
+- FDA Type B meeting (End of Phase 1): September 2025
+- EMA Scientific Advice: October 2025
+- Pediatric Study Plan (PSP) to be submitted prior to Phase 3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+11. REFERENCES
+
+1. McDonagh TA, et al. 2021 ESC Guidelines for HF. Eur Heart J. 2021;42:3599-3726.
+2. Heidenreich PA, et al. 2022 AHA/ACC/HFSA HF Guideline. Circulation. 2022;145:e895-e1032.
+3. McMurray JJ, et al. Dapagliflozin in HFrEF. N Engl J Med. 2019;381:1995-2008.
+4. Brown DA, et al. Mitochondrial function as a therapeutic target in HF.
+   Nat Rev Cardiol. 2017;14:238-250.
+5. Sabbah HN, et al. Chronic therapy with elamipretide improves LV function
+   in dogs with HF. Circ Heart Fail. 2016;9:e002206.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF PROTOCOL

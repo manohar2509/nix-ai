@@ -1,0 +1,1111 @@
+{
+  "metadata": {
+    "title": "ICH Guidelines — Complete Reference Database for NIX AI",
+    "version": "3.0",
+    "last_updated": "2026-03-01",
+    "source": "International Council for Harmonisation (ICH)",
+    "url": "https://www.ich.org/page/ich-guidelines",
+    "description": "Comprehensive ICH guideline database covering Quality (Q), Safety (S), Efficacy (E), and Multidisciplinary (M) guidelines with detailed section references, requirements, and compliance criteria for clinical trial protocol analysis."
+  },
+  "efficacy_guidelines": {
+    "E1": {
+      "code": "ICH E1",
+      "title": "The Extent of Population Exposure to Assess Clinical Safety",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E1_Guideline.pdf",
+      "effective_date": "1994-10-27",
+      "focus": "Safety database size requirements for marketing applications",
+      "key_requirements": [
+        "For drugs intended for chronic use: minimum 1500 patients exposed, 300-600 for 6 months, 100 for 12 months",
+        "Database size justification based on intended patient population",
+        "Short-term exposure requirements vary by disease severity and treatment alternatives",
+        "Special populations (elderly, renal/hepatic impairment) should be adequately represented"
+      ],
+      "sections": {
+        "1": "Introduction — rationale for safety database size",
+        "2": "Overall Safety Database — total exposure requirements",
+        "2.1": "Long-term treatment — chronic disease exposure minimums",
+        "2.2": "Short-term treatment — acute condition requirements",
+        "3": "Special Situations — dose-response, pediatric, rare diseases"
+      },
+      "compliance_criteria": {
+        "critical": ["Minimum 100 patients exposed for 12 months for chronic indications", "Total database ≥1500 patients"],
+        "major": ["300-600 patients with 6-month exposure", "Special population representation"],
+        "minor": ["Dose-response data availability"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E2A": {
+      "code": "ICH E2A",
+      "title": "Clinical Safety Data Management: Definitions and Standards for Expedited Reporting",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E2A_Guideline.pdf",
+      "effective_date": "1994-10-27",
+      "focus": "Definitions of adverse events, serious adverse events, and expedited reporting requirements",
+      "key_requirements": [
+        "Clear definitions: Adverse Event (AE), Adverse Drug Reaction (ADR), Unexpected ADR, Serious AE",
+        "Expedited reporting timelines: fatal/life-threatening within 7 days, all serious within 15 days",
+        "Causality assessment methodology documentation",
+        "Investigator brochure update when new safety signals emerge",
+        "Blinding/unblinding procedures for safety reporting"
+      ],
+      "sections": {
+        "I": "Introduction",
+        "II": "Definitions — AE, ADR, Unexpected ADR, Serious AE",
+        "III": "Standards for Expedited Reporting — timelines and criteria",
+        "III.A": "What should be reported: serious, unexpected ADRs",
+        "III.B": "Reporting timelines: 7-day and 15-day requirements",
+        "III.C": "Special situations: pregnancy, overdose, lack of efficacy",
+        "IV": "Other Safety Reports — periodic reports during development"
+      },
+      "compliance_criteria": {
+        "critical": ["SAE definition aligned with ICH E2A", "Expedited reporting timelines in protocol", "DSMB/DMC charter for safety oversight"],
+        "major": ["AE grading scale specified (CTCAE or equivalent)", "Causality assessment methodology defined"],
+        "minor": ["Adverse event collection period specified post-treatment"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E2F": {
+      "code": "ICH E2F",
+      "title": "Development Safety Update Report",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E2F_Guideline.pdf",
+      "effective_date": "2010-08-17",
+      "focus": "Annual safety reporting during clinical development",
+      "key_requirements": [
+        "Annual DSUR submission to all relevant regulatory authorities",
+        "Standard format and content requirements",
+        "Overall benefit-risk assessment based on cumulative safety data",
+        "Signal detection methodology",
+        "Reference safety information updates"
+      ],
+      "sections": {
+        "1": "Introduction and purpose of DSUR",
+        "2": "DSUR format and content",
+        "3": "Executive Summary",
+        "4": "Safety reporting interval and datasets",
+        "5": "Overall safety evaluation",
+        "6": "Summary of important risks and new safety information",
+        "7": "Overall benefit-risk assessment"
+      },
+      "compliance_criteria": {
+        "critical": ["DSUR submission plan documented", "Benefit-risk assessment framework defined"],
+        "major": ["Reference safety information (RSI) specified", "Signal detection methodology described"],
+        "minor": ["DSUR submission timeline aligned with DIBD"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E3": {
+      "code": "ICH E3",
+      "title": "Structure and Content of Clinical Study Reports",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E3_Guideline.pdf",
+      "effective_date": "1995-11-30",
+      "focus": "Standard format for clinical study reports (CSRs)",
+      "key_requirements": [
+        "16-section standardized CSR structure",
+        "Synopsis requirements for all CSRs",
+        "Statistical analysis details and display conventions",
+        "Appendix requirements: protocol, SAP, CRF, patient data listings",
+        "Efficacy and safety data presentation standards"
+      ],
+      "sections": {
+        "1": "Title Page",
+        "2": "Synopsis",
+        "3-9": "Study Protocol and Investigational Plan",
+        "10": "Study Patients — demographics, disposition",
+        "11": "Efficacy Evaluation — primary and secondary endpoints",
+        "12": "Safety Evaluation — AEs, laboratory, vital signs, ECG",
+        "13": "Discussion and Conclusions",
+        "14": "Tables, Figures, and Graphs (referenced in text)",
+        "15": "Reference List",
+        "16": "Appendices — Protocol, SAP, CRF, Patient Listings"
+      },
+      "compliance_criteria": {
+        "critical": ["CSR structure follows ICH E3 format"],
+        "major": ["Protocol synopsis included", "SAP appendix included"],
+        "minor": ["Data listing format standards"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E4": {
+      "code": "ICH E4",
+      "title": "Dose-Response Information to Support Drug Registration",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E4_Guideline.pdf",
+      "effective_date": "1994-03-10",
+      "focus": "Dose selection, dose-response studies, PK/PD relationships",
+      "key_requirements": [
+        "Dose-response relationship characterization before Phase III",
+        "At least 3 dose levels recommended for dose-response studies",
+        "PK/PD modeling when direct dose-response data is limited",
+        "Dose adjustment criteria for special populations",
+        "Starting dose justification for first-in-human studies"
+      ],
+      "compliance_criteria": {
+        "critical": ["Dose selection rationale documented with PK/PD data or dose-response study"],
+        "major": ["Multiple dose levels evaluated", "Dose adjustment for renal/hepatic impairment"],
+        "minor": ["Food effect assessment planned"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E5_R1": {
+      "code": "ICH E5(R1)",
+      "title": "Ethnic Factors in the Acceptability of Foreign Clinical Data",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E5_R1__Guideline.pdf",
+      "effective_date": "1998-02-05",
+      "focus": "Ethnic sensitivity assessment, bridging studies, foreign data acceptance",
+      "key_requirements": [
+        "Ethnic factors classification: intrinsic (genetics, metabolism) and extrinsic (diet, culture, medical practice)",
+        "Bridging study design when ethnic sensitivity is a concern",
+        "Complete clinical data package for each region",
+        "Pharmacogenomic considerations",
+        "Dose adjustment based on ethnic PK/PD differences"
+      ],
+      "compliance_criteria": {
+        "critical": ["Ethnic sensitivity assessment for multi-regional trials"],
+        "major": ["Bridging study plan for new regions", "PK comparison across ethnic groups"],
+        "minor": ["Cultural adaptation of patient-reported outcomes"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E6_R3": {
+      "code": "ICH E6(R3)",
+      "title": "Good Clinical Practice",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/ICH_E6%28R3%29_Step4_FinalGuideline_2025_0106_ErrorCorrections_2025_1024.pdf",
+      "effective_date": "2025-01-06",
+      "focus": "Trial conduct, quality, data integrity, informed consent, risk-based approaches",
+      "key_requirements": [
+        "Quality by Design (QbD) approach to clinical trials",
+        "Risk-based quality management system (RBQMS)",
+        "Proportionate approaches to source data verification",
+        "Enhanced informed consent requirements including digital consent",
+        "Investigator responsibilities and oversight",
+        "Sponsor responsibilities for trial quality",
+        "IRB/IEC requirements for protocol approval",
+        "Essential document management (TMF)",
+        "Data governance and integrity principles",
+        "Technology-enabled trial conduct",
+        "Decentralized clinical trial considerations"
+      ],
+      "sections": {
+        "1": "Glossary — key GCP definitions",
+        "2": "Principles of ICH GCP — 13 fundamental principles",
+        "3": "Institutional Review Board/Independent Ethics Committee",
+        "4": "Investigator Responsibilities",
+        "4.1": "Investigator qualifications",
+        "4.2": "Adequate resources",
+        "4.3": "Medical care of trial subjects",
+        "4.5": "Protocol compliance",
+        "4.8": "Informed consent",
+        "5": "Sponsor Responsibilities",
+        "5.0": "Quality management — critical to quality factors",
+        "5.2": "Trial management, data handling, record keeping",
+        "5.5": "Trial/Site management",
+        "5.18": "Monitoring — risk-based monitoring strategy",
+        "5.20": "Audit requirements",
+        "6": "Clinical Trial Protocol",
+        "6.1": "General information",
+        "6.2": "Background information",
+        "6.3": "Trial objectives and purpose",
+        "6.4": "Trial design",
+        "6.5": "Selection of trial subjects",
+        "6.6": "Treatment of trial subjects",
+        "6.7": "Assessment of efficacy",
+        "6.8": "Assessment of safety",
+        "6.9": "Statistics",
+        "6.10": "Quality control and quality assurance",
+        "8": "Essential Documents for trial conduct"
+      },
+      "compliance_criteria": {
+        "critical": [
+          "Informed consent process documented per Section 4.8",
+          "IRB/IEC approval obtained before enrollment",
+          "Risk-based quality management plan",
+          "Protocol includes all Section 6 elements",
+          "Investigator qualifications verified",
+          "Safety reporting procedures defined"
+        ],
+        "major": [
+          "Risk-based monitoring strategy documented (Section 5.18)",
+          "Data integrity measures specified",
+          "Critical to quality (CtQ) factors identified",
+          "Essential documents list maintained",
+          "Amendment handling procedures defined"
+        ],
+        "minor": [
+          "Trial Master File (TMF) management plan",
+          "Technology platforms for data capture specified"
+        ]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E7": {
+      "code": "ICH E7",
+      "title": "Studies in Support of Special Populations: Geriatrics",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E7_Guideline.pdf",
+      "effective_date": "1993-09-24",
+      "focus": "Elderly patient inclusion, age-specific dosing, safety considerations",
+      "key_requirements": [
+        "Patients ≥65 years should be included in clinical trials unless excluded by medical criteria",
+        "Minimum 100 geriatric patients in drugs for diseases of aging",
+        "PK studies in elderly to determine dose adjustments",
+        "Drug-drug interaction studies relevant to geriatric polypharmacy",
+        "Assessment of cognitive function, falls, renal function"
+      ],
+      "compliance_criteria": {
+        "critical": ["Elderly inclusion criteria justified", "No arbitrary upper age limit without medical justification"],
+        "major": ["Geriatric PK data collected", "Age-specific safety analyses planned"],
+        "minor": ["Geriatric-specific quality of life instruments considered"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E8_R1": {
+      "code": "ICH E8(R1)",
+      "title": "General Considerations for Clinical Studies",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/ICH_E8-R1_Guideline_Step4_2021_1006.pdf",
+      "effective_date": "2021-10-06",
+      "focus": "Study design, quality factors, fit-for-purpose studies, innovative designs",
+      "key_requirements": [
+        "Quality by Design approach to clinical studies",
+        "Critical to Quality (CtQ) factor identification",
+        "Fit-for-purpose study designs — match rigor to decision importance",
+        "Stakeholder engagement in study design",
+        "Proportionate approach to data collection",
+        "Study types: traditional, pragmatic, observational, decentralized"
+      ],
+      "sections": {
+        "1": "Introduction",
+        "2": "Objectives and Design — study quality factors",
+        "2.1": "Study objectives should address specific questions",
+        "2.2": "Critical quality factors — CtQ identification",
+        "2.3": "Study design selection — fit for purpose",
+        "3": "Study Conduct Considerations",
+        "4": "Data Quality — proportionate, fit-for-purpose"
+      },
+      "compliance_criteria": {
+        "critical": ["Study objectives clearly defined", "CtQ factors identified and managed"],
+        "major": ["Study design justification documented", "Proportionate data collection approach"],
+        "minor": ["Stakeholder engagement documentation"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E9_R1": {
+      "code": "ICH E9(R1)",
+      "title": "Statistical Principles for Clinical Trials — Addendum: Estimands and Sensitivity Analysis",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E9-R1_Step4_Guideline_2019_1203.pdf",
+      "effective_date": "2019-12-03",
+      "focus": "Estimands framework, intercurrent events, sensitivity analysis strategies",
+      "key_requirements": [
+        "Estimand framework: 5 attributes (Population, Treatment, Variable, Intercurrent Events, Summary Measure)",
+        "Intercurrent event strategies: treatment policy, composite, hypothetical, principal stratum, while-on-treatment",
+        "Primary estimand aligned with study objective and clinical question",
+        "Sensitivity analyses to test robustness of primary analysis",
+        "Supplementary analyses for additional clinical questions",
+        "Missing data handling aligned with estimand strategy"
+      ],
+      "sections": {
+        "A.1": "Introduction to Estimand Framework",
+        "A.2": "Estimand: A precise description of the treatment effect",
+        "A.2.1": "Attributes of an Estimand — the 5 components",
+        "A.2.2": "Population attribute",
+        "A.2.3": "Variable (endpoint) attribute",
+        "A.2.4": "Intercurrent events and strategies",
+        "A.2.5": "Population-level summary measure",
+        "A.3": "Impact on Trial Design and Conduct",
+        "A.4": "Sensitivity and Supplementary Analyses",
+        "A.5": "Documentation — estimand in protocol and SAP"
+      },
+      "compliance_criteria": {
+        "critical": [
+          "Primary estimand explicitly defined with all 5 attributes",
+          "Intercurrent events identified with handling strategies",
+          "SAP describes sensitivity analyses aligned with estimand"
+        ],
+        "major": [
+          "Missing data strategy aligned with estimand",
+          "Supplementary estimands for secondary questions",
+          "Sample size justified for primary estimand"
+        ],
+        "minor": [
+          "Estimand framework training for study team documented"
+        ]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E10": {
+      "code": "ICH E10",
+      "title": "Choice of Control Group and Related Issues in Clinical Trials",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E10_Guideline.pdf",
+      "effective_date": "2000-07-20",
+      "focus": "Active vs. placebo controls, non-inferiority, assay sensitivity",
+      "key_requirements": [
+        "Control group selection rationale (placebo, active, dose-response, historical)",
+        "Ethical considerations for placebo use — Declaration of Helsinki compliance",
+        "Non-inferiority margin selection based on historical effect size",
+        "Assay sensitivity demonstration requirements",
+        "Superiority vs. non-inferiority vs. equivalence trial considerations"
+      ],
+      "sections": {
+        "1": "Introduction — purpose and scope",
+        "2": "Types of control groups — placebo, active, dose-response, historical, no treatment",
+        "3": "Choosing the control group — scientific and ethical considerations",
+        "4": "Non-inferiority trials — margin selection, constancy assumption",
+        "5": "Practical considerations — sample size, regional requirements"
+      },
+      "compliance_criteria": {
+        "critical": [
+          "Control group selection justified scientifically and ethically",
+          "Non-inferiority margin justified with historical data if applicable",
+          "Assay sensitivity addressed for non-inferiority trials"
+        ],
+        "major": [
+          "Placebo use ethically justified per Declaration of Helsinki",
+          "Active comparator reflects standard of care"
+        ],
+        "minor": [
+          "Rescue medication criteria specified"
+        ]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E11_R1": {
+      "code": "ICH E11(R1)",
+      "title": "Clinical Investigation of Medicinal Products in the Pediatric Population",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E11_R1_Addendum.pdf",
+      "effective_date": "2017-08-11",
+      "focus": "Pediatric development, extrapolation, age-appropriate formulations, ethical consent",
+      "key_requirements": [
+        "Pediatric Investigation Plan (PIP) / Pediatric Study Plan (PSP)",
+        "Age categories: preterm neonates, term neonates (0-27d), infants (28d-23m), children (2-11y), adolescents (12-17y)",
+        "Extrapolation framework: when adult data can support pediatric approvals",
+        "Age-appropriate formulations required",
+        "Assent requirements by age group",
+        "Modeling and simulation for dose selection",
+        "Long-term follow-up for growth and development"
+      ],
+      "compliance_criteria": {
+        "critical": [
+          "Pediatric development plan documented (PIP/PSP)",
+          "Age-appropriate dose selection justified",
+          "Assent/consent procedures for each age group"
+        ],
+        "major": [
+          "Extrapolation framework justified if used",
+          "PK/PD data collection in pediatric age groups",
+          "Long-term safety monitoring plan"
+        ],
+        "minor": [
+          "Age-appropriate formulation development plan"
+        ]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E14": {
+      "code": "ICH E14",
+      "title": "The Clinical Evaluation of QT/QTc Interval Prolongation and Proarrhythmic Potential for Non-Antiarrhythmic Drugs",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E14_Guideline.pdf",
+      "effective_date": "2005-05-12",
+      "focus": "Cardiac safety, thorough QT study (TQS), concentration-response (C-R) analysis",
+      "key_requirements": [
+        "Thorough QT study (TQS) or concentration-response (C-R) analysis",
+        "Positive control (moxifloxacin) in TQS design",
+        "ECG collection methodology — triplicate, centralized reading",
+        "QTc correction formula selection (Fridericia preferred)",
+        "Exposure-response analysis integrating Phase I-III data",
+        "Threshold of regulatory concern: >10ms QTc prolongation"
+      ],
+      "compliance_criteria": {
+        "critical": [
+          "Cardiac safety strategy defined (TQS or C-R approach)",
+          "ECG collection schedule specified in protocol"
+        ],
+        "major": [
+          "QTc correction formula specified",
+          "Centralized ECG reading planned",
+          "Exposure-response analysis in SAP"
+        ],
+        "minor": [
+          "Holter monitoring for drugs with arrhythmia signals"
+        ]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E17": {
+      "code": "ICH E17",
+      "title": "General Principles for Planning and Design of Multi-Regional Clinical Trials",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/E17EWG_Step4_2017_1116.pdf",
+      "effective_date": "2017-11-16",
+      "focus": "Global trial design, regional sample sizes, ethnic factors, consistency assessment",
+      "key_requirements": [
+        "Multi-Regional Clinical Trial (MRCT) design principles",
+        "Regional sample size allocation methodology",
+        "Consistency assessment across regions — quantitative and qualitative",
+        "Intrinsic and extrinsic ethnic factors evaluation (per E5)",
+        "Regulatory alignment across participating regions",
+        "Poolability assessment for combining regional data",
+        "Pre-specified subgroup analyses by region"
+      ],
+      "sections": {
+        "1": "Introduction and scope",
+        "2": "Principles — MRCT as single trial vs. regional programs",
+        "3": "Planning — regulatory strategy, regional requirements",
+        "3.1": "Overall sample size and regional allocation",
+        "3.2": "Key design elements — stratification, randomization",
+        "3.3": "Endpoint selection across regions",
+        "4": "Design considerations — consistency, poolability",
+        "5": "Statistical considerations — consistency assessment methods",
+        "6": "Regulatory submissions and use of MRCT data"
+      },
+      "compliance_criteria": {
+        "critical": [
+          "Regional sample size allocation plan documented",
+          "Consistency assessment methodology pre-specified",
+          "Regulatory alignment plan for all participating regions"
+        ],
+        "major": [
+          "Ethnic factor evaluation completed",
+          "Region-specific endpoint considerations addressed",
+          "Stratification by region in randomization"
+        ],
+        "minor": [
+          "Cultural adaptation of PRO instruments"
+        ]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E19": {
+      "code": "ICH E19",
+      "title": "Optimization of Safety Data Collection",
+      "step": "Step 4",
+      "url": "https://database.ich.org/sites/default/files/ICH_E19_Guideline_Step4_2022_0826_0.pdf",
+      "effective_date": "2022-08-26",
+      "focus": "Selective safety data collection in late-stage confirmatory trials",
+      "key_requirements": [
+        "Selective safety data collection for well-characterized drugs in late-stage trials",
+        "Targeted AE collection based on known safety profile",
+        "Serious adverse event collection always required",
+        "Pre-specified safety data collection plan with justification",
+        "Not applicable to first-in-class drugs or new safety signals"
+      ],
+      "compliance_criteria": {
+        "critical": ["SAE collection plan maintained regardless of selective approach"],
+        "major": ["Justification for selective AE collection based on prior data"],
+        "minor": ["Safety data collection rationale documented in protocol"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E20": {
+      "code": "ICH E20",
+      "title": "Adaptive Clinical Trials",
+      "step": "Step 3 (Draft)",
+      "url": "https://database.ich.org/sites/default/files/ICH_E20EWG_Step3_DraftGuideline_2025_0627.pdf",
+      "effective_date": "2025-06-27",
+      "focus": "Adaptive designs, interim analyses, type I error control, operational bias control",
+      "key_requirements": [
+        "Types of adaptations: sample size re-estimation, dose selection, population enrichment, endpoint modification",
+        "Type I error rate control across adaptations",
+        "Operational bias mitigation — blinding, pre-specification",
+        "Statistical framework: group sequential, adaptive seamless Phase II/III",
+        "Independent DMC for interim analyses",
+        "Simulation-based operating characteristics",
+        "Regulatory interaction recommended before implementation"
+      ],
+      "compliance_criteria": {
+        "critical": [
+          "All adaptations pre-specified in protocol and SAP",
+          "Type I error control demonstrated via simulation",
+          "DMC charter for interim analysis decision-making"
+        ],
+        "major": [
+          "Operating characteristics evaluated via simulation",
+          "Blinding maintained during adaptations where possible",
+          "Decision rules for each adaptation pre-specified"
+        ],
+        "minor": [
+          "Regulatory consultation for novel adaptive designs"
+        ]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E22": {
+      "code": "ICH E22",
+      "title": "General Considerations for Patient Preference Studies",
+      "step": "Step 2 (Draft)",
+      "url": "https://database.ich.org/sites/default/files/ICH_E22_Step2_draftGuideline_Assembly_Endorsed_FINAL_2025_1119.pdf",
+      "effective_date": "2025-11-19",
+      "focus": "Patient preference information, benefit-risk assessment, stated/revealed preferences",
+      "key_requirements": [
+        "Patient preference studies as input to benefit-risk assessment",
+        "Stated preference methods: DCE, threshold technique, swing weighting",
+        "Revealed preference methods: treatment switching data",
+        "Study design and validation requirements",
+        "Integration with regulatory decision-making"
+      ],
+      "compliance_criteria": {
+        "critical": ["Patient preference methodology validated if used for regulatory decisions"],
+        "major": ["Sample size justified for preference study", "Preference data collection instruments validated"],
+        "minor": ["Patient preference considered in protocol design"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    }
+  },
+  "safety_guidelines": {
+    "S1A": {
+      "code": "ICH S1A",
+      "title": "Need for Carcinogenicity Studies of Pharmaceuticals",
+      "url": "https://database.ich.org/sites/default/files/S1A_Guideline.pdf",
+      "focus": "When carcinogenicity studies are required based on duration of use, genotoxicity signals, structural alerts",
+      "key_requirements": [
+        "Carcinogenicity studies required for drugs used continuously for ≥6 months",
+        "Required for drugs with genotoxicity signals, structural alerts to known carcinogens",
+        "Not required for drugs used for short-term, life-threatening conditions",
+        "Two-year rodent bioassay typically required (rat; mouse may be replaced by alternative model)",
+        "Timing: completed before NDA/MAA filing or Phase III if patient population at risk"
+      ],
+      "compliance_criteria": {
+        "critical": ["Carcinogenicity study need assessment documented", "Studies initiated before Phase III for drugs requiring them"],
+        "major": ["Two-species study plan or justified alternative approach", "Genotoxicity battery completed before carcinogenicity study design"],
+        "minor": ["Carcinogenicity study timeline aligned with registration filing"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "S2_R1": {
+      "code": "ICH S2(R1)",
+      "title": "Guidance on Genotoxicity Testing and Data Interpretation",
+      "url": "https://database.ich.org/sites/default/files/S2%28R1%29_Guideline.pdf",
+      "focus": "Standard genotoxicity battery: in vitro gene mutation, chromosomal damage, in vivo test",
+      "key_requirements": [
+        "Standard battery: (1) Bacterial reverse mutation (Ames test), (2) In vitro mammalian cell assay (chromosomal aberration or mouse lymphoma), (3) In vivo test (micronucleus or chromosomal aberration)",
+        "Option 1 (preferred): Ames + in vitro + in vivo micronucleus",
+        "Option 2: Ames + two in vivo assays (micronucleus + comet or transgenic)",
+        "Positive genotoxicity results require weight-of-evidence assessment",
+        "Completed before Phase I for small molecules; before Phase III for biologics"
+      ],
+      "compliance_criteria": {
+        "critical": ["Complete genotoxicity battery before human exposure", "Positive signals addressed with mechanistic follow-up studies"],
+        "major": ["Standard battery completed per ICH S2(R1)", "Weight-of-evidence assessment for equivocal results"],
+        "minor": ["Follow-up study rationale documented"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "S5_R3": {
+      "code": "ICH S5(R3)",
+      "title": "Detection of Toxicity to Reproduction for Human Pharmaceuticals",
+      "url": "https://database.ich.org/sites/default/files/S5-R3_Step4_Guideline_2020_0218.pdf",
+      "effective_date": "2020-02-18",
+      "focus": "Fertility, embryo-fetal development, pre/postnatal development studies",
+      "key_requirements": [
+        "Three-segment design: fertility (Segment I), embryo-fetal development (Segment II), pre/postnatal (Segment III)",
+        "EFD studies in two species (rat + rabbit) before enrollment of women of childbearing potential",
+        "Fertility studies before Phase III or NDA/MAA",
+        "R3 update: integrated study designs, reduced animal use, enhanced exposure assessment",
+        "Contraception requirements in clinical trials based on reproductive toxicity data"
+      ],
+      "compliance_criteria": {
+        "critical": ["EFD completed before WOCBP enrollment", "Contraception requirements specified in protocol"],
+        "major": ["Fertility and pre/postnatal studies planned per development timeline", "Exposure margins calculated vs. clinical dose"],
+        "minor": ["Juvenile animal study timeline for pediatric indications"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "S6_R1": {
+      "code": "ICH S6(R1)",
+      "title": "Preclinical Safety Evaluation of Biotechnology-Derived Pharmaceuticals",
+      "url": "https://database.ich.org/sites/default/files/S6_R1_Guideline.pdf",
+      "focus": "Biologics-specific nonclinical requirements: species selection, immunogenicity, reproductive toxicity",
+      "key_requirements": [
+        "Relevant species selection based on pharmacological activity (not just binding)",
+        "One species may be sufficient if only one relevant species exists",
+        "Immunogenicity assessment: anti-drug antibodies (ADA) impact on toxicology interpretation",
+        "Reproductive toxicity: homologous protein or surrogate molecule approach",
+        "Carcinogenicity studies generally not required for biologics",
+        "Tissue cross-reactivity studies for monoclonal antibodies",
+        "Recovery groups included in pivotal studies"
+      ],
+      "compliance_criteria": {
+        "critical": ["Relevant species justified", "Immunogenicity monitoring in tox studies"],
+        "major": ["ADA impact on PK/PD and toxicity interpretation", "Reproductive toxicity strategy documented"],
+        "minor": ["Tissue cross-reactivity completed for mAbs"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "S7B": {
+      "code": "ICH S7B",
+      "title": "Nonclinical Evaluation of the Potential for Delayed Ventricular Repolarization (QT Interval Prolongation)",
+      "url": "https://database.ich.org/sites/default/files/S7B_Guideline.pdf",
+      "focus": "hERG assay, in vivo QT studies, integrated risk assessment with E14",
+      "key_requirements": [
+        "hERG channel inhibition assay (in vitro)",
+        "In vivo QT study in conscious telemetered animals",
+        "Integrated risk assessment combining S7B and E14/clinical data",
+        "2020 Q&A update: allows in silico and in vitro approaches to replace in vivo QT study",
+        "Concentration-response analysis for hERG data",
+        "Safety margins: comparison of hERG IC50 to clinical Cmax"
+      ],
+      "compliance_criteria": {
+        "critical": ["hERG assay completed before first human dose", "QT risk assessment documented"],
+        "major": ["In vivo QT study or justified waiver", "Integrated risk assessment per S7B/E14 Q&A"],
+        "minor": ["Dose-dependent QTc relationship characterized"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "S9": {
+      "code": "ICH S9",
+      "title": "Nonclinical Evaluation for Anticancer Pharmaceuticals",
+      "url": "https://database.ich.org/sites/default/files/S9_Guideline.pdf",
+      "focus": "Reduced nonclinical requirements for life-threatening oncology indications",
+      "key_requirements": [
+        "Reduced nonclinical package for anti-cancer drugs: life-threatening indications",
+        "Genotoxicity: Ames test sufficient before Phase I; full battery before Phase II/III",
+        "Carcinogenicity: generally not required for cytotoxic drugs",
+        "Reproductive toxicity: EFD in one species before Phase III; not required before Phase I/II",
+        "Safety pharmacology: can be assessed within general toxicology studies",
+        "Applies to drugs for advanced cancer; different requirements for adjuvant settings"
+      ],
+      "compliance_criteria": {
+        "critical": ["S9 applicability justified (advanced vs early stage cancer)", "Minimum tox package for Phase I complete"],
+        "major": ["EFD planning for Phase III aligned", "Genotoxicity battery completed before late-stage trials"],
+        "minor": ["Immunotoxicity assessment for immunomodulatory agents"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "S11": {
+      "code": "ICH S11",
+      "title": "Nonclinical Safety Testing in Support of Development of Paediatric Pharmaceuticals",
+      "url": "https://database.ich.org/sites/default/files/S11_Step4_Guideline_2020_1112.pdf",
+      "effective_date": "2020-11-12",
+      "focus": "Juvenile animal studies, timing relative to pediatric clinical trials",
+      "key_requirements": [
+        "Juvenile animal studies (JAS) to assess developmental toxicity",
+        "Species selection: rat or dog typically; species with similar postnatal development to humans",
+        "Timing: JAS before pediatric clinical trials; must cover age-relevant developmental stages",
+        "Not always required: consider existing adult data, mechanism of action, human pediatric data",
+        "Study design: age at treatment start based on target pediatric age, endpoints for growth and development",
+        "Decision framework for when JAS is needed vs. can be waived"
+      ],
+      "compliance_criteria": {
+        "critical": ["JAS need assessment documented", "JAS completed before pediatric dosing if required"],
+        "major": ["Age-appropriate endpoints selected", "Species and age at dosing start justified"],
+        "minor": ["JAS waiver rationale documented if not conducted"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "S12": {
+      "code": "ICH S12",
+      "title": "Nonclinical Biodistribution Considerations for Gene Therapy Products",
+      "url": "https://database.ich.org/sites/default/files/ICH_S12_Step4_Guideline_2023_0530.pdf",
+      "effective_date": "2023-05-30",
+      "focus": "Gene therapy biodistribution study design and timing",
+      "key_requirements": [
+        "Biodistribution assessment for gene therapy products using vector DNA/RNA by qPCR",
+        "Target and non-target tissue analysis including gonads for germline integration risk",
+        "Shedding studies for viral vector gene therapies",
+        "Integration analysis for integrating vectors (e.g., lentiviral)",
+        "Biodistribution data used to support first-in-human dose selection",
+        "Long-term follow-up considerations based on vector persistence"
+      ],
+      "compliance_criteria": {
+        "critical": ["Biodistribution study completed before first human dose", "Gonadal distribution assessed"],
+        "major": ["Shedding study plan for viral vectors", "Integration site analysis for integrating vectors"],
+        "minor": ["Long-term persistence follow-up plan"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    }
+  },
+  "pharmacovigilance_guidelines": {
+    "E2B_R3": {
+      "code": "ICH E2B(R3)",
+      "title": "Individual Case Safety Reports (ICSRs) — Electronic Transmission",
+      "url": "https://database.ich.org/sites/default/files/E2B_R3_Guideline.pdf",
+      "effective_date": "2013-07-01",
+      "focus": "Standardized electronic format for individual case safety report (ICSR) transmission",
+      "key_requirements": [
+        "E2B(R3) XML format for ICSR transmission globally",
+        "MedDRA coding for adverse events and indications",
+        "Minimum data elements: identifiable reporter, identifiable patient, suspected product, adverse event",
+        "Transmission to EudraVigilance (EMA), FAERS (FDA), PMDA safety reporting system",
+        "Narrative section requirements for case description",
+        "Causality assessment per Naranjo or WHO-UMC system"
+      ],
+      "compliance_criteria": {
+        "critical": ["ICSR reporting system capability established", "MedDRA coding system implemented"],
+        "major": ["E2B(R3) format validation", "Reporter and patient identifiability criteria met"],
+        "minor": ["Narrative quality standards defined"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E2C_R2": {
+      "code": "ICH E2C(R2)",
+      "title": "Periodic Benefit-Risk Evaluation Report (PBRER)",
+      "url": "https://database.ich.org/sites/default/files/E2C_R2_Guideline.pdf",
+      "effective_date": "2012-12-17",
+      "focus": "Periodic safety reporting during post-approval and development lifecycle",
+      "key_requirements": [
+        "Replaces PSUR (Periodic Safety Update Report) with enhanced benefit-risk evaluation",
+        "Data lock points aligned with International Birth Date (IBD)",
+        "Cumulative and interval safety data analysis",
+        "Benefit-risk evaluation framework per ICH E2C(R2) Section V",
+        "Signal detection and evaluation of new safety information",
+        "Risk management plan integration",
+        "Submission to all ICH regulatory authorities"
+      ],
+      "compliance_criteria": {
+        "critical": ["PBRER submission plan documented", "Benefit-risk assessment methodology defined"],
+        "major": ["Data lock point schedule established", "Signal detection methodology in place"],
+        "minor": ["PBRER format aligned with ICH E2C(R2) template"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E2D": {
+      "code": "ICH E2D",
+      "title": "Post-Approval Safety Data Management: Definitions and Standards for Expedited Reporting",
+      "url": "https://database.ich.org/sites/default/files/E2D_Guideline.pdf",
+      "effective_date": "2003-11-12",
+      "focus": "Post-marketing safety data collection, evaluation, and expedited reporting standards",
+      "key_requirements": [
+        "Expedited reporting of serious unexpected ADRs from any source (spontaneous, literature, studies)",
+        "15-day reporting for all serious unexpected post-marketing ADRs",
+        "7-day reporting for fatal or life-threatening ADRs",
+        "Literature monitoring for safety signals",
+        "Stimulated reporting vs. spontaneous reporting distinction",
+        "Minimum criteria for valid ICSR in post-marketing setting"
+      ],
+      "compliance_criteria": {
+        "critical": ["Post-marketing safety reporting procedures established", "Expedited reporting timelines defined"],
+        "major": ["Literature monitoring system in place", "Safety database for aggregate analysis"],
+        "minor": ["Reporting criteria documented for different ADR sources"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E2E": {
+      "code": "ICH E2E",
+      "title": "Pharmacovigilance Planning",
+      "url": "https://database.ich.org/sites/default/files/E2E_Guideline.pdf",
+      "effective_date": "2004-11-18",
+      "focus": "Safety specification and pharmacovigilance plan development for regulatory submission",
+      "key_requirements": [
+        "Safety specification summarising known and potential risks, missing information",
+        "Pharmacovigilance plan addressing safety concerns",
+        "Risk management measures: routine and additional",
+        "Integration with risk management plan (RMP for EMA) or REMS (FDA)",
+        "Post-marketing study commitments for safety monitoring"
+      ],
+      "compliance_criteria": {
+        "critical": ["Safety specification developed based on pre-approval data", "Pharmacovigilance plan submitted with registration application"],
+        "major": ["Key safety concerns identified and mitigation planned", "Post-marketing study design pre-specified"],
+        "minor": ["Routine pharmacovigilance measures documented"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    }
+  },
+  "additional_efficacy_guidelines": {
+    "E12": {
+      "code": "ICH E12",
+      "title": "Clinical Evaluation by Therapeutic Category — Principles",
+      "url": "https://database.ich.org/sites/default/files/E12A_Guideline.pdf",
+      "focus": "General principles for clinical evaluation structured by therapeutic category",
+      "key_requirements": [
+        "Dose-finding rationale per therapeutic category",
+        "Control group selection adapted to disease area",
+        "Endpoint selection relevant to therapeutic area",
+        "Safety database size guidance by therapeutic category",
+        "Cross-reference to therapeutic area-specific annexes"
+      ],
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E15": {
+      "code": "ICH E15",
+      "title": "Definitions for Genomic Biomarkers, Pharmacogenomics, Pharmacogenetics, Genomic Data and Sample Coding Categories",
+      "url": "https://database.ich.org/sites/default/files/E15_Guideline.pdf",
+      "effective_date": "2007-11-01",
+      "focus": "Standardized terminology for pharmacogenomics in drug development",
+      "key_requirements": [
+        "Definitions: genomic biomarker, pharmacogenomics, pharmacogenetics, DNA/RNA sample categories",
+        "Coding categories for genomic data: identified, coded, anonymized",
+        "Framework for genomic biomarker use in clinical trials",
+        "Consent requirements for genomic sample collection"
+      ],
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E16": {
+      "code": "ICH E16",
+      "title": "Biomarkers Related to Drug or Biotechnology Product Development: Context, Structure, and Format of Qualification Submissions",
+      "url": "https://database.ich.org/sites/default/files/E16_Guideline.pdf",
+      "effective_date": "2010-08-17",
+      "focus": "Biomarker qualification process for regulatory acceptance across ICH regions",
+      "key_requirements": [
+        "Context of Use (COU) definition for biomarker qualification",
+        "Submission format for biomarker qualification: rationale, evidence, COU statement",
+        "Evidentiary standards for biomarker validation",
+        "Biomarker qualification applicable to safety and efficacy biomarkers",
+        "Accepted qualifications applicable across ICH regions"
+      ],
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "E18": {
+      "code": "ICH E18",
+      "title": "Genomic Sampling and Management of Genomic Data",
+      "url": "https://database.ich.org/sites/default/files/E18_Guideline.pdf",
+      "effective_date": "2017-08-11",
+      "focus": "Practical guidance on genomic sample collection, storage, and data management in clinical trials",
+      "key_requirements": [
+        "Informed consent for genomic sampling: specific, broad, or tiered consent models",
+        "Sample collection: timing, handling, storage, and shipping requirements",
+        "Data management: privacy, coding, access controls, data sharing",
+        "Biobank governance and sample retention policies",
+        "Pharmacogenomic data reporting in regulatory submissions"
+      ],
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    }
+  },
+  "quality_guidelines": {
+    "Q1A_R2": {
+      "code": "ICH Q1A(R2)",
+      "title": "Stability Testing of New Drug Substances and Products",
+      "url": "https://database.ich.org/sites/default/files/Q1A%28R2%29%20Guideline.pdf",
+      "focus": "Stability study design, storage conditions, shelf life determination",
+      "key_requirements": [
+        "Long-term stability: 25°C/60% RH for 12 months minimum at submission",
+        "Accelerated stability: 40°C/75% RH for 6 months",
+        "Photostability per ICH Q1B",
+        "Stress testing for degradation pathway identification",
+        "Stability-indicating analytical methods required",
+        "Statistical analysis of stability data for shelf life extrapolation"
+      ],
+      "compliance_criteria": {
+        "critical": ["Long-term and accelerated stability data available at filing"],
+        "major": ["Photostability study completed", "Stability-indicating method validated"],
+        "minor": ["Stress testing completed for degradation pathway understanding"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "Q5E": {
+      "code": "ICH Q5E",
+      "title": "Comparability of Biotechnological/Biological Products",
+      "url": "https://database.ich.org/sites/default/files/Q5E_Guideline.pdf",
+      "focus": "Comparability assessment for manufacturing changes to biologics",
+      "key_requirements": [
+        "Comparability exercise required for manufacturing process changes",
+        "Analytical comparability: head-to-head comparison of quality attributes",
+        "Non-clinical and clinical comparability may be required depending on change magnitude",
+        "Risk-based approach to determine extent of comparability studies needed",
+        "Applicable to all biotechnology-derived products (mAbs, proteins, vaccines)"
+      ],
+      "compliance_criteria": {
+        "critical": ["Comparability protocol defined for planned manufacturing changes"],
+        "major": ["Analytical methods for comparability validated", "Acceptance criteria pre-defined"],
+        "minor": ["Comparability assessment strategy aligned with product lifecycle"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "Q8_R2": {
+      "code": "ICH Q8(R2)",
+      "title": "Pharmaceutical Development",
+      "url": "https://database.ich.org/sites/default/files/Q8_R2_Guideline.pdf",
+      "focus": "Quality by Design, design space, critical quality attributes",
+      "key_requirements": [
+        "Quality by Design (QbD) approach: systematic development based on sound science",
+        "Quality Target Product Profile (QTPP) definition",
+        "Critical Quality Attributes (CQAs) identification and justification",
+        "Design space establishment through multivariate experiments",
+        "Control strategy development based on product and process understanding",
+        "Real-time release testing and PAT (Process Analytical Technology)"
+      ],
+      "compliance_criteria": {
+        "critical": ["CQAs identified and justified", "Control strategy defined"],
+        "major": ["QTPP documented", "Design space established where applicable"],
+        "minor": ["QbD principles applied in formulation development"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "Q9_R1": {
+      "code": "ICH Q9(R1)",
+      "title": "Quality Risk Management",
+      "url": "https://database.ich.org/sites/default/files/ICH_Q9(R1)_Guideline_Step4_2023_0119.pdf",
+      "effective_date": "2023-01-19",
+      "focus": "Risk assessment tools, FMEA, HACCP for pharma manufacturing",
+      "key_requirements": [
+        "Quality risk management principles throughout product lifecycle",
+        "Risk assessment tools: FMEA, FMECA, HACCP, FTA, HAZOP",
+        "Risk identification, analysis, evaluation, control, review cycle",
+        "R1 update: addresses subjectivity in risk assessment, formalised risk management",
+        "Integration with pharmaceutical quality system (ICH Q10)",
+        "Application to GMP, regulatory decisions, and development activities"
+      ],
+      "compliance_criteria": {
+        "critical": ["Risk management methodology documented and applied"],
+        "major": ["Risk tools appropriate to complexity of decision", "Risk review and communication processes established"],
+        "minor": ["Risk management training for relevant personnel"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "Q10": {
+      "code": "ICH Q10",
+      "title": "Pharmaceutical Quality System",
+      "url": "https://database.ich.org/sites/default/files/Q10_Guideline.pdf",
+      "focus": "Lifecycle approach to GMP, knowledge management, continual improvement",
+      "key_requirements": [
+        "Pharmaceutical Quality System (PQS) across product lifecycle",
+        "Management responsibility and commitment",
+        "Knowledge management: systematic approach to acquiring and sharing knowledge",
+        "Continual improvement through CAPA, change management, management review",
+        "Process performance and product quality monitoring",
+        "Integration with GMP and ICH Q8/Q9"
+      ],
+      "compliance_criteria": {
+        "critical": ["PQS documented and implemented"],
+        "major": ["Knowledge management system in place", "CAPA system functional"],
+        "minor": ["Management review conducted periodically"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "Q12": {
+      "code": "ICH Q12",
+      "title": "Technical and Regulatory Considerations for Pharmaceutical Product Lifecycle Management",
+      "url": "https://database.ich.org/sites/default/files/Q12_Step4_Guideline_2019_1119.pdf",
+      "effective_date": "2019-11-19",
+      "focus": "Post-approval changes, established conditions, regulatory flexibility",
+      "key_requirements": [
+        "Established Conditions (ECs): elements requiring regulatory notification for changes",
+        "Post-Approval Change Management Protocols (PACMPs)",
+        "Product Lifecycle Management (PLCM) approach",
+        "Categorisation of post-approval changes based on risk",
+        "Regulatory flexibility for well-understood products",
+        "Knowledge management for lifecycle decisions"
+      ],
+      "compliance_criteria": {
+        "critical": ["ECs identified in registration dossier"],
+        "major": ["Change management protocol for anticipated changes", "Risk-based categorisation of changes"],
+        "minor": ["PLCM approach documented"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    }
+  },
+  "multidisciplinary_guidelines": {
+    "M4": {
+      "code": "ICH M4",
+      "title": "Common Technical Document (CTD)",
+      "url": "https://database.ich.org/sites/default/files/M4_Guideline.pdf",
+      "focus": "Standard registration dossier format: Module 1-5",
+      "key_requirements": [
+        "Module 1: Administrative Information (region-specific)",
+        "Module 2: Quality Overall Summary, Non-clinical Overview, Clinical Overview",
+        "Module 3: Quality (CMC data)",
+        "Module 4: Non-clinical Study Reports",
+        "Module 5: Clinical Study Reports",
+        "eCTD electronic submission format required by all major regulators"
+      ],
+      "compliance_criteria": {
+        "critical": ["CTD structure followed for all submissions"],
+        "major": ["Module 2 summaries and overviews complete", "eCTD format used"],
+        "minor": ["Hyperlinks and cross-references functional in eCTD"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "M4E_R2": {
+      "code": "ICH M4E(R2)",
+      "title": "CTD — Efficacy",
+      "url": "https://database.ich.org/sites/default/files/M4E_R2__Guideline.pdf",
+      "focus": "Module 5 clinical overview, clinical summary, tabular summaries",
+      "key_requirements": [
+        "Module 2.5: Clinical Overview — integrated benefit-risk assessment",
+        "Module 2.7: Clinical Summary — biopharmaceutics, PK, efficacy, safety tabular summaries",
+        "Module 5.3: Clinical Study Reports organized by type",
+        "Tabular format for demographic, efficacy, and safety summaries",
+        "Individual patient data listings in appendices"
+      ],
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "M7_R2": {
+      "code": "ICH M7(R2)",
+      "title": "Assessment and Control of DNA Reactive Impurities",
+      "url": "https://database.ich.org/sites/default/files/M7_R2_Guideline.pdf",
+      "focus": "Mutagenic impurity risk assessment, TTC, Ames test data",
+      "key_requirements": [
+        "Risk assessment framework for mutagenic impurities in drug substances and products",
+        "Threshold of Toxicological Concern (TTC): 1.5 μg/day lifetime intake limit",
+        "Less-than-lifetime exposure limits: higher limits for shorter durations",
+        "In silico and Ames test for mutagenicity assessment",
+        "Control strategies: avoid, control, or purge-based approaches",
+        "Cohort of Concern: specific structural alerts requiring lower limits"
+      ],
+      "compliance_criteria": {
+        "critical": ["Mutagenic impurity risk assessment completed before Phase I"],
+        "major": ["TTC-based limits applied or justified alternatives", "Control strategy documented"],
+        "minor": ["In silico assessment tools validated and documented"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "M11": {
+      "code": "ICH M11",
+      "title": "Clinical Electronic Structured Harmonised Protocol (CeSHarP)",
+      "url": "https://database.ich.org/sites/default/files/ICH_M11_Step4_Guideline_2024_1121.pdf",
+      "effective_date": "2024-11-21",
+      "focus": "Standardized electronic protocol template and structure",
+      "key_requirements": [
+        "Common protocol template structure for all ICH regions",
+        "Machine-readable protocol elements for automated processing",
+        "Standard sections: Title Page, Synopsis, Schedule of Activities, Introduction, Objectives/Estimands, Study Design, Study Population, Study Intervention, Assessments, Statistical Considerations, Oversight",
+        "Harmonized terminology and definitions across ICH regions",
+        "Digital protocol enabling automated regulatory review",
+        "Protocol amendments structured consistently",
+        "Alignment with CDISC standards for data collection"
+      ],
+      "sections": {
+        "1": "Title Page and Protocol Identification",
+        "2": "Protocol Synopsis",
+        "3": "Schedule of Activities",
+        "4": "Introduction — Disease Background, Study Rationale, Benefit-Risk",
+        "5": "Objectives, Endpoints, and Estimands",
+        "6": "Study Design — description, schematic, scientific rationale",
+        "7": "Study Population — eligibility criteria, lifestyle restrictions",
+        "8": "Study Intervention — investigational product, concomitant therapy",
+        "9": "Discontinuation — participant, study intervention, study",
+        "10": "Study Assessments and Procedures",
+        "11": "Adverse Events, SAEs, Pregnancy",
+        "12": "Statistical Considerations",
+        "13": "Supporting Documentation and Operational Considerations",
+        "14": "References"
+      },
+      "compliance_criteria": {
+        "critical": ["Protocol follows M11 section structure", "Estimand framework included in objectives section"],
+        "major": ["Schedule of Activities complete and consistent", "Machine-readable elements populated"],
+        "minor": ["CDISC alignment for data collection elements"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    },
+    "M14": {
+      "code": "ICH M14",
+      "title": "General Principles on Real World Data/Evidence",
+      "url": "https://database.ich.org/sites/default/files/ICH_M14_Step2_DraftGuideline_2024_0627.pdf",
+      "effective_date": "2024-06-27",
+      "step": "Step 2 (Draft)",
+      "focus": "Use of real-world data and real-world evidence in regulatory decisions",
+      "key_requirements": [
+        "Definitions: Real-World Data (RWD), Real-World Evidence (RWE)",
+        "RWD sources: electronic health records, claims data, registries, wearables, patient-generated data",
+        "Fitness-for-purpose assessment of RWD for regulatory use",
+        "Data quality requirements: completeness, accuracy, timeliness, relevance",
+        "Study design considerations for RWE generation: target trial emulation, pragmatic trials",
+        "Regulatory applications: new indications, safety monitoring, effectiveness confirmation",
+        "Governance, data access, and privacy considerations"
+      ],
+      "compliance_criteria": {
+        "critical": ["RWD fitness-for-purpose assessment documented if RWE used"],
+        "major": ["Data quality framework applied", "Study design aligned with regulatory question"],
+        "minor": ["RWD governance and privacy measures documented"]
+      },
+      "jurisdictions_applicable": ["FDA", "EMA", "PMDA", "NMPA", "Health_Canada", "MHRA"]
+    }
+  }
+}

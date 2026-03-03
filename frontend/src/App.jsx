@@ -11,6 +11,7 @@ import PastAnalysisView from './components/PastAnalysisView';
 import AdminAnalyticsView from './components/AdminAnalyticsView';
 import ConfigurationView from './components/ConfigurationView';
 import KnowledgeBaseView from './components/KnowledgeBaseView';
+import ComparisonView from './components/ComparisonView';
 import { UploadDialog } from './components/UploadDialog';
 import Toast from './components/Toast';
 import { useAppStore, useDocuments, useAnalysis } from './stores/useAppStore';
@@ -23,6 +24,11 @@ function DashboardLayout() {
   useThemeInit(); // Apply light/dark/system theme from user preferences
   const [activeTab, setActiveTab] = useState('analysis');
   const [showUpload, setShowUpload] = useState(false);
+  const [editorCollapsed, setEditorCollapsed] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(480);
+  const isDraggingRef = React.useRef(false);
+  const startXRef = React.useRef(0);
+  const startWidthRef = React.useRef(480);
 
   const { currentDocument, documents } = useDocuments();
   const { isAnalyzing, lastAnalysis } = useAnalysis();
@@ -35,6 +41,28 @@ function DashboardLayout() {
   const showToast = useAppStore((state) => state.showToast);
 
   const hasAnalyzed = !!lastAnalysis;
+
+  // Helper: re-fetch document list from backend (source of truth)
+  const _refreshDocuments = useCallback(async () => {
+    try {
+      const docs = await documentService.listDocuments();
+      setDocuments(docs);
+      // If current document was deleted on the backend, clear it
+      if (currentDocument && !docs.find((d) => d.id === currentDocument.id)) {
+        setCurrentDocument(docs.length > 0 ? docs[0] : null);
+        setLastAnalysis(null);
+      }
+      // If current document status changed (e.g. worker finished), update it
+      if (currentDocument) {
+        const updated = docs.find((d) => d.id === currentDocument.id);
+        if (updated && updated.status !== currentDocument.status) {
+          setCurrentDocument(updated);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh documents:', err);
+    }
+  }, [currentDocument, setDocuments, setCurrentDocument, setLastAnalysis]);
 
   // Load user documents on mount
   useEffect(() => {
@@ -52,6 +80,13 @@ function DashboardLayout() {
     };
     loadDocuments();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Periodic background refresh: picks up status changes from workers
+  // (e.g. analysis completing in background, error states, etc.)
+  useEffect(() => {
+    const interval = setInterval(_refreshDocuments, 15000); // every 15s
+    return () => clearInterval(interval);
+  }, [_refreshDocuments]);
 
   // Auto-load analysis results when selecting a previously analyzed document
   const updateDocument = useAppStore((state) => state.updateDocument);
@@ -73,7 +108,7 @@ function DashboardLayout() {
   // In production: analysis runs via SQS → Worker Lambda, frontend polls with backoff
   const handleAnalyze = useCallback(async () => {
     if (!currentDocument) {
-      showToast({ type: 'error', title: 'No document', message: 'Upload or select a document first.' });
+      showToast({ type: 'error', title: 'No protocol selected', message: 'Upload or select a clinical trial protocol first.' });
       return;
     }
     setIsAnalyzing(true);
@@ -92,8 +127,10 @@ function DashboardLayout() {
         setLastAnalysis(results);
         updateDocument(currentDocument.id, { status: 'analyzed' });
         setActiveTab('analysis');
-        showToast({ type: 'success', title: 'Analysis complete', message: 'Conflict detection finished.' });
-        return;
+        showToast({ type: 'success', title: 'Regulatory analysis complete', message: 'Your protocol has been reviewed. View compliance findings in the Findings tab.' });
+        // Refresh document list to get consistent state from backend
+        _refreshDocuments();
+        return; // Don't fall through to polling
       }
 
       // ── Case: SQS-queued (production) — poll with backoff ──
@@ -108,7 +145,7 @@ function DashboardLayout() {
 
       if (status === 'FAILED') throw new Error('Analysis failed');
       if (status !== 'COMPLETE') {
-        showToast({ type: 'info', title: 'Analysis still processing', message: 'Running in the background. Check back shortly.' });
+        showToast({ type: 'info', title: 'Analysis in progress', message: 'Your protocol is being reviewed in the background. Results will appear shortly.' });
         return;
       }
 
@@ -117,17 +154,21 @@ function DashboardLayout() {
       setLastAnalysis(results);
       updateDocument(currentDocument.id, { status: 'analyzed' });
       setActiveTab('analysis');
-      showToast({ type: 'success', title: 'Analysis complete', message: 'Conflict detection finished.' });
+      showToast({ type: 'success', title: 'Regulatory analysis complete', message: 'Protocol review finished. Check the Findings tab for compliance results.' });
+      // Refresh document list from backend for consistency
+      _refreshDocuments();
     } catch (err) {
       updateDocument(currentDocument.id, { status: 'error' });
-      showToast({ type: 'error', title: 'Analysis failed', message: err.message });
+      showToast({ type: 'error', title: 'Analysis failed', message: err.message || 'The regulatory analysis could not be completed. Please try again.' });
+      // Refresh document list to get backend truth (may have been set to 'error' by worker)
+      _refreshDocuments();
     } finally {
       setIsAnalyzing(false);
     }
   }, [currentDocument, setIsAnalyzing, setLastAnalysis, showToast]);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 selection:bg-brand-100 selection:text-brand-900">
+    <div className="flex h-screen w-full overflow-hidden bg-slate-100 selection:bg-brand-100 selection:text-brand-900">
       <Sidebar
         onUpload={() => setShowUpload(true)}
         onSelectDocument={setCurrentDocument}
@@ -163,18 +204,83 @@ function DashboardLayout() {
           <main className="flex-1 overflow-hidden">
             <KnowledgeBaseView />
           </main>
+        ) : activeView === 'comparison' ? (
+          <main className="flex-1 overflow-hidden">
+            <ComparisonView />
+          </main>
         ) : activeView === 'settings' ? (
           <main className="flex-1 overflow-hidden">
             <ConfigurationView />
           </main>
         ) : (
-          /* Protocol view — editor + intelligence panel */
+          /* Protocol view — editor + intelligence panel with resizable divider */
           <main className="flex-1 flex overflow-hidden relative">
-            <div className="flex-1 relative z-0">
+            {/* Sliding Document Viewer */}
+            <div
+              className="relative z-0 min-w-0 overflow-hidden transition-all duration-300 ease-in-out"
+              style={{
+                flex: editorCollapsed ? '0 0 0px' : '1 1 0%',
+                minWidth: editorCollapsed ? 0 : '280px',
+                opacity: editorCollapsed ? 0 : 1,
+              }}
+            >
               <EditorWindow hasAnalyzed={hasAnalyzed} currentDocument={currentDocument} />
             </div>
 
-            <div className="w-[480px] bg-white border-l border-slate-200 shadow-xl flex flex-col z-10">
+            {/* Resizable Divider Handle */}
+            <div
+              className="relative z-20 w-2 flex-shrink-0 cursor-col-resize group select-none"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                isDraggingRef.current = true;
+                startXRef.current = e.clientX;
+                startWidthRef.current = panelWidth;
+                const onMove = (ev) => {
+                  if (!isDraggingRef.current) return;
+                  const delta = startXRef.current - ev.clientX;
+                  const newWidth = Math.min(Math.max(startWidthRef.current + delta, 380), 900);
+                  setPanelWidth(newWidth);
+                };
+                const onUp = () => {
+                  isDraggingRef.current = false;
+                  document.removeEventListener('mousemove', onMove);
+                  document.removeEventListener('mouseup', onUp);
+                  document.body.style.cursor = '';
+                  document.body.style.userSelect = '';
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+              }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-px h-full bg-slate-200 group-hover:bg-brand-400 transition-colors" />
+              </div>
+              {/* Toggle button embedded in divider */}
+              <button
+                onClick={() => setEditorCollapsed(!editorCollapsed)}
+                className="absolute top-1/2 -translate-y-1/2 -left-3 z-30 w-6 h-10 bg-white border border-slate-200 rounded-md shadow-sm flex items-center justify-center hover:bg-slate-50 hover:border-brand-300 transition-all"
+                title={editorCollapsed ? 'Show document panel' : 'Hide document panel'}
+              >
+                <svg
+                  className={`w-3 h-3 text-slate-400 transition-transform ${editorCollapsed ? 'rotate-180' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Intelligence Panel — uses set width or expands when editor is collapsed */}
+            <div
+              className="bg-white border-l border-slate-200/80 shadow-lg flex flex-col z-10 transition-all duration-300 overflow-hidden"
+              style={{
+                width: editorCollapsed ? '100%' : `${panelWidth}px`,
+                minWidth: '380px',
+                flex: editorCollapsed ? '1 1 0%' : 'none',
+              }}
+            >
               <IntelligencePanel
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}

@@ -23,9 +23,12 @@ class ChatFeedbackRequest(BaseModel):
 class Citation(BaseModel):
     text: str = ""
     source: str = ""
+    source_type: Optional[str] = None
+    url: Optional[str] = None
     page: Optional[int] = None
     section: Optional[str] = None
     score: Optional[float] = None
+    s3_uri: Optional[str] = None
 
 
 class ChatMessageResponse(BaseModel):

@@ -1,0 +1,161 @@
+{
+  "metadata": {
+    "title": "Master Citation Reference Database — NIX AI",
+    "version": "2.0",
+    "last_updated": "2026-03-01",
+    "description": "Comprehensive citation database with verified URLs, section references, and validity dates. Used to ground all NIX AI responses with authoritative, traceable citations."
+  },
+  "citation_categories": {
+    "ich_guidelines": {
+      "description": "ICH Harmonised Guidelines — authoritative global regulatory standards",
+      "citations": [
+        {"code": "ICH E6(R3)", "title": "Good Clinical Practice", "url": "https://database.ich.org/sites/default/files/ICH_E6%28R3%29_Step4_FinalGuideline_2025_0106_ErrorCorrections_2025_1024.pdf", "type": "PDF", "valid_from": "2025-01-06", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E8(R1)", "title": "General Considerations for Clinical Studies", "url": "https://database.ich.org/sites/default/files/ICH_E8-R1_Guideline_Step4_2021_1006.pdf", "type": "PDF", "valid_from": "2021-10-06", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E9(R1)", "title": "Statistical Principles — Estimands Addendum", "url": "https://database.ich.org/sites/default/files/E9-R1_Step4_Guideline_2019_1203.pdf", "type": "PDF", "valid_from": "2019-12-03", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E10", "title": "Choice of Control Group", "url": "https://database.ich.org/sites/default/files/E10_Guideline.pdf", "type": "PDF", "valid_from": "2000-07-20", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E17", "title": "Multi-Regional Clinical Trials", "url": "https://database.ich.org/sites/default/files/E17EWG_Step4_2017_1116.pdf", "type": "PDF", "valid_from": "2017-11-16", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E20", "title": "Adaptive Clinical Trials", "url": "https://database.ich.org/sites/default/files/ICH_E20EWG_Step3_DraftGuideline_2025_0627.pdf", "type": "PDF", "valid_from": "2025-06-27", "issuer": "ICH", "authority_level": "high", "note": "Step 3 Draft"},
+        {"code": "ICH E1", "title": "Population Exposure Assessment", "url": "https://database.ich.org/sites/default/files/E1_Guideline.pdf", "type": "PDF", "valid_from": "1994-10-27", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E2A", "title": "Clinical Safety Data Management", "url": "https://database.ich.org/sites/default/files/E2A_Guideline.pdf", "type": "PDF", "valid_from": "1994-10-27", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E2B(R3)", "title": "Individual Case Safety Reports (ICSRs) — Electronic Transmission", "url": "https://database.ich.org/sites/default/files/E2B_R3_Guideline.pdf", "type": "PDF", "valid_from": "2013-11-12", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E2C(R2)", "title": "Periodic Benefit-Risk Evaluation Report (PBRER)", "url": "https://database.ich.org/sites/default/files/E2C_R2_Guideline.pdf", "type": "PDF", "valid_from": "2012-12-17", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E2F", "title": "Development Safety Update Report", "url": "https://database.ich.org/sites/default/files/E2F_Guideline.pdf", "type": "PDF", "valid_from": "2010-08-17", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E3", "title": "Clinical Study Reports", "url": "https://database.ich.org/sites/default/files/E3_Guideline.pdf", "type": "PDF", "valid_from": "1995-11-30", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E4", "title": "Dose-Response Information", "url": "https://database.ich.org/sites/default/files/E4_Guideline.pdf", "type": "PDF", "valid_from": "1994-03-10", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E5(R1)", "title": "Ethnic Factors / Bridging Studies", "url": "https://database.ich.org/sites/default/files/E5_R1__Guideline.pdf", "type": "PDF", "valid_from": "1998-02-05", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E7", "title": "Geriatric Populations", "url": "https://database.ich.org/sites/default/files/E7_Guideline.pdf", "type": "PDF", "valid_from": "1993-09-24", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E11(R1)", "title": "Pediatric Populations", "url": "https://database.ich.org/sites/default/files/E11_R1_Addendum.pdf", "type": "PDF", "valid_from": "2017-08-11", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E12", "title": "Dose-Response in Clinical Pharmacology", "url": "https://database.ich.org/sites/default/files/E12_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E14", "title": "QT/QTc Interval Assessment", "url": "https://database.ich.org/sites/default/files/E14_Guideline.pdf", "type": "PDF", "valid_from": "2005-05-12", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E15", "title": "Pharmacogenomics Definitions", "url": "https://database.ich.org/sites/default/files/E15_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E16", "title": "Genomic Biomarker Qualification", "url": "https://database.ich.org/sites/default/files/E16_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E18", "title": "Genomic Sampling and Biobanking", "url": "https://database.ich.org/sites/default/files/E18_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E19", "title": "Selective Safety Data Collection", "url": "https://database.ich.org/sites/default/files/ICH_E19_Guideline_Step4_2022_0826_0.pdf", "type": "PDF", "valid_from": "2022-08-26", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH E22", "title": "Patient Preference Studies", "url": "https://database.ich.org/sites/default/files/ICH_E22_Step2_draftGuideline_Assembly_Endorsed_FINAL_2025_1119.pdf", "type": "PDF", "valid_from": "2025-11-19", "issuer": "ICH", "authority_level": "high", "note": "Step 2 Draft"},
+        {"code": "ICH M4E(R2)", "title": "CTD Efficacy Module 5", "url": "https://database.ich.org/sites/default/files/M4E_R2_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH M7(R2)", "title": "Mutagenic Impurities Assessment", "url": "https://database.ich.org/sites/default/files/M7_R2_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH M11", "title": "CeSHarP — Harmonised Protocol Template", "url": "https://database.ich.org/sites/default/files/ICH_M11_Step4_Guideline_2024_1121.pdf", "type": "PDF", "valid_from": "2024-11-21", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH M14", "title": "Use of Real-World Data for Clinical Evidence", "url": "https://database.ich.org/sites/default/files/ICH_M14_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH S1A", "title": "Carcinogenicity Assessment Need", "url": "https://database.ich.org/sites/default/files/S1A_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH S2(R1)", "title": "Genotoxicity Testing", "url": "https://database.ich.org/sites/default/files/S2_R1_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH S5(R3)", "title": "Reproductive Toxicology", "url": "https://database.ich.org/sites/default/files/S5_R3_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH S6(R1)", "title": "Biotechnology-Derived Pharmaceuticals Safety", "url": "https://database.ich.org/sites/default/files/S6_R1_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH S7B", "title": "Non-clinical QT/QTc Evaluation", "url": "https://database.ich.org/sites/default/files/S7B_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH S9", "title": "Anticancer Pharmaceuticals Non-clinical Evaluation", "url": "https://database.ich.org/sites/default/files/S9_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH Q8(R2)", "title": "Pharmaceutical Development", "url": "https://database.ich.org/sites/default/files/Q8_R2_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH Q9(R1)", "title": "Quality Risk Management", "url": "https://database.ich.org/sites/default/files/Q9_R1_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH Q10", "title": "Pharmaceutical Quality System", "url": "https://database.ich.org/sites/default/files/Q10_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"},
+        {"code": "ICH Q12", "title": "Lifecycle Management", "url": "https://database.ich.org/sites/default/files/Q12_Guideline.pdf", "type": "PDF", "issuer": "ICH", "authority_level": "highest"}
+      ]
+    },
+    "fda_guidance": {
+      "description": "FDA Guidance Documents — U.S. regulatory standards",
+      "citations": [
+        {"code": "FDA Adaptive Designs", "title": "Adaptive Designs for Clinical Trials of Drugs and Biologics", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adaptive-designs-clinical-trials-drugs-and-biologics-guidance-industry", "type": "Web", "year": 2019, "issuer": "FDA CDER/CBER", "authority_level": "highest"},
+        {"code": "FDA NI Trials", "title": "Non-Inferiority Clinical Trials to Establish Effectiveness", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/non-inferiority-clinical-trials-establish-effectiveness", "type": "Web", "year": 2016, "issuer": "FDA CDER", "authority_level": "highest"},
+        {"code": "FDA Master Protocols", "title": "Master Protocols: Efficient Clinical Trial Design Strategies", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/master-protocols-efficient-clinical-trial-design-strategies-expedite-development-oncology-drugs-and", "type": "Web", "year": 2022, "issuer": "FDA CDER/CBER", "authority_level": "highest"},
+        {"code": "FDA Oncology Endpoints", "title": "Clinical Trial Endpoints for Cancer Drug Approval", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/clinical-trial-endpoints-approval-cancer-drugs-and-biologics", "type": "Web", "year": 2018, "issuer": "FDA CDER/CBER", "authority_level": "highest"},
+        {"code": "FDA PRO Guidance", "title": "Patient-Reported Outcome Measures", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/patient-reported-outcome-measures-use-medical-product-development-support-labeling-claims", "type": "Web", "year": 2009, "issuer": "FDA CDER", "authority_level": "highest"},
+        {"code": "FDA Multiple Endpoints", "title": "Multiple Endpoints in Clinical Trials", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/multiple-endpoints-clinical-trials-guidance-industry", "type": "Web", "year": 2022, "issuer": "FDA CDER/CBER", "authority_level": "highest"},
+        {"code": "FDA DCT Guidance", "title": "Decentralized Clinical Trials for Drugs, Biologics, Devices", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/decentralized-clinical-trials-drugs-biological-products-and-devices", "type": "Web", "year": 2024, "issuer": "FDA", "authority_level": "highest"},
+        {"code": "FDA IND Safety", "title": "Safety Reporting Requirements for INDs", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/safety-reporting-requirements-inds-and-babe-studies", "type": "Web", "year": 2012, "issuer": "FDA CDER/CBER", "authority_level": "highest"},
+        {"code": "FDA Enrichment", "title": "Enrichment Strategies for Clinical Trials", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/enrichment-strategies-clinical-trials-support-approval-human-drugs-and-biological-products", "type": "Web", "year": 2019, "issuer": "FDA CDER/CBER", "authority_level": "highest"},
+        {"code": "FDA Rare Diseases", "title": "Rare Diseases: Common Issues in Drug Development", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/rare-diseases-common-issues-drug-development-guidance-industry", "type": "Web", "year": 2019, "issuer": "FDA CDER", "authority_level": "highest"},
+        {"code": "FDA RWE Framework", "title": "Framework for FDA's Real-World Evidence Program", "url": "https://www.fda.gov/science-research/science-and-research-special-topics/real-world-evidence", "type": "Web", "year": 2018, "issuer": "FDA", "authority_level": "highest"},
+        {"code": "FDA External Controls", "title": "Externally Controlled Trials Design and Conduct", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/considerations-design-and-conduct-externally-controlled-trials-drug-and-biological-products", "type": "Web", "year": 2023, "issuer": "FDA CDER/CBER", "authority_level": "highest"},
+        {"code": "FDA Diversity Plans", "title": "Diversity Plans to Improve Enrollment in Clinical Trials", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/diversity-plans-improve-enrollment-participants-underrepresented-populations-clinical-studies", "type": "Web", "year": 2024, "issuer": "FDA", "authority_level": "highest"},
+        {"code": "FDA AI/ML Drug Dev", "title": "Artificial Intelligence and Machine Learning in Drug Development", "url": "https://www.fda.gov/science-research/science-and-research-special-topics/artificial-intelligence-and-machine-learning-drug-development", "type": "Web", "year": 2023, "issuer": "FDA", "authority_level": "high"},
+        {"code": "FDA Project Optimus", "title": "Project Optimus: Reforming the Dose Optimization and Selection Paradigm", "url": "https://www.fda.gov/about-fda/oncology-center-excellence/project-optimus", "type": "Web", "year": 2022, "issuer": "FDA OCE", "authority_level": "highest"},
+        {"code": "FDA Gene Therapy", "title": "Human Gene Therapy Products — Chemistry, Manufacturing, and Control (CMC)", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/chemistry-manufacturing-and-control-cmc-information-human-gene-therapy-investigational-new-drug", "type": "Web", "year": 2020, "issuer": "FDA CBER", "authority_level": "highest"},
+        {"code": "FDA Genome Editing", "title": "Human Gene Therapy Products Incorporating Human Genome Editing", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/human-gene-therapy-products-incorporating-human-genome-editing", "type": "Web", "year": 2022, "issuer": "FDA CBER", "authority_level": "highest"},
+        {"code": "FDA CAR-T REMS", "title": "FDA Requires Boxed Warning for T Cell Malignancies Following BCMA-Directed or CD19-Directed Autologous CAR T Cell Immunotherapies", "url": "https://www.fda.gov/vaccines-blood-biologics/safety-availability-biologics/fda-requires-boxed-warning-t-cell-malignancies-following-treatment-bcma-directed-or-cd19-directed", "type": "Web", "year": 2024, "issuer": "FDA CBER", "authority_level": "highest"},
+        {"code": "FDA Biosimilar Guidance", "title": "Biosimilar Development and BPCIA Procedures", "url": "https://www.fda.gov/drugs/biosimilars/biosimilar-development-review-and-approval", "type": "Web", "year": 2023, "issuer": "FDA CDER/CBER", "authority_level": "highest"},
+        {"code": "FDA eGFR CKD", "title": "Chronic Kidney Disease: Evaluation of Therapies (eGFR Endpoint)", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/chronic-kidney-disease-evaluation-treatments-endpoint-assessment", "type": "Web", "year": 2022, "issuer": "FDA CDER", "authority_level": "highest"}
+      ]
+    },
+    "fda_cfr_regulations": {
+      "description": "Code of Federal Regulations — legally binding FDA regulations",
+      "citations": [
+        {"code": "21 CFR Part 11", "title": "Electronic Records; Electronic Signatures", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-11", "type": "Web", "issuer": "FDA", "authority_level": "highest", "note": "Legally binding regulation"},
+        {"code": "21 CFR Part 50", "title": "Protection of Human Subjects (Informed Consent)", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-50", "type": "Web", "issuer": "FDA", "authority_level": "highest"},
+        {"code": "21 CFR Part 56", "title": "Institutional Review Boards", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-56", "type": "Web", "issuer": "FDA", "authority_level": "highest"},
+        {"code": "21 CFR Part 312", "title": "Investigational New Drug Application (IND)", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312", "type": "Web", "issuer": "FDA", "authority_level": "highest"},
+        {"code": "21 CFR Part 314", "title": "Applications for FDA Approval to Market a New Drug (NDA)", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314", "type": "Web", "issuer": "FDA", "authority_level": "highest"},
+        {"code": "21 CFR Parts 600/610", "title": "Biological Products (General & Standards)", "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F/part-600", "type": "Web", "issuer": "FDA", "authority_level": "highest"}
+      ]
+    },
+    "cdisc_standards": {
+      "description": "CDISC data standards required by FDA and other regulatory agencies",
+      "citations": [
+        {"code": "CDISC CDASH", "title": "Clinical Data Acquisition Standards Harmonization", "url": "https://www.cdisc.org/standards/foundational/cdash", "type": "Web", "issuer": "CDISC", "authority_level": "high"},
+        {"code": "CDISC SDTM", "title": "Study Data Tabulation Model", "url": "https://www.cdisc.org/standards/foundational/sdtm", "type": "Web", "issuer": "CDISC", "authority_level": "high"},
+        {"code": "CDISC ADaM", "title": "Analysis Data Model", "url": "https://www.cdisc.org/standards/foundational/adam", "type": "Web", "issuer": "CDISC", "authority_level": "high"},
+        {"code": "CDISC ODM", "title": "Operational Data Model (ODM-XML)", "url": "https://www.cdisc.org/standards/data-exchange/odm", "type": "Web", "issuer": "CDISC", "authority_level": "high"},
+        {"code": "FDA CDISC Mandate", "title": "FDA Data Standards Catalog — CDISC Required for NDA/BLA Submissions", "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/study-data-standards-resources", "type": "Web", "issuer": "FDA", "authority_level": "highest"}
+      ]
+    },
+    "ema_guidelines": {
+      "description": "EMA Scientific Guidelines — EU regulatory standards",
+      "citations": [
+        {"code": "EMA Biostatistics", "title": "Points to Consider on Biostatistical/Methodological Issues Arising from Recent CHMP Discussions", "url": "https://www.ema.europa.eu/en/documents/scientific-guideline/points-consider-biostatistical-methodological-issues-arising-recent-chmp-discussion-clinical-trials_en.pdf", "type": "PDF", "issuer": "EMA CHMP", "authority_level": "high"},
+        {"code": "EMA Multiplicity", "title": "Guideline on Multiplicity Issues in Clinical Trials", "url": "https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-multiplicity-issues-clinical-trials_en.pdf", "type": "PDF", "year": 2017, "issuer": "EMA CHMP", "authority_level": "high"},
+        {"code": "EMA Missing Data", "title": "Guideline on Missing Data in Confirmatory Clinical Trials", "url": "https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-missing-data-confirmatory-clinical-trials_en.pdf", "type": "PDF", "year": 2010, "issuer": "EMA CHMP", "authority_level": "high"},
+        {"code": "EU CTR", "title": "EU Clinical Trials Regulation 536/2014", "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32014R0536", "type": "Web", "year": 2014, "issuer": "European Parliament", "authority_level": "highest"},
+        {"code": "EMA PRIME", "title": "PRIME: Priority Medicines Scheme", "url": "https://www.ema.europa.eu/en/human-regulatory-overview/research-and-development/prime-priority-medicines", "type": "Web", "issuer": "EMA", "authority_level": "high"},
+        {"code": "EMA PIP", "title": "Paediatric Investigation Plans", "url": "https://www.ema.europa.eu/en/human-regulatory-overview/research-development/paediatric-medicines-research-development", "type": "Web", "issuer": "EMA PDCO", "authority_level": "high"},
+        {"code": "EMA Biosimilars", "title": "Biosimilar Medicines: Overview", "url": "https://www.ema.europa.eu/en/human-regulatory-overview/marketing-authorisation/biosimilar-medicines-overview", "type": "Web", "issuer": "EMA", "authority_level": "highest"},
+        {"code": "EMA ATMP Regulation", "title": "Advanced Therapy Medicinal Products Regulation (EC) No 1394/2007", "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32007R1394", "type": "Web", "year": 2007, "issuer": "European Parliament", "authority_level": "highest"},
+        {"code": "EMA GVP Module V", "title": "Good Pharmacovigilance Practices Module V: Risk Management Systems", "url": "https://www.ema.europa.eu/en/human-regulatory-overview/post-authorisation/pharmacovigilance/good-pharmacovigilance-practices", "type": "Web", "issuer": "EMA", "authority_level": "highest"},
+        {"code": "EU HTA Regulation", "title": "EU HTA Regulation 2021/2282 — Joint Clinical Assessment", "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32021R2282", "type": "Web", "year": 2021, "issuer": "European Parliament", "authority_level": "highest"},
+        {"code": "EU CTR 536/2014", "title": "EU Clinical Trials Regulation 536/2014", "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32014R0536", "type": "Web", "year": 2014, "issuer": "European Parliament", "authority_level": "highest"},
+        {"code": "DARWIN EU", "title": "Data Analysis and Real World Interrogation Network", "url": "https://www.darwin-eu.org", "type": "Web", "issuer": "EMA/EHDEN", "authority_level": "high"}
+      ]
+    },
+    "hta_references": {
+      "description": "Health Technology Assessment body guidelines and manuals",
+      "citations": [
+        {"code": "NICE Manual", "title": "NICE Technology Appraisal and HST Guidance: The Manual (PMG36)", "url": "https://www.nice.org.uk/process/pmg36", "type": "Web", "year": 2022, "issuer": "NICE", "authority_level": "highest"},
+        {"code": "NICE DSU", "title": "NICE Decision Support Unit Technical Support Documents", "url": "https://sheffield.ac.uk/nice-dsu/tsds/full-list", "type": "Web", "issuer": "NICE DSU / University of Sheffield", "authority_level": "high"},
+        {"code": "IQWiG Methods", "title": "IQWiG General Methods (Version 7.0)", "url": "https://www.iqwig.de/en/about-us/methods/methods-paper/", "type": "Web", "year": 2023, "issuer": "IQWiG", "authority_level": "highest"},
+        {"code": "CADTH Guidelines", "title": "Guidelines for the Economic Evaluation of Health Technologies: Canada (4th Edition)", "url": "https://www.cda-amc.ca/guidelines-economic-evaluation-health-technologies-canada", "type": "Web", "year": 2017, "issuer": "CADTH/CDA-AMC", "authority_level": "highest"},
+        {"code": "PBAC Guidelines", "title": "PBAC Guidelines for Preparing Submissions", "url": "https://www.pbs.gov.au/info/industry/listing/elements/pbac-guidelines", "type": "Web", "issuer": "PBAC", "authority_level": "highest"},
+        {"code": "HAS Methods", "title": "Haute Autorité de Santé — Assessment Methods and Framework", "url": "https://www.has-sante.fr/jcms/c_412113/fr/methodes-d-evaluation", "type": "Web", "issuer": "HAS France", "authority_level": "highest"},
+        {"code": "ICER Value Framework", "title": "ICER 2020-2023 Value Assessment Framework", "url": "https://icer.org/our-approach/methods-process/value-assessment-framework/", "type": "Web", "year": 2020, "issuer": "ICER", "authority_level": "high"},
+        {"code": "AIFA MEA Registry", "title": "AIFA Monitoring Registries for Managed Entry Agreements", "url": "https://www.aifa.gov.it/registri-e-piani-terapeutici", "type": "Web", "issuer": "AIFA Italy", "authority_level": "highest"}
+      ]
+    },
+    "clinical_data_sources": {
+      "description": "Public clinical trial databases and registries for benchmarking",
+      "citations": [
+        {"code": "ClinicalTrials.gov", "title": "ClinicalTrials.gov — U.S. NIH Clinical Trial Registry", "url": "https://clinicaltrials.gov", "type": "Database", "api_url": "https://clinicaltrials.gov/api/v2/studies", "issuer": "NIH/NLM", "authority_level": "highest"},
+        {"code": "EU CTR", "title": "EU Clinical Trials Register", "url": "https://www.clinicaltrialsregister.eu", "type": "Database", "issuer": "EMA", "authority_level": "highest"},
+        {"code": "WHO ICTRP", "title": "WHO International Clinical Trials Registry Platform", "url": "https://www.who.int/clinical-trials-registry-platform", "type": "Database", "issuer": "WHO", "authority_level": "highest"},
+        {"code": "PubMed", "title": "PubMed — MEDLINE database", "url": "https://pubmed.ncbi.nlm.nih.gov", "type": "Database", "api_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", "issuer": "NIH/NLM", "authority_level": "highest"},
+        {"code": "CTIS", "title": "EU Clinical Trials Information System", "url": "https://euclinicaltrials.eu", "type": "Database", "issuer": "EMA", "authority_level": "highest"}
+      ]
+    }
+  },
+  "citation_quality_rules": {
+    "description": "Rules for citation quality in NIX AI responses",
+    "rules": [
+      "Every finding must reference at least one authoritative source",
+      "ICH guidelines take precedence as they are globally harmonised",
+      "Regional guidance cited when jurisdiction-specific requirement",
+      "HTA body manuals cited for payer-specific recommendations",
+      "URLs must point to official government/organization sources only",
+      "Citation includes: source code, title, specific section, relevance explanation",
+      "Confidence score reflects strength of citation: ICH Step 4 = highest, Draft = lower",
+      "Multiple citations strengthen findings — cross-reference ICH + regional when possible"
+    ],
+    "authority_hierarchy": [
+      "1. ICH Step 4 Guidelines (globally accepted)",
+      "2. National regulatory requirements (21 CFR, EU CTR, PMD Act)",
+      "3. FDA/EMA Final Guidance Documents",
+      "4. HTA Body Official Manuals (NICE, IQWiG, CADTH, PBAC)",
+      "5. ICH Step 2-3 Draft Guidelines",
+      "6. FDA/EMA Draft Guidance Documents",
+      "7. Published clinical literature (PubMed/MEDLINE)",
+      "8. Clinical trial registry data (ClinicalTrials.gov)"
+    ]
+  }
+}

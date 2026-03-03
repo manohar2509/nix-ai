@@ -1,0 +1,511 @@
+CLINICAL TRIAL PROTOCOL
+
+Protocol Number: NIX-ONC-2026-001
+Version: 3.0
+Date: January 15, 2026
+
+TITLE: A Phase 3, Randomized, Double-Blind, Placebo-Controlled Study to Evaluate
+the Efficacy and Safety of Nixatinib (NIX-4821) in Combination with Pembrolizumab
+versus Pembrolizumab Alone in Patients with Previously Untreated, PD-L1 Positive,
+Locally Advanced or Metastatic Non-Small Cell Lung Cancer (NSCLC)
+
+Short Title: PHOENIX-LUNG 3
+
+Sponsor: NixBio Therapeutics, Inc.
+1200 Innovation Drive, Cambridge, MA 02142, USA
+
+IND Number: 182456
+EudraCT Number: 2025-004821-31
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLE OF CONTENTS
+
+1. SYNOPSIS
+2. INTRODUCTION AND BACKGROUND
+3. STUDY OBJECTIVES AND ENDPOINTS
+4. STUDY DESIGN
+5. STUDY POPULATION
+6. TREATMENT PLAN
+7. SAFETY ASSESSMENTS
+8. EFFICACY ASSESSMENTS
+9. STATISTICAL CONSIDERATIONS
+10. REGULATORY AND ETHICAL CONSIDERATIONS
+11. DATA MANAGEMENT
+12. REFERENCES
+13. APPENDICES
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SYNOPSIS
+
+Study Title:        PHOENIX-LUNG 3
+Phase:              Phase 3
+Study Design:       Randomized, double-blind, placebo-controlled, multicenter
+Indication:         First-line treatment of locally advanced or metastatic NSCLC
+                    with PD-L1 TPS ≥ 1%
+Study Population:   Adults ≥ 18 years with histologically confirmed NSCLC
+Target Enrollment:  680 patients (340 per arm)
+Number of Sites:    ~120 sites across North America, Europe, and Asia-Pacific
+
+Treatment Arms:
+  Arm A (Experimental): Nixatinib 200 mg PO BID + Pembrolizumab 200 mg IV Q3W
+  Arm B (Control):      Placebo PO BID + Pembrolizumab 200 mg IV Q3W
+
+Primary Endpoint:   Progression-Free Survival (PFS) per RECIST v1.1 by BICR
+Key Secondary:      Overall Survival (OS), Objective Response Rate (ORR),
+                    Duration of Response (DOR), Patient-Reported Outcomes (PROs)
+
+Study Duration:     Approximately 48 months (24 months enrollment + 24 months follow-up)
+Treatment Duration: Until disease progression, unacceptable toxicity, or max 35 cycles
+                    of pembrolizumab (approximately 2 years)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2. INTRODUCTION AND BACKGROUND
+
+2.1 Disease Background
+
+Non-small cell lung cancer (NSCLC) accounts for approximately 85% of all lung
+cancers and remains the leading cause of cancer-related mortality worldwide. Despite
+advances in immunotherapy, particularly with PD-1/PD-L1 checkpoint inhibitors,
+many patients develop primary or acquired resistance. The 5-year overall survival
+rate for metastatic NSCLC remains approximately 7-8%.
+
+2.2 Investigational Product: Nixatinib (NIX-4821)
+
+Nixatinib is a novel, orally bioavailable, selective inhibitor of the KRAS G12C
+mutation found in approximately 13% of NSCLC cases. In preclinical models, nixatinib
+demonstrated synergistic antitumor activity when combined with anti-PD-1 antibodies,
+enhancing T-cell infiltration into the tumor microenvironment.
+
+Mechanism of Action:
+- Direct covalent binding to KRAS G12C in the GDP-bound (inactive) state
+- Inhibition of RAF-MEK-ERK signaling pathway
+- Enhanced MHC class I antigen presentation on tumor cells
+- Increased CD8+ T-cell tumor infiltration
+
+2.3 Preclinical Data
+
+In KRAS G12C-mutant NSCLC xenograft models:
+- Nixatinib monotherapy: 68% tumor growth inhibition (TGI)
+- Anti-PD-1 monotherapy: 42% TGI
+- Combination: 94% TGI with 30% complete response rate
+
+2.4 Phase 1/2 Data (Study NIX-ONC-2024-001)
+
+Dose-escalation (Phase 1, n=48):
+- MTD: 250 mg BID (RP2D: 200 mg BID based on PK/PD modeling)
+- DLTs at 300 mg BID: Grade 3 hepatotoxicity (2/6), Grade 3 rash (1/6)
+
+Dose-expansion (Phase 2, n=82):
+- ORR: 52% (95% CI: 41-63%)
+- DCR: 84% (95% CI: 75-91%)
+- Median PFS: 11.2 months (95% CI: 8.4-14.1)
+- Grade ≥3 AEs: 34% (most common: ALT/AST elevation, rash, diarrhea)
+
+2.5 Rationale for the Study
+
+The combination of nixatinib with pembrolizumab is hypothesized to overcome
+resistance to PD-1 monotherapy by:
+1. Enhancing tumor antigen presentation (KRAS G12C inhibition)
+2. Increasing T-cell recognition and killing (dual pathway blockade)
+3. Modifying the immunosuppressive tumor microenvironment
+
+This Phase 3 study will determine whether the combination provides clinically
+meaningful improvement in PFS compared to pembrolizumab alone in the first-line
+setting for PD-L1-positive NSCLC patients harboring KRAS G12C mutations.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3. STUDY OBJECTIVES AND ENDPOINTS
+
+3.1 Primary Objective
+
+To compare PFS of nixatinib + pembrolizumab versus placebo + pembrolizumab in
+patients with previously untreated, PD-L1 positive (TPS ≥ 1%), locally advanced
+or metastatic NSCLC harboring KRAS G12C mutation.
+
+Primary Endpoint: PFS as assessed by BICR per RECIST v1.1
+
+3.2 Key Secondary Objectives and Endpoints
+
+  Objective                                    Endpoint
+  ─────────────────────────────────────────    ──────────────────────────────
+  Compare OS between treatment arms            Overall survival
+  Compare ORR between treatment arms           Objective response rate (BICR)
+  Evaluate DOR                                 Duration of response (BICR)
+  Assess patient-reported outcomes             EORTC QLQ-C30, QLQ-LC13
+  Evaluate safety and tolerability             AEs, SAEs per CTCAE v5.0
+
+3.3 Exploratory Objectives
+
+- Evaluate PFS and ORR in PD-L1 TPS ≥ 50% subgroup
+- Characterize ctDNA dynamics as early predictor of response
+- Evaluate tumor mutational burden (TMB) as predictive biomarker
+- Assess pharmacokinetics of nixatinib in combination setting
+- Evaluate immune cell infiltration in paired biopsies (optional)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4. STUDY DESIGN
+
+4.1 Overall Design
+
+This is a Phase 3, randomized, double-blind, placebo-controlled, multicenter,
+international study. Approximately 680 patients will be randomized 1:1 to receive
+either nixatinib + pembrolizumab or placebo + pembrolizumab.
+
+Randomization will be stratified by:
+- PD-L1 TPS (≥ 50% vs. 1-49%)
+- ECOG PS (0 vs. 1)
+- Geographic region (North America vs. Europe vs. Asia-Pacific)
+
+4.2 Study Periods
+
+Screening:    Up to 28 days prior to randomization
+Treatment:    Until PD, unacceptable toxicity, or 35 cycles pembrolizumab
+Follow-up:    Every 12 weeks until death or study closure
+Survival:     Every 12 weeks after treatment discontinuation
+
+4.3 Dose Modifications
+
+Nixatinib/Placebo dose reductions:
+  Level 0 (starting): 200 mg BID
+  Level -1:           150 mg BID
+  Level -2:           100 mg BID
+  Level -3:           Permanent discontinuation
+
+Pembrolizumab:
+  No dose reductions permitted per prescribing information.
+  Dosing delays up to 12 weeks allowed for immune-related AEs.
+
+4.4 Crossover
+
+No crossover from the control arm to the experimental arm will be permitted
+during the primary analysis period. After the primary PFS analysis, patients
+in the control arm who have documented PD may be offered open-label nixatinib
+access through a separate extension study.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5. STUDY POPULATION
+
+5.1 Inclusion Criteria
+
+  1. Age ≥ 18 years at time of informed consent
+  2. Histologically or cytologically confirmed NSCLC (non-squamous or squamous)
+  3. Locally advanced (Stage IIIB/IIIC not amenable to curative therapy) or
+     metastatic (Stage IV) disease per AJCC 8th edition
+  4. Documented KRAS G12C mutation by central laboratory testing (tissue or ctDNA)
+  5. PD-L1 TPS ≥ 1% by IHC (22C3 pharmDx assay, central lab)
+  6. No prior systemic therapy for advanced/metastatic NSCLC
+     (Prior adjuvant/neoadjuvant therapy completed ≥ 12 months prior allowed)
+  7. Measurable disease per RECIST v1.1
+  8. ECOG Performance Status 0 or 1
+  9. Adequate organ function:
+     a. Absolute neutrophil count ≥ 1,500/µL
+     b. Platelets ≥ 100,000/µL
+     c. Hemoglobin ≥ 9.0 g/dL
+     d. Serum creatinine ≤ 1.5× ULN or CrCl ≥ 50 mL/min (Cockcroft-Gault)
+     e. Total bilirubin ≤ 1.5× ULN (≤ 3× ULN if Gilbert's syndrome)
+     f. AST/ALT ≤ 2.5× ULN (≤ 5× ULN if liver metastases)
+     g. INR/PT and aPTT ≤ 1.5× ULN
+  10. Women of childbearing potential: negative serum pregnancy test and
+      agreement to use effective contraception during study and for 120 days
+      after last dose
+  11. Written informed consent
+
+5.2 Exclusion Criteria
+
+  1. Known EGFR, ALK, ROS1, BRAF V600E, MET exon 14, RET, or NTRK alterations
+  2. Symptomatic brain metastases (treated, stable brain mets allowed if
+     off steroids for ≥ 14 days and no neurological symptoms)
+  3. Active autoimmune disease requiring systemic immunosuppression
+  4. Known interstitial lung disease or history of pneumonitis requiring steroids
+  5. Active infection requiring systemic antimicrobial therapy
+  6. Known HIV, active HBV, or active HCV infection
+  7. Prior treatment with KRAS G12C inhibitor
+  8. Prior treatment with anti-PD-1, anti-PD-L1, or anti-CTLA-4 antibody
+  9. Known hypersensitivity to nixatinib, pembrolizumab, or excipients
+  10. Concurrent use of strong CYP3A4 inhibitors or inducers
+  11. QTcF > 470 ms at screening
+  12. Major surgery within 4 weeks of randomization
+  13. Active second malignancy (exceptions: non-melanoma skin cancer,
+      carcinoma in situ, superficial bladder cancer)
+  14. Pregnancy or breastfeeding
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6. TREATMENT PLAN
+
+6.1 Investigational Medicinal Product
+
+Drug:               Nixatinib (NIX-4821)
+Formulation:        Film-coated tablet, 100 mg
+Dose:               200 mg (2 × 100 mg tablets) BID
+Route:              Oral
+Schedule:           Continuous daily dosing (Days 1-21 of each 21-day cycle)
+Food Effect:        Administer with or without food; consistent timing recommended
+
+6.2 Comparator
+
+Drug:               Matching placebo
+Formulation:        Film-coated tablet, identical appearance to nixatinib
+Dose:               2 tablets BID
+Route:              Oral
+Schedule:           Continuous daily dosing
+
+6.3 Background Therapy
+
+Drug:               Pembrolizumab
+Dose:               200 mg IV
+Schedule:           Day 1 of each 21-day cycle
+Duration:           Maximum 35 cycles (approximately 2 years)
+Premedication:      Per institutional guidelines
+
+6.4 Concomitant Medications
+
+Permitted:
+- Standard supportive care (antiemetics, analgesics, bisphosphonates)
+- Palliative radiation to non-target lesions (with sponsor notification)
+
+Prohibited:
+- Other systemic anticancer therapy
+- Live vaccines during treatment
+- Strong CYP3A4 inhibitors/inducers (washout ≥ 5 half-lives before Day 1)
+- Corticosteroids > 10 mg/day prednisone equivalent (except for irAE management)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7. SAFETY ASSESSMENTS
+
+7.1 Adverse Event Monitoring
+
+AEs will be graded per NCI CTCAE v5.0 and collected from informed consent
+through 30 days (90 days for SAEs) after last dose.
+
+7.2 Safety Evaluations Schedule
+
+Assessment                     Screening   Cycle 1     Cycles 2+    Follow-up
+                                           (each wk)   (Day 1)     (Q12W)
+──────────────────────────────────────────────────────────────────────────────
+Physical Exam                  X           X (D1,D8)   X            X
+Vital Signs                    X           X (D1,D8)   X            X
+ECOG PS                        X           X (D1)      X            X
+12-Lead ECG                    X           X (D1,D8)   C1-3 D1      —
+Hematology                     X           X (D1,D8)   X            X
+Chemistry (LFTs, renal)        X           X (D1,D8)   X            X
+Thyroid Function               X           C1 D1       Q6W          —
+Urinalysis                     X           C1 D1       Q3C          —
+Pregnancy Test (WOCBP)         X           C1 D1       Q3C          X
+
+7.3 Hepatotoxicity Monitoring Protocol
+
+Given the hepatotoxicity signal observed in Phase 1/2:
+- LFTs (AST, ALT, ALP, total bilirubin) weekly × 8 weeks, then Q3W
+- If ALT/AST > 3× ULN: increase to twice weekly monitoring
+- Hy's Law criteria triggers immediate treatment discontinuation
+- Liver biopsy recommended for suspected DILI Grade ≥ 3
+
+7.4 Cardiac Safety
+
+- Serial ECGs at screening, C1D1, C1D8, C2D1 (pre-dose and 2h post-dose)
+- Centralized ECG reading
+- LVEF assessment by echocardiography at screening and Q12W
+
+7.5 Special Populations
+
+- Hepatic impairment: Excluded if baseline ALT/AST > 2.5× ULN (> 5× if liver mets)
+- Renal impairment: CrCl ≥ 50 mL/min required; PK sub-study for CrCl 30-50 mL/min
+- Elderly (≥ 75): No dose adjustment; safety monitoring intensified
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+8. EFFICACY ASSESSMENTS
+
+8.1 Tumor Assessments
+
+- CT (chest/abdomen/pelvis) or MRI per RECIST v1.1
+- Schedule: Every 6 weeks (±7 days) for first 48 weeks, then every 12 weeks
+- Brain MRI: Baseline and as clinically indicated
+- Assessment by BICR (primary) and investigator (secondary)
+
+8.2 Response Criteria
+
+Per RECIST v1.1:
+- Complete Response (CR): Disappearance of all target/non-target lesions
+- Partial Response (PR): ≥ 30% decrease in sum of diameters
+- Stable Disease (SD): Neither PR nor PD
+- Progressive Disease (PD): ≥ 20% increase in sum of diameters + 5 mm absolute increase
+
+Confirmation: CR and PR require confirmation ≥ 4 weeks after initial assessment
+
+8.3 Patient-Reported Outcomes
+
+- EORTC QLQ-C30 (global quality of life): Day 1 of each cycle, EOT, FU
+- EORTC QLQ-LC13 (lung cancer specific): Day 1 of each cycle, EOT, FU
+- EQ-5D-5L (health utility): Day 1 Q3C, EOT, FU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+9. STATISTICAL CONSIDERATIONS
+
+9.1 Sample Size
+
+Primary endpoint: PFS (BICR per RECIST v1.1)
+Assumptions:
+- Median PFS control arm: 8.0 months
+- Expected hazard ratio: 0.70
+- Median PFS experimental arm: ~11.4 months
+- Type I error (two-sided): 0.05
+- Power: 90%
+- Dropout rate: 5%
+- Required PFS events: ~420
+
+Sample size: 680 patients (340 per arm)
+
+9.2 Analysis Populations
+
+- ITT: All randomized patients (primary efficacy analysis)
+- Per-Protocol: Patients who received ≥ 80% planned dose and had ≥ 1 post-baseline assessment
+- Safety: All patients who received ≥ 1 dose of study treatment
+
+9.3 Primary Analysis
+
+PFS will be compared between arms using a stratified log-rank test
+(stratification factors: PD-L1 TPS, ECOG PS, geographic region).
+
+Hazard ratio and 95% CI estimated from a stratified Cox proportional
+hazards model. Kaplan-Meier methodology for median PFS estimation.
+
+9.4 Interim Analysis
+
+One interim analysis for efficacy (PFS) planned after approximately 60%
+of required events (~252 events) using the Lan-DeMets spending function
+with O'Brien-Fleming boundary (alpha = 0.0031 at interim, 0.0491 at final).
+
+An independent Data Monitoring Committee (DMC) will review unblinded
+interim data.
+
+9.5 Multiplicity Adjustment
+
+Hierarchical testing procedure:
+1. PFS (overall population)
+2. OS (overall population) — tested only if PFS is significant
+3. ORR (overall population) — tested only if OS is significant
+
+Alpha recycling per Maurer-Bretz graphical approach.
+
+9.6 Subgroup Analyses
+
+Pre-specified subgroups:
+- PD-L1 TPS (≥ 50% vs. 1-49%)
+- ECOG PS (0 vs. 1)
+- Age (< 65 vs. ≥ 65)
+- Sex
+- Geographic region
+- TMB (high vs. low, exploratory cutoff)
+- Baseline brain metastases (yes vs. no)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+10. REGULATORY AND ETHICAL CONSIDERATIONS
+
+10.1 Regulatory Compliance
+
+This study will be conducted in accordance with:
+- ICH E6(R2) Good Clinical Practice
+- ICH E8(R1) General Considerations for Clinical Studies
+- ICH E9(R1) Statistical Principles (including estimand framework)
+- Declaration of Helsinki (2013 revision)
+- Applicable national and regional regulatory requirements
+
+10.2 Informed Consent
+
+Written informed consent will be obtained from each participant prior to
+any study-related procedures. The informed consent form (ICF) will be
+approved by the relevant IRB/IEC and will include:
+- Study purpose and procedures
+- Risks and benefits
+- Alternative treatments
+- Confidentiality protections
+- Right to withdraw
+- Compensation for study-related injury
+
+10.3 Ethics Committee Approval
+
+The study protocol, ICF, and all amendments must be approved by the
+IRB/IEC at each participating site before enrollment begins.
+
+10.4 Data Protection
+
+- GDPR compliance for EU sites
+- HIPAA compliance for US sites
+- Data minimization principles applied
+- Pseudonymized data only in sponsor databases
+- Data retention: 25 years per ICH E6(R2) and applicable regulations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+11. DATA MANAGEMENT
+
+11.1 Electronic Data Capture
+
+All clinical data will be entered into a validated EDC system (Medidata Rave).
+Source data verification will be performed per monitoring plan.
+
+11.2 Data Quality
+
+- Edit checks and range validations programmed in EDC
+- Medical coding: MedDRA (latest version) for AEs, WHO Drug Dictionary for medications
+- External data reconciliation: central lab, ECG, BICR, PK, biomarker data
+
+11.3 Database Lock
+
+Database lock will occur after:
+1. All queries resolved
+2. Blind review completed
+3. SAP finalized
+4. DMC recommendation (for interim analyses)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+12. REFERENCES
+
+1. Ostrem JM, et al. K-Ras(G12C) inhibitors allosterically control GTP
+   affinity and effector interactions. Nature. 2013;503:548-551.
+2. Canon J, et al. The clinical KRAS(G12C) inhibitor AMG 510 drives
+   anti-tumour immunity. Nature. 2019;575:217-223.
+3. Skoulidis F, et al. Sotorasib for Lung Cancers with KRAS p.G12C
+   Mutation. N Engl J Med. 2021;384:2371-2381.
+4. Reck M, et al. Pembrolizumab versus Chemotherapy for PD-L1-Positive
+   NSCLC. N Engl J Med. 2016;375:1823-1833.
+5. Gandhi L, et al. Pembrolizumab plus Chemotherapy in Metastatic
+   NSCLC. N Engl J Med. 2018;378:2078-2092.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+13. APPENDICES
+
+Appendix A: Schedule of Assessments (see separate document)
+Appendix B: ECOG Performance Status Scale
+Appendix C: RECIST v1.1 Summary
+Appendix D: CTCAE v5.0 Grading for Key AEs
+Appendix E: Nixatinib Dose Modification Guidelines
+Appendix F: Pembrolizumab Immune-Related AE Management Algorithm
+Appendix G: Central Laboratory Reference Ranges
+Appendix H: Sample Informed Consent Form
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROTOCOL AMENDMENT HISTORY
+
+Version   Date          Description
+────────────────────────────────────────────────────────────────────
+1.0       2025-06-01    Original protocol
+2.0       2025-11-15    Added PK sub-study, updated monitoring schedule
+3.0       2026-01-15    Updated primary endpoint per FDA Type B meeting feedback,
+                        added exploratory ctDNA endpoint
+
+END OF PROTOCOL

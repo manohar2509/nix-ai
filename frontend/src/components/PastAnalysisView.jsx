@@ -95,10 +95,10 @@ export default function PastAnalysisView() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
               <History size={24} className="text-brand-600" />
-              Past Analyses
+              Analysis History
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              {analyses.length} {analyses.length === 1 ? 'analysis' : 'analyses'} across your protocols
+              {analyses.length} regulatory {analyses.length === 1 ? 'analysis' : 'analyses'} across your clinical trial protocols
             </p>
           </div>
           <button
@@ -127,7 +127,7 @@ export default function PastAnalysisView() {
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by document name..."
+                placeholder="Search by protocol name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all"
@@ -162,9 +162,9 @@ export default function PastAnalysisView() {
               onChange={(e) => setSortBy(e.target.value)}
               className="px-3 py-2 text-xs font-medium border border-slate-200 rounded-lg bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             >
-              <option value="date">Sort: Newest</option>
-              <option value="regScore">Sort: Lowest Reg Score</option>
-              <option value="payScore">Sort: Lowest Payer Score</option>
+              <option value="date">Sort: Most Recent</option>
+              <option value="regScore">Sort: Lowest Compliance Score</option>
+              <option value="payScore">Sort: Lowest Payer Readiness</option>
               <option value="findings">Sort: Most Findings</option>
             </select>
           </div>
@@ -226,7 +226,7 @@ function AnalysisCard({ analysis, isExpanded, onToggle, onViewInProtocol }) {
           <div className="flex items-center gap-4 text-[11px] text-slate-400">
             <span>{formatDate(analysis.analyzedAt)}</span>
             {analysis.extractionMethod && (
-              <span className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 text-[10px]">
+              <span className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 text-[11px]">
                 {analysis.extractionMethod}
               </span>
             )}
@@ -249,7 +249,7 @@ function AnalysisCard({ analysis, isExpanded, onToggle, onViewInProtocol }) {
           {/* Total findings */}
           <div className="text-center">
             <div className="text-sm font-bold text-slate-700">{analysis.findingsCount}</div>
-            <div className="text-[9px] text-slate-400 uppercase tracking-wider">findings</div>
+            <div className="text-[11px] text-slate-400 uppercase tracking-wider">findings</div>
           </div>
         </div>
       </div>
@@ -260,7 +260,7 @@ function AnalysisCard({ analysis, isExpanded, onToggle, onViewInProtocol }) {
           {/* Summary */}
           {analysis.summary && (
             <div className="px-12 py-4 bg-slate-50/50 border-b border-slate-100">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Analysis Summary</h4>
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Analysis Summary</h4>
               <p className="text-sm text-slate-600 leading-relaxed">{analysis.summary}</p>
             </div>
           )}
@@ -275,7 +275,7 @@ function AnalysisCard({ analysis, isExpanded, onToggle, onViewInProtocol }) {
 
           {/* Findings */}
           <div className="px-12 py-5">
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">
+            <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4">
               Findings ({analysis.findingsCount})
             </h4>
             {analysis.findings?.length > 0 ? (
@@ -313,7 +313,7 @@ function ScorePill({ icon, label, value, color }) {
         {icon}
         {Math.round(value)}%
       </div>
-      <div className="text-[9px] text-slate-400 uppercase tracking-wider">{label}</div>
+      <div className="text-[11px] text-slate-400 uppercase tracking-wider">{label}</div>
     </div>
   );
 }
@@ -360,7 +360,7 @@ function StatusBadge({ status }) {
 
   return (
     <span className={cn(
-      'inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full',
+      'inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
       styles[status] || 'bg-slate-100 text-slate-500'
     )}>
       {icons[status]}
@@ -380,7 +380,7 @@ function SeverityBadge({ severity, count }) {
 
   return (
     <span className={cn(
-      'inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded border',
+      'inline-flex items-center text-[11px] font-semibold px-1.5 py-0.5 rounded border',
       colors[severity] || 'bg-slate-100 text-slate-500 border-slate-200'
     )}>
       {count} {severity?.charAt(0).toUpperCase()}
@@ -405,16 +405,16 @@ function FindingRow({ finding }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-semibold text-slate-800">{finding.title || 'Finding'}</span>
-            <span className={cn('text-[9px] font-bold uppercase px-1.5 py-0.5 rounded', s.badge)}>
+            <span className={cn('text-[11px] font-semibold uppercase px-1.5 py-0.5 rounded', s.badge)}>
               {finding.severity}
             </span>
             {finding.type && (
-              <span className="text-[9px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+              <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                 {finding.type}
               </span>
             )}
             {finding.section && (
-              <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+              <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                 {finding.section}
               </span>
             )}
@@ -451,7 +451,7 @@ function EmptyHistory({ hasAnalyses, setActiveView }) {
       <p className="text-sm text-slate-400 max-w-[320px] mx-auto leading-relaxed mb-6">
         {hasAnalyses
           ? 'Try adjusting your search or filter criteria'
-          : 'Upload a clinical protocol and run your first adversarial analysis to see results here'}
+          : 'Upload a clinical protocol and run your first analysis to see results here'}
       </p>
       {!hasAnalyses && (
         <button

@@ -82,7 +82,16 @@ def rag_chat(
                             f"You are NIX AI, an expert clinical trial protocol analyst. "
                             f"The user is {user_name} from {user_org}. "
                             f"Answer their question using ONLY the retrieved documents. "
-                            f"Cite specific sections. If unsure, say so.\n\n"
+                            f"Cite specific sections and guideline codes (e.g., ICH E6(R3) Section 5.2.1). "
+                            f"When referencing regulatory requirements, always name the specific guideline "
+                            f"(ICH, FDA, EMA) and section. When referencing HTA requirements, name the body "
+                            f"(NICE, IQWiG, CADTH, PBAC). If unsure, say so.\n\n"
+                            f"IMPORTANT: You are ONLY authorized to answer questions related to clinical trials, "
+                            f"regulatory compliance, protocol design, drug development, payer/HTA strategy, "
+                            f"and biomedical/pharmaceutical topics. If the user asks a question that is "
+                            f"clearly unrelated to clinical trials or healthcare (e.g., cooking, sports, "
+                            f"entertainment, politics, general knowledge), politely decline and redirect "
+                            f"them to ask about their clinical trial protocol instead.\n\n"
                             f"Question: $query$\n\n"
                             f"Retrieved context: $search_results$"
                         ),
@@ -161,7 +170,11 @@ def direct_chat(
     Fallback chat using the Converse API directly with document text
     as context. Used when the Knowledge Base RAG returns a refusal
     (e.g. KB has no indexed documents).
+
+    Generates inline citations from guideline references in the response.
     """
+    from app.services.regulatory_engine import ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
+
     # Truncate document text to fit in context window
     max_doc_chars = 12_000
     doc_excerpt = document_text[:max_doc_chars] if document_text else ""
@@ -173,7 +186,18 @@ def direct_chat(
             f"The user is {user_name} from {user_org}. "
             f"No document is currently loaded. Answer the user's question "
             f"helpfully based on your clinical trial expertise. "
+            f"When referencing guidelines, always include the specific guideline code "
+            f"(e.g., 'ICH E6(R3) Section 5.2.1', 'FDA Adaptive Designs Guidance'). "
             f"If you need a document to give a specific answer, ask the user to upload one.\n\n"
+            f"IMPORTANT: You are ONLY authorized to answer questions related to clinical trials, "
+            f"regulatory compliance, protocol design, drug development, payer/HTA strategy, "
+            f"and biomedical/pharmaceutical topics. If the user asks a question that is "
+            f"clearly unrelated to clinical trials or healthcare (e.g., cooking, sports, "
+            f"entertainment, politics, general knowledge), politely decline and say: "
+            f"'I'm NIX AI, specialized in clinical trial protocol analysis. "
+            f"I can help with regulatory compliance, trial design, endpoint strategy, "
+            f"payer readiness, and protocol optimization. Please ask me about your "
+            f"clinical trial protocol.'\n\n"
             f"User question: {query}"
         )
     else:
@@ -181,7 +205,14 @@ def direct_chat(
             f"You are NIX AI, an expert clinical trial protocol analyst. "
             f"The user is {user_name} from {user_org}. "
             f"Answer their question using the document context below. "
-            f"Cite specific sections when possible. Be thorough but concise.\n\n"
+            f"Cite specific sections when possible. Be thorough but concise. "
+            f"When referencing guidelines, always include the specific guideline code "
+            f"(e.g., 'ICH E6(R3) Section 5.2.1', 'FDA Adaptive Designs Guidance'). \n\n"
+            f"IMPORTANT: You are ONLY authorized to answer questions related to clinical trials, "
+            f"regulatory compliance, protocol design, drug development, payer/HTA strategy, "
+            f"and biomedical/pharmaceutical topics. If the user asks a question that is "
+            f"clearly unrelated to clinical trials or healthcare, politely decline and redirect "
+            f"them to ask about their clinical trial protocol.\n\n"
             f"--- DOCUMENT CONTEXT ---\n{doc_excerpt}\n--- END CONTEXT ---\n\n"
             f"User question: {query}"
         )
@@ -192,15 +223,100 @@ def direct_chat(
             "Direct chat fallback: query=%s, doc_chars=%d, response_chars=%d",
             query[:60], len(doc_excerpt), len(response_text),
         )
+
+        # Extract inline citations from the response text
+        citations = _extract_inline_guideline_citations(
+            response_text, ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
+        )
+
         return {
             "text": response_text,
-            "citations": [],
+            "citations": citations,
             "session_id": None,
             "is_refusal": False,
         }
     except Exception as exc:
         logger.error("Direct chat fallback failed: %s", exc)
         raise BedrockError(str(exc))
+
+
+def _extract_inline_guideline_citations(
+    text: str,
+    ich_guidelines: dict,
+    fda_guidance: dict,
+    hta_body_refs: dict,
+) -> list[dict]:
+    """
+    Scan AI response text for mentions of known guidelines and generate
+    structured citations with URLs. This ensures even direct (non-RAG)
+    chat responses have traceable, clickable citations.
+    """
+    citations = []
+    text_lower = text.lower()
+    seen = set()
+
+    # Scan for ICH guideline references (e.g. "ICH E6(R3)", "E9(R1)")
+    for code, info in ich_guidelines.items():
+        # Match both "ICH E6(R3)" and bare "E6(R3)"
+        if code.lower() in text_lower or f"ich {code.lower()}" in text_lower:
+            if code not in seen:
+                seen.add(code)
+                # Try to extract the section number mentioned near this reference
+                section = _extract_section_near(text, code)
+                citations.append({
+                    "text": f"{info['title']} — {info['focus']}",
+                    "source": f"ICH {code}",
+                    "source_type": "ICH",
+                    "url": info["url"],
+                    "section": section,
+                    "score": 0.95,
+                })
+
+    # Scan for FDA guidance references
+    for key, info in fda_guidance.items():
+        key_lower = key.lower()
+        title_words = info["title"].lower().split()[:4]
+        title_fragment = " ".join(title_words)
+        if key_lower in text_lower or title_fragment in text_lower:
+            if key not in seen:
+                seen.add(key)
+                citations.append({
+                    "text": f"{info['title']} ({info['year']}) — {info['focus']}",
+                    "source": f"FDA {key}",
+                    "source_type": "FDA",
+                    "url": info["url"],
+                    "section": None,
+                    "score": 0.90,
+                })
+
+    # Scan for HTA body mentions
+    for key, info in hta_body_refs.items():
+        if key.lower() in text_lower:
+            if key not in seen:
+                seen.add(key)
+                citations.append({
+                    "text": info["title"],
+                    "source": key,
+                    "source_type": "HTA",
+                    "url": info["url"],
+                    "section": None,
+                    "score": 0.85,
+                })
+
+    return citations
+
+
+def _extract_section_near(text: str, guideline_code: str) -> Optional[str]:
+    """Extract section number mentioned near a guideline reference in text."""
+    # Look for patterns like "Section 5.2.1" or "§ 5.2" near the guideline code
+    pattern = re.compile(
+        re.escape(guideline_code) + r'[^.]{0,60}(?:section|§)\s*([\d]+(?:\.[\d]+)*)',
+        re.IGNORECASE,
+    )
+    match = pattern.search(text)
+    if match:
+        return match.group(1)
+    return None
 
 
 def _build_chat_prompt(
@@ -213,20 +329,41 @@ def _build_chat_prompt(
     max_doc_chars = 12_000
     doc_excerpt = document_text[:max_doc_chars] if document_text else ""
 
+    guideline_instruction = (
+        "When referencing guidelines, always include the specific guideline code "
+        "(e.g., 'ICH E6(R3) Section 5.2.1', 'FDA Adaptive Designs Guidance'). "
+    )
+
+    topic_guardrail = (
+        "IMPORTANT: You are ONLY authorized to answer questions related to clinical trials, "
+        "regulatory compliance, protocol design, drug development, payer/HTA strategy, "
+        "and biomedical/pharmaceutical topics. If the user asks a question that is "
+        "clearly unrelated to clinical trials or healthcare (e.g., cooking, sports, "
+        "entertainment, politics, general knowledge), politely decline and say: "
+        "'I'm NIX AI, specialized in clinical trial protocol analysis. "
+        "I can help with regulatory compliance, trial design, endpoint strategy, "
+        "payer readiness, and protocol optimization. Please ask me about your "
+        "clinical trial protocol.' "
+    )
+
     if not doc_excerpt:
         return (
             f"You are NIX AI, an expert clinical trial protocol analyst. "
             f"The user is {user_name} from {user_org}. "
             f"No document is currently loaded. Answer the user's question "
             f"helpfully based on your clinical trial expertise. "
+            f"{guideline_instruction}"
             f"If you need a document to give a specific answer, ask the user to upload one.\n\n"
+            f"{topic_guardrail}\n\n"
             f"User question: {query}"
         )
     return (
         f"You are NIX AI, an expert clinical trial protocol analyst. "
         f"The user is {user_name} from {user_org}. "
         f"Answer their question using the document context below. "
-        f"Cite specific sections when possible. Be thorough but concise.\n\n"
+        f"Cite specific sections when possible. Be thorough but concise. "
+        f"{guideline_instruction}\n\n"
+        f"{topic_guardrail}\n\n"
         f"--- DOCUMENT CONTEXT ---\n{doc_excerpt}\n--- END CONTEXT ---\n\n"
         f"User question: {query}"
     )
@@ -251,7 +388,10 @@ def direct_chat_stream(
 
 
 def _extract_citations(response: dict) -> list[dict]:
-    """Parse citations from Bedrock RetrieveAndGenerate response."""
+    """
+    Parse citations from Bedrock RetrieveAndGenerate response.
+    Enriches S3-based citations with source type and friendly names.
+    """
     citations = []
     for citation_group in response.get("citations", []):
         for ref in citation_group.get("retrievedReferences", []):
@@ -260,11 +400,25 @@ def _extract_citations(response: dict) -> list[dict]:
             s3_uri = location.get("s3Location", {}).get("uri", "")
             source = s3_uri.split("/")[-1] if s3_uri else "Unknown"
 
+            # Determine source type from file name
+            source_lower = source.lower()
+            source_type = "knowledge_base"
+            if "ich" in source_lower:
+                source_type = "ICH"
+            elif "fda" in source_lower:
+                source_type = "FDA"
+            elif "ema" in source_lower:
+                source_type = "EMA"
+            elif "nice" in source_lower or "hta" in source_lower or "payer" in source_lower:
+                source_type = "HTA"
+
             citations.append({
                 "text": content[:500],
                 "source": source,
+                "source_type": source_type,
                 "section": ref.get("metadata", {}).get("section", None),
                 "score": ref.get("metadata", {}).get("score", None),
+                "s3_uri": s3_uri if s3_uri else None,
             })
     return citations
 
@@ -455,31 +609,8 @@ def analyze_document_native(
         return None  # Caller should fall back to text-based analysis
 
     # ── Build Converse API request with DocumentBlock ────────────
-    pref_instructions = _build_preference_instructions(preferences)
-    analysis_prompt = f"""You are NIX AI, an expert clinical trial protocol analyst.
-
-Analyze this clinical trial protocol document thoroughly and return a JSON response with:
-1. "regulatorScore" (0-100): FDA/EMA regulatory compliance score
-2. "payerScore" (0-100): Payer/reimbursement readiness score
-3. "findings": Array of objects with:
-   - "id": unique string
-   - "type": "conflict" | "recommendation" | "risk"
-   - "severity": "low" | "medium" | "high" | "critical"
-   - "title": short title
-   - "description": detailed description
-   - "section": which protocol section
-   - "suggestion": recommended fix
-4. "summary": 2-3 sentence executive summary
-5. "tables_detected": number of data tables found in the document
-6. "extraction_method": "native_document_block"
-
-Pay special attention to:
-- Tables containing dosing schedules, inclusion/exclusion criteria, endpoints
-- Statistical analysis plan details
-- Safety monitoring provisions
-- Regulatory compliance gaps
-{pref_instructions}
-Respond with ONLY valid JSON. No markdown, no explanation."""
+    from app.services.regulatory_engine import build_enhanced_analysis_prompt
+    analysis_prompt = build_enhanced_analysis_prompt(preferences)
 
     messages = [
         {
@@ -556,22 +687,9 @@ def analyze_document(document_text: str, preferences: dict | None = None) -> dic
     (unsupported format, oversized file, or model doesn't support documents).
     """
     pref_instructions = _build_preference_instructions(preferences)
-    prompt = f"""You are NIX AI, an expert clinical trial protocol analyst.
+    from app.services.regulatory_engine import build_enhanced_analysis_prompt
+    prompt = build_enhanced_analysis_prompt(preferences) + f"""
 
-Analyze this clinical trial protocol document and return a JSON response with:
-1. "regulatorScore" (0-100): FDA/EMA regulatory compliance score
-2. "payerScore" (0-100): Payer/reimbursement readiness score
-3. "findings": Array of objects with:
-   - "id": unique string
-   - "type": "conflict" | "recommendation" | "risk"
-   - "severity": "low" | "medium" | "high" | "critical"
-   - "title": short title
-   - "description": detailed description
-   - "section": which protocol section
-   - "suggestion": recommended fix
-4. "summary": 2-3 sentence executive summary
-5. "extraction_method": "text_fallback"
-{pref_instructions}
 Document text:
 ---
 {document_text[:8000]}

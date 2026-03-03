@@ -1,0 +1,334 @@
+{
+  "metadata": {
+    "title": "GCP Compliance & Protocol Quality Checklist — NIX AI Scoring Engine",
+    "version": "1.0",
+    "last_updated": "2026-03-02",
+    "description": "Comprehensive compliance checklist aligned with ICH E6(R3) GCP, ICH M11 CeSHarP protocol structure, and multi-jurisdiction regulatory requirements. Used by NIX AI to systematically evaluate clinical trial protocols and generate actionable compliance scores."
+  },
+  "protocol_structure_checklist": {
+    "description": "Checklist based on ICH M11 CeSHarP protocol template — the global standard for clinical trial protocol structure",
+    "reference": "ICH M11 Step 4 (2024)",
+    "sections": {
+      "title_page": {
+        "weight": 2,
+        "required_elements": [
+          {"element": "Protocol title (descriptive, including study drug and condition)", "severity": "critical", "guideline": "ICH M11 Section 1"},
+          {"element": "Protocol identifier/number", "severity": "critical", "guideline": "ICH M11 Section 1"},
+          {"element": "Version number and date", "severity": "critical", "guideline": "ICH M11 Section 1"},
+          {"element": "Sponsor name and address", "severity": "major", "guideline": "ICH M11 Section 1"},
+          {"element": "EudraCT/CTIS number (if EU trial)", "severity": "major", "guideline": "EU CTR 536/2014"},
+          {"element": "IND number (if US trial)", "severity": "major", "guideline": "21 CFR 312.23"},
+          {"element": "Coordinating investigator name and affiliation", "severity": "major", "guideline": "ICH E6(R3) Section 4"}
+        ]
+      },
+      "synopsis": {
+        "weight": 3,
+        "required_elements": [
+          {"element": "Brief study summary covering all key design elements", "severity": "critical", "guideline": "ICH M11 Section 2"},
+          {"element": "Study title", "severity": "critical"},
+          {"element": "Study phase", "severity": "critical"},
+          {"element": "Study design (parallel, crossover, adaptive, etc.)", "severity": "critical"},
+          {"element": "Primary objective and endpoint", "severity": "critical"},
+          {"element": "Number of subjects", "severity": "critical"},
+          {"element": "Study duration", "severity": "major"},
+          {"element": "Study population summary", "severity": "major"},
+          {"element": "Key inclusion/exclusion criteria", "severity": "major"},
+          {"element": "Statistical methods summary", "severity": "major"}
+        ]
+      },
+      "schedule_of_activities": {
+        "weight": 5,
+        "required_elements": [
+          {"element": "Tabular schedule of all study visits and assessments", "severity": "critical", "guideline": "ICH M11 Section 3"},
+          {"element": "Screening period assessments", "severity": "critical"},
+          {"element": "Treatment period visits and assessments", "severity": "critical"},
+          {"element": "Follow-up period assessments", "severity": "critical"},
+          {"element": "Visit windows (acceptable timeframes)", "severity": "major"},
+          {"element": "Safety assessments at each visit", "severity": "critical"},
+          {"element": "PRO/QoL collection timepoints", "severity": "major", "guideline": "NICE PMG36"},
+          {"element": "EQ-5D-5L collection timepoints", "severity": "major", "guideline": "NICE/IQWiG requirement"},
+          {"element": "Lab assessments schedule", "severity": "major"},
+          {"element": "PK sampling timepoints (if applicable)", "severity": "major"},
+          {"element": "ECG assessment schedule", "severity": "major", "guideline": "ICH E14"}
+        ]
+      },
+      "introduction": {
+        "weight": 5,
+        "required_elements": [
+          {"element": "Disease/condition background with epidemiology", "severity": "critical", "guideline": "ICH M11 Section 4"},
+          {"element": "Current standard of care description", "severity": "critical"},
+          {"element": "Unmet medical need justification", "severity": "critical"},
+          {"element": "Nonclinical data summary", "severity": "major"},
+          {"element": "Clinical data summary from prior studies", "severity": "major"},
+          {"element": "Study drug mechanism of action", "severity": "major"},
+          {"element": "Known and potential risks", "severity": "critical", "guideline": "ICH E6(R3) Section 6.2"},
+          {"element": "Known and potential benefits", "severity": "critical"},
+          {"element": "Benefit-risk assessment", "severity": "critical", "guideline": "ICH E6(R3) Section 6.2"}
+        ]
+      },
+      "objectives_endpoints_estimands": {
+        "weight": 15,
+        "required_elements": [
+          {"element": "Primary objective clearly stated", "severity": "critical", "guideline": "ICH M11 Section 5"},
+          {"element": "Primary endpoint with precise definition and measurement method", "severity": "critical"},
+          {"element": "Primary estimand with all 5 attributes (per ICH E9(R1))", "severity": "critical", "guideline": "ICH E9(R1)"},
+          {"element": "Estimand attribute 1: Population", "severity": "critical", "guideline": "ICH E9(R1) A.2.2"},
+          {"element": "Estimand attribute 2: Treatment (intervention and comparator)", "severity": "critical", "guideline": "ICH E9(R1) A.2"},
+          {"element": "Estimand attribute 3: Variable (endpoint)", "severity": "critical", "guideline": "ICH E9(R1) A.2.3"},
+          {"element": "Estimand attribute 4: Intercurrent events and strategies", "severity": "critical", "guideline": "ICH E9(R1) A.2.4"},
+          {"element": "Estimand attribute 5: Population-level summary measure", "severity": "critical", "guideline": "ICH E9(R1) A.2.5"},
+          {"element": "Secondary objectives and endpoints", "severity": "major"},
+          {"element": "Exploratory objectives and endpoints", "severity": "minor"},
+          {"element": "Safety objectives", "severity": "critical"},
+          {"element": "Endpoint alignment with regulatory guidance for indication", "severity": "critical"},
+          {"element": "Endpoint validation status documented", "severity": "major"},
+          {"element": "Patient-reported outcome endpoints included", "severity": "major", "guideline": "FDA PRO Guidance / NICE PMG36"},
+          {"element": "Health economic endpoints (resource use)", "severity": "major", "guideline": "NICE/IQWiG/CADTH requirement"}
+        ]
+      },
+      "study_design": {
+        "weight": 15,
+        "required_elements": [
+          {"element": "Study design type clearly specified", "severity": "critical", "guideline": "ICH M11 Section 6"},
+          {"element": "Study schematic/flow diagram", "severity": "major"},
+          {"element": "Randomisation method and ratio", "severity": "critical"},
+          {"element": "Stratification factors (limited to 2-3, clinically relevant)", "severity": "major"},
+          {"element": "Blinding level with justification", "severity": "critical"},
+          {"element": "Emergency unblinding procedures", "severity": "critical", "guideline": "ICH E6(R3)"},
+          {"element": "Control arm selection justified per ICH E10", "severity": "critical", "guideline": "ICH E10"},
+          {"element": "Comparator reflects standard of care", "severity": "critical", "guideline": "ICH E10 / HTA bodies"},
+          {"element": "Treatment duration justified", "severity": "major"},
+          {"element": "Follow-up duration adequate for endpoints", "severity": "critical"},
+          {"element": "Run-in period described (if applicable)", "severity": "minor"},
+          {"element": "Adaptive design elements pre-specified (if applicable)", "severity": "critical", "guideline": "ICH E20 / FDA Adaptive Designs"},
+          {"element": "Dose selection rationale documented", "severity": "critical", "guideline": "ICH E4 / FDA Project Optimus"}
+        ]
+      },
+      "study_population": {
+        "weight": 10,
+        "required_elements": [
+          {"element": "Target population clearly described", "severity": "critical", "guideline": "ICH M11 Section 7"},
+          {"element": "Specific, measurable inclusion criteria", "severity": "critical"},
+          {"element": "Scientifically justified exclusion criteria", "severity": "critical"},
+          {"element": "No arbitrary upper age limits (per ICH E7)", "severity": "major", "guideline": "ICH E7"},
+          {"element": "Diversity plan / enrollment targets for underrepresented populations", "severity": "major", "guideline": "FDA Diversity Plans 2024"},
+          {"element": "Screen failure rate estimation", "severity": "minor"},
+          {"element": "Withdrawal/discontinuation criteria specified", "severity": "critical"},
+          {"element": "Replacement policy for dropouts", "severity": "major"}
+        ]
+      },
+      "study_intervention": {
+        "weight": 8,
+        "required_elements": [
+          {"element": "Investigational product description", "severity": "critical", "guideline": "ICH M11 Section 8"},
+          {"element": "Dosage, route, frequency, duration", "severity": "critical"},
+          {"element": "Dose modification/reduction guidelines", "severity": "critical"},
+          {"element": "Treatment discontinuation criteria", "severity": "critical"},
+          {"element": "Concomitant medication policy (permitted and prohibited)", "severity": "critical"},
+          {"element": "Rescue medication rules", "severity": "major"},
+          {"element": "Drug supply, storage, accountability", "severity": "major", "guideline": "ICH E6(R3) Section 5"},
+          {"element": "Treatment compliance monitoring method", "severity": "major"}
+        ]
+      },
+      "statistical_considerations": {
+        "weight": 15,
+        "required_elements": [
+          {"element": "Primary analysis method clearly specified", "severity": "critical", "guideline": "ICH M11 Section 12"},
+          {"element": "Sample size calculation with assumptions", "severity": "critical"},
+          {"element": "Effect size assumption justified from prior data", "severity": "critical"},
+          {"element": "Power (typically 80-90%)", "severity": "critical"},
+          {"element": "Significance level (typically two-sided α = 0.05)", "severity": "critical"},
+          {"element": "Analysis populations defined (ITT, mITT, PP, Safety)", "severity": "critical"},
+          {"element": "Missing data handling strategy aligned with estimand", "severity": "critical", "guideline": "ICH E9(R1)"},
+          {"element": "Multiplicity adjustment for multiple endpoints/comparisons", "severity": "critical", "guideline": "FDA Multiple Endpoints / EMA CHMP/44762/2017"},
+          {"element": "Interim analysis plan (if applicable)", "severity": "critical"},
+          {"element": "Stopping rules (efficacy and futility)", "severity": "critical"},
+          {"element": "DMC/DSMB charter referenced", "severity": "critical"},
+          {"element": "Pre-specified subgroup analyses", "severity": "major"},
+          {"element": "Sensitivity analyses described", "severity": "major"},
+          {"element": "Bayesian design elements justified (if applicable)", "severity": "major"},
+          {"element": "Survival analysis methods (KM, Cox PH) for time-to-event", "severity": "major"}
+        ]
+      },
+      "safety_monitoring": {
+        "weight": 12,
+        "required_elements": [
+          {"element": "AE and SAE definitions aligned with ICH E2A", "severity": "critical", "guideline": "ICH E2A"},
+          {"element": "AE grading scale specified (CTCAE v5, MedDRA)", "severity": "critical"},
+          {"element": "AE collection start and end timepoints", "severity": "critical"},
+          {"element": "SAE reporting timelines to sponsor", "severity": "critical", "guideline": "ICH E2A / 21 CFR 312.32"},
+          {"element": "SAE reporting timelines to IRB/IEC", "severity": "critical"},
+          {"element": "SAE reporting timelines to regulators (7-day, 15-day)", "severity": "critical", "guideline": "21 CFR 312.32 / EU CTR Art 41-43"},
+          {"element": "DSMB/DMC established with charter", "severity": "critical", "guideline": "ICH E6(R3) / FDA DMC Guidance"},
+          {"element": "Stopping rules for safety signals", "severity": "critical"},
+          {"element": "DSUR (Development Safety Update Report) submission plan", "severity": "major", "guideline": "ICH E2F"},
+          {"element": "Cardiac safety monitoring (ECG schedule, QTc)", "severity": "major", "guideline": "ICH E14 / ICH S7B"},
+          {"element": "Pregnancy reporting procedures", "severity": "major"},
+          {"element": "Suicidality monitoring (C-SSRS) if CNS drug", "severity": "critical"},
+          {"element": "Hepatotoxicity monitoring (Hy's Law) if hepatotoxic risk", "severity": "major"},
+          {"element": "Follow-up for ongoing AEs after treatment end", "severity": "major"}
+        ]
+      },
+      "data_integrity_and_quality": {
+        "weight": 5,
+        "required_elements": [
+          {"element": "Risk-based quality management plan", "severity": "critical", "guideline": "ICH E6(R3) Section 5.0"},
+          {"element": "Critical to Quality (CtQ) factors identified", "severity": "critical", "guideline": "ICH E8(R1)"},
+          {"element": "Risk-based monitoring strategy", "severity": "critical", "guideline": "ICH E6(R3) Section 5.18"},
+          {"element": "Data management plan referenced", "severity": "major"},
+          {"element": "EDC system with Part 11 compliance", "severity": "major", "guideline": "21 CFR Part 11"},
+          {"element": "Source data verification strategy", "severity": "major"},
+          {"element": "Audit trail requirements", "severity": "major"},
+          {"element": "Data privacy and GDPR compliance (if EU trial)", "severity": "critical", "guideline": "GDPR 2016/679"},
+          {"element": "CDISC data standards for submission", "severity": "major", "guideline": "FDA CDISC requirement"}
+        ]
+      },
+      "ethics_and_regulatory": {
+        "weight": 5,
+        "required_elements": [
+          {"element": "Informed consent process described", "severity": "critical", "guideline": "ICH E6(R3) Section 4.8 / 21 CFR Part 50"},
+          {"element": "All 8 basic consent elements addressed", "severity": "critical", "guideline": "21 CFR 50.25(a)"},
+          {"element": "IRB/IEC approval required before enrollment", "severity": "critical", "guideline": "21 CFR Part 56"},
+          {"element": "Regulatory submissions plan (IND, CTA, CTN)", "severity": "critical"},
+          {"element": "Protocol amendment procedures", "severity": "major"},
+          {"element": "Publication policy", "severity": "minor"},
+          {"element": "Insurance/indemnity provisions (EU requirement)", "severity": "major", "guideline": "EU CTR 536/2014"},
+          {"element": "Trial registration (ClinicalTrials.gov / CTIS / ICTRP)", "severity": "critical"}
+        ]
+      }
+    }
+  },
+  "jurisdiction_specific_checklist": {
+    "description": "Additional requirements by jurisdiction beyond ICH core",
+    "FDA_specific": {
+      "requirements": [
+        {"element": "IND filed and 30-day review period observed", "severity": "critical", "guideline": "21 CFR 312.40"},
+        {"element": "Adequate and well-controlled study design per 21 CFR 314.126", "severity": "critical"},
+        {"element": "CDISC SDTM/ADaM data standards for submission", "severity": "major"},
+        {"element": "Diversity Action Plan for Phase III trials", "severity": "major", "guideline": "FDA 2024"},
+        {"element": "Pediatric Study Plan per PREA if applicable", "severity": "major"},
+        {"element": "Special Protocol Assessment (SPA) considered for Phase III", "severity": "minor"},
+        {"element": "CVOT requirement for diabetes drugs", "severity": "critical", "guideline": "FDA CVOT Guidance 2008/2020"}
+      ]
+    },
+    "EMA_specific": {
+      "requirements": [
+        {"element": "Clinical Trial Application via CTIS portal", "severity": "critical", "guideline": "EU CTR 536/2014"},
+        {"element": "GDPR-compliant data handling procedures", "severity": "critical", "guideline": "GDPR 2016/679"},
+        {"element": "Paediatric Investigation Plan (PIP) or justified deferral/waiver", "severity": "major", "guideline": "EC 1901/2006"},
+        {"element": "Results submission to CTIS within 12 months of trial end", "severity": "critical", "guideline": "EU CTR Article 37"},
+        {"element": "EU standard of care as comparator", "severity": "critical"},
+        {"element": "Risk Management Plan preparation aligned with pharmacovigilance plan", "severity": "major", "guideline": "GVP Module V"},
+        {"element": "DSUR to all concerned Member States", "severity": "major", "guideline": "ICH E2F"}
+      ]
+    },
+    "PMDA_specific": {
+      "requirements": [
+        {"element": "Clinical Trial Notification filed", "severity": "critical"},
+        {"element": "Japanese population PK/bridging data planned", "severity": "critical", "guideline": "ICH E5(R1)"},
+        {"element": "CYP2C19 polymorphism evaluated", "severity": "major"},
+        {"element": "Japanese site inclusion in MRCT", "severity": "major", "guideline": "ICH E17"},
+        {"element": "Body weight-based dosing consideration", "severity": "major"}
+      ]
+    },
+    "NMPA_specific": {
+      "requirements": [
+        {"element": "CTA filed with CDE", "severity": "critical"},
+        {"element": "Chinese population PK data planned", "severity": "critical"},
+        {"element": "Chinese site participation in global trial", "severity": "major"},
+        {"element": "Minimum Chinese patient enrollment targets", "severity": "major"},
+        {"element": "Traditional medicine interaction consideration if relevant", "severity": "minor"}
+      ]
+    }
+  },
+  "scoring_algorithm": {
+    "description": "How NIX AI calculates compliance scores from this checklist",
+    "methodology": {
+      "element_scoring": {
+        "present_and_adequate": 1.0,
+        "present_but_incomplete": 0.5,
+        "missing": 0.0,
+        "not_applicable": "excluded from calculation"
+      },
+      "severity_multipliers": {
+        "critical": 3.0,
+        "major": 2.0,
+        "minor": 1.0
+      },
+      "section_score": "Sum of (element_score × severity_multiplier) / Sum of (max_score × severity_multiplier) × 100",
+      "overall_score": "Weighted average of section scores using section weights",
+      "interpretation": {
+        "85-100": "Excellent — Protocol meets or exceeds all major requirements",
+        "70-84": "Good — Minor gaps addressable via amendment",
+        "50-69": "Adequate — Notable deficiencies requiring attention",
+        "30-49": "Needs Improvement — Significant redesign required",
+        "0-29": "Major Revision — Fundamental issues in protocol design"
+      }
+    }
+  },
+  "common_protocol_deficiencies": {
+    "description": "Most frequently identified deficiencies across jurisdictions — ranked by frequency and impact",
+    "top_deficiencies": [
+      {
+        "rank": 1,
+        "deficiency": "Missing or incomplete estimand framework (ICH E9(R1))",
+        "impact": "Regulatory delay — both FDA and EMA now expect estimands in protocol and SAP",
+        "fix": "Define primary estimand with all 5 attributes: population, treatment, variable, intercurrent events + strategies, summary measure"
+      },
+      {
+        "rank": 2,
+        "deficiency": "No EQ-5D-5L or quality of life data collection",
+        "impact": "Payer rejection — NICE, IQWiG, CADTH all require QoL data for reimbursement assessment",
+        "fix": "Add EQ-5D-5L at baseline and every scheduled visit. Add disease-specific PRO instrument."
+      },
+      {
+        "rank": 3,
+        "deficiency": "Comparator does not reflect standard of care in target markets",
+        "impact": "HTA bodies may rule 'no added benefit' — especially IQWiG/G-BA if ACT not matched",
+        "fix": "Engage early with HTA bodies via scientific advice. Consider multi-arm design with HTA-relevant comparator."
+      },
+      {
+        "rank": 4,
+        "deficiency": "Inadequate sample size justification",
+        "impact": "FDA clinical hold or EMA request for information — delays trial start",
+        "fix": "Provide effect size justification from prior studies, power calculation with sensitivity analysis, handling of dropouts"
+      },
+      {
+        "rank": 5,
+        "deficiency": "Missing multiplicity adjustment for multiple endpoints",
+        "impact": "Primary endpoint claims may be rejected if FWER not controlled",
+        "fix": "Pre-specify testing hierarchy, graphical testing procedure, or gatekeeping strategy in protocol and SAP"
+      },
+      {
+        "rank": 6,
+        "deficiency": "No DSMB/DMC charter for Phase III trial",
+        "impact": "ICH E6(R3) non-compliance — safety oversight gap",
+        "fix": "Establish independent DMC with charter covering interim analyses, safety monitoring, stopping rules"
+      },
+      {
+        "rank": 7,
+        "deficiency": "Dose selection not adequately justified",
+        "impact": "FDA Project Optimus — oncology drugs especially need multiple dose evaluation data",
+        "fix": "Provide PK/PD modelling, dose-response data, exposure-response analysis supporting selected dose"
+      },
+      {
+        "rank": 8,
+        "deficiency": "Missing diversity enrollment plan",
+        "impact": "FDA now requires diversity plans for Phase III (since 2024)",
+        "fix": "Include diversity targets, community engagement strategy, site selection for diverse populations"
+      },
+      {
+        "rank": 9,
+        "deficiency": "Insufficient safety follow-up duration",
+        "impact": "Incomplete safety database for registration — may trigger post-marketing requirements",
+        "fix": "Align follow-up with ICH E1 requirements and therapeutic area standards"
+      },
+      {
+        "rank": 10,
+        "deficiency": "No healthcare resource utilisation data collection",
+        "impact": "Cannot build cost-effectiveness model for HTA submissions",
+        "fix": "Add resource use CRF fields: hospitalisations, ER visits, outpatient visits, concomitant medications"
+      }
+    ]
+  }
+}

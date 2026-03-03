@@ -1,0 +1,533 @@
+{
+  "metadata": {
+    "title": "FDA Clinical Trial Guidance Documents — Reference Database for NIX AI",
+    "version": "2.0",
+    "last_updated": "2026-03-01",
+    "source": "U.S. Food and Drug Administration (FDA), Center for Drug Evaluation and Research (CDER), Center for Biologics Evaluation and Research (CBER)",
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents",
+    "description": "Key FDA guidance documents relevant to clinical trial protocol design, conduct, and regulatory submissions."
+  },
+  "clinical_trial_design": {
+    "adaptive_designs": {
+      "title": "Adaptive Designs for Clinical Trials of Drugs and Biologics",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adaptive-designs-clinical-trials-drugs-and-biologics-guidance-industry",
+      "year": 2019,
+      "status": "Final",
+      "key_points": [
+        "Types of adaptive designs: sample size re-estimation, response-adaptive randomization, seamless Phase II/III, biomarker-adaptive, adaptive dose-finding",
+        "Pre-specification of all adaptations in the protocol required",
+        "Control of Type I error rate across adaptations",
+        "Operational bias prevention through blinding and firewalls",
+        "Statistical methods: group sequential, combination tests, Bayesian approaches",
+        "DMC role in interim analyses and adaptation decisions",
+        "Simulation studies to evaluate operating characteristics recommended"
+      ],
+      "protocol_requirements": [
+        "Pre-specified adaptation rules in protocol and SAP",
+        "Justification for each adaptation",
+        "Type I error rate control methodology",
+        "Operating characteristics from simulations",
+        "DMC charter with decision-making framework",
+        "Interim analysis timing and stopping rules"
+      ]
+    },
+    "enrichment_designs": {
+      "title": "Enrichment Strategies for Clinical Trials to Support Determination of Effectiveness of Human Drugs and Biological Products",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/enrichment-strategies-clinical-trials-support-approval-human-drugs-and-biological-products",
+      "year": 2019,
+      "status": "Final",
+      "key_points": [
+        "Practical enrichment: select patients likely to comply, complete study",
+        "Prognostic enrichment: select patients with higher event rates",
+        "Predictive enrichment: select patients more likely to respond (biomarker-driven)",
+        "Biomarker validation requirements for predictive enrichment",
+        "Companion diagnostic development when predictive enrichment used"
+      ]
+    },
+    "non_inferiority": {
+      "title": "Non-Inferiority Clinical Trials to Establish Effectiveness",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/non-inferiority-clinical-trials-establish-effectiveness",
+      "year": 2016,
+      "status": "Final",
+      "key_points": [
+        "Non-inferiority margin (M2) should preserve at least 50% of active control effect",
+        "Historical evidence of active control effect (M1) must be reliable",
+        "Constancy assumption: active control effect retained in new trial setting",
+        "Both ITT and per-protocol analyses important for NI trials",
+        "Fixed margin and synthesis methods for margin selection",
+        "Assay sensitivity demonstration required"
+      ],
+      "protocol_requirements": [
+        "NI margin specified with justification from meta-analysis",
+        "M1 (historical effect) and M2 (NI margin) clearly defined",
+        "Constancy assumption assessment",
+        "Both ITT and PP analysis populations defined",
+        "Sensitivity analyses for NI conclusion"
+      ]
+    },
+    "master_protocols": {
+      "title": "Master Protocols: Efficient Clinical Trial Design Strategies to Expedite Development of Oncology Drugs and Biologics",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/master-protocols-efficient-clinical-trial-design-strategies-expedite-development-oncology-drugs-and",
+      "year": 2022,
+      "status": "Final",
+      "key_points": [
+        "Basket trials: single drug across multiple tumor types/biomarkers",
+        "Umbrella trials: multiple drugs in single disease, biomarker-stratified",
+        "Platform trials: perpetual protocol allowing arm additions/drops",
+        "Shared control arm considerations and concurrent control requirements",
+        "Multiplicity adjustment across sub-studies",
+        "Governance structure for multi-stakeholder master protocols"
+      ]
+    },
+    "complex_innovative_designs": {
+      "title": "Complex Innovative Trial Designs (CID) Pilot Program",
+      "url": "https://www.fda.gov/drugs/development-resources/complex-innovative-trial-designs-meeting-request-program",
+      "year": 2023,
+      "status": "Active Program",
+      "key_points": [
+        "Bayesian adaptive designs, platform trials, response-adaptive randomization",
+        "Pre-IND/pre-NDA meetings for CID discussions",
+        "Statistical review team engagement for novel designs",
+        "Simulation requirements for complex designs"
+      ]
+    }
+  },
+  "endpoints_and_biomarkers": {
+    "clinical_endpoints": {
+      "title": "Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/clinical-trial-endpoints-approval-cancer-drugs-and-biologics",
+      "year": 2018,
+      "status": "Final",
+      "key_points": [
+        "Overall survival (OS): gold standard for regular approval in oncology",
+        "Progression-free survival (PFS): acceptable for some regular approvals",
+        "Objective response rate (ORR): accelerated approval basis",
+        "Duration of response (DOR): important complementary endpoint",
+        "Disease-free survival (DFS), event-free survival (EFS): adjuvant settings",
+        "Patient-reported outcomes (PROs): supportive evidence for approval"
+      ]
+    },
+    "surrogate_endpoints": {
+      "title": "Surrogate Endpoint Resources for Drug and Biologic Development",
+      "url": "https://www.fda.gov/drugs/development-resources/surrogate-endpoint-resources-drug-and-biologic-development",
+      "year": 2024,
+      "status": "Active Resource",
+      "key_points": [
+        "Table of Surrogate Endpoints used for accelerated and regular approval",
+        "Validation requirements: biological plausibility + epidemiological evidence",
+        "Risk-benefit considerations when relying on surrogate endpoints",
+        "Post-marketing confirmatory study requirements for accelerated approval"
+      ]
+    },
+    "patient_reported_outcomes": {
+      "title": "Patient-Reported Outcome Measures: Use in Medical Product Development to Support Labeling Claims",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/patient-reported-outcome-measures-use-medical-product-development-support-labeling-claims",
+      "year": 2009,
+      "status": "Final",
+      "key_points": [
+        "PRO instrument development and validation pathway",
+        "Content validity: qualitative evidence from target population",
+        "Construct validity: convergent, discriminant, known-groups",
+        "Reliability: test-retest, internal consistency",
+        "Meaningful change thresholds (MID/MCID)",
+        "FDA review of PRO endpoints in SPAs"
+      ]
+    },
+    "digital_health_technologies": {
+      "title": "Digital Health Technologies for Remote Data Acquisition in Clinical Investigations",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/digital-health-technologies-remote-data-acquisition-clinical-investigations",
+      "year": 2024,
+      "status": "Final",
+      "key_points": [
+        "DHT as data collection tools in clinical trials",
+        "Verification and validation of DHT measurements",
+        "Data quality standards for DHT-collected data",
+        "Cybersecurity and data integrity requirements"
+      ]
+    }
+  },
+  "statistics_and_analysis": {
+    "multiplicity": {
+      "title": "Multiple Endpoints in Clinical Trials",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/multiple-endpoints-clinical-trials-guidance-industry",
+      "year": 2022,
+      "status": "Final",
+      "key_points": [
+        "Family-wise error rate (FWER) control strategies",
+        "Hierarchical (gatekeeping) testing procedures",
+        "Graphical testing approaches (Bonferroni-based)",
+        "Split-alpha strategies across dose groups or endpoints",
+        "When multiplicity adjustment is required vs. when it is not",
+        "Pre-specification of multiple testing strategy in SAP"
+      ]
+    },
+    "missing_data": {
+      "title": "Statistical Principles for Clinical Trials: ICH E9 Implementation",
+      "year": 2019,
+      "key_points": [
+        "Estimand-based approach to missing data per ICH E9(R1)",
+        "Treatment policy strategy: include all data regardless of adherence",
+        "Tipping point analyses for sensitivity",
+        "Pattern mixture models, selection models",
+        "Multiple imputation with appropriate assumptions"
+      ]
+    },
+    "bayesian_statistics": {
+      "title": "Guidance for the Use of Bayesian Statistics in Medical Device Clinical Trials",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/guidance-use-bayesian-statistics-medical-device-clinical-trials",
+      "year": 2010,
+      "status": "Final",
+      "key_points": [
+        "Prior elicitation methods and justification",
+        "Operating characteristics evaluation",
+        "Type I error rate control in Bayesian framework",
+        "Prior-data conflict detection",
+        "Bayesian adaptive designs"
+      ]
+    },
+    "subgroup_analyses": {
+      "title": "Evaluation of Sex-Specific Data in Medical Device Clinical Studies",
+      "year": 2014,
+      "key_points": [
+        "Pre-specified subgroup analyses by sex, age, race/ethnicity",
+        "Interaction tests and interpretation",
+        "Subgroup-specific safety and efficacy evaluations"
+      ]
+    }
+  },
+  "special_populations": {
+    "pregnant_women": {
+      "title": "Pregnant Women: Scientific and Ethical Considerations for Inclusion in Clinical Trials",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/pregnant-women-scientific-and-ethical-considerations-inclusion-clinical-trials",
+      "year": 2018,
+      "status": "Final"
+    },
+    "geriatric": {
+      "title": "E7 Studies in Support of Special Populations: Geriatrics",
+      "cross_reference": "ICH E7"
+    },
+    "pediatric": {
+      "title": "Pediatric Study Plans: Content of and Process for Submitting Initial Pediatric Study Plans and Amended Initial Pediatric Study Plans",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/pediatric-study-plans-content-and-process-submitting-initial-pediatric-study-plans-and-amended",
+      "year": 2020,
+      "status": "Final"
+    },
+    "rare_diseases": {
+      "title": "Rare Diseases: Common Issues in Drug Development — Guidance for Industry",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/rare-diseases-common-issues-drug-development-guidance-industry",
+      "year": 2019,
+      "status": "Final",
+      "key_points": [
+        "Natural history study importance for rare diseases",
+        "Flexible trial designs for small populations",
+        "Use of external controls and historical data",
+        "Patient registries as data sources",
+        "Accelerated approval pathways for rare diseases"
+      ]
+    }
+  },
+  "safety_reporting": {
+    "safety_reporting_ind": {
+      "title": "Safety Reporting Requirements for INDs and BA/BE Studies",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/safety-reporting-requirements-inds-and-babe-studies",
+      "year": 2012,
+      "status": "Final",
+      "key_points": [
+        "IND safety report criteria: serious, unexpected, reasonably possible causal relationship",
+        "7-day alert reports for fatal or life-threatening events",
+        "15-day IND safety reports for all other serious unexpected ADRs",
+        "Annual IND safety report requirements",
+        "Investigator notification timelines"
+      ]
+    },
+    "risk_management": {
+      "title": "Risk Evaluation and Mitigation Strategies (REMS)",
+      "url": "https://www.fda.gov/drugs/drug-safety-and-availability/risk-evaluation-and-mitigation-strategies-rems",
+      "key_points": [
+        "When REMS may be required",
+        "REMS components: medication guide, communication plan, ETASU",
+        "REMS assessment timelines"
+      ]
+    }
+  },
+  "real_world_evidence": {
+    "rwe_framework": {
+      "title": "Framework for FDA's Real-World Evidence Program",
+      "url": "https://www.fda.gov/science-research/science-and-research-special-topics/real-world-evidence",
+      "year": 2018,
+      "key_points": [
+        "RWD sources: EHR, claims, registries, DHTs",
+        "RWE for new indications and post-approval commitments",
+        "Data quality, relevance, and reliability assessment",
+        "Study design considerations for RWE",
+        "Regulatory grade RWE standards"
+      ]
+    },
+    "external_controls": {
+      "title": "Considerations for the Design and Conduct of Externally Controlled Trials for Drug and Biological Products",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/considerations-design-and-conduct-externally-controlled-trials-drug-and-biological-products",
+      "year": 2023,
+      "status": "Final",
+      "key_points": [
+        "When external controls may be appropriate (rare diseases, single-arm oncology)",
+        "Data quality requirements for external control data",
+        "Propensity score methods for confounding adjustment",
+        "Sensitivity analyses for external control comparisons"
+      ]
+    }
+  },
+  "decentralized_trials": {
+    "dct_guidance": {
+      "title": "Decentralized Clinical Trials for Drugs, Biological Products, and Devices",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/decentralized-clinical-trials-drugs-biological-products-and-devices",
+      "year": 2024,
+      "status": "Final",
+      "key_points": [
+        "Remote informed consent (eConsent) procedures",
+        "Telemedicine visits replacing in-person site visits",
+        "Direct-to-patient (DtP) drug shipment",
+        "Home health provider assessments",
+        "Local lab and imaging facility use",
+        "Data integrity in decentralized settings",
+        "IRB/IEC considerations for DCT elements"
+      ]
+    }
+  },
+  "ai_ml_and_digital_innovation": {
+    "ai_ml_drug_development": {
+      "title": "Artificial Intelligence and Machine Learning in Drug Development",
+      "url": "https://www.fda.gov/science-research/science-and-research-special-topics/artificial-intelligence-and-machine-learning-aiml-drug-development",
+      "year": 2023,
+      "status": "Discussion Paper / Emerging Framework",
+      "key_points": [
+        "AI/ML applications across drug development lifecycle: target identification, clinical trial design, manufacturing, post-market surveillance",
+        "Data quality requirements: training data representativeness, bias detection, data integrity",
+        "Model transparency and explainability requirements for regulatory submissions",
+        "Good Machine Learning Practice (GMLP) principles: valid clinical association, appropriate data representation, reference standards, performance monitoring",
+        "Regulatory considerations: predetermined change control plans, human oversight, real-world performance monitoring",
+        "AI-derived biomarkers: qualification pathways and validation requirements",
+        "Clinical Decision Support (CDS) tools in trials: FDA oversight framework"
+      ],
+      "protocol_requirements": [
+        "AI/ML model description in protocol if used for endpoint assessment or patient selection",
+        "Validation dataset separate from training data",
+        "Bias mitigation strategy for AI-assisted decisions",
+        "Human oversight plan for AI-supported clinical decisions",
+        "Model versioning and change control documentation"
+      ]
+    },
+    "ai_ml_medical_devices": {
+      "title": "Artificial Intelligence/Machine Learning (AI/ML)-Based Software as a Medical Device (SaMD) Action Plan",
+      "url": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-software-medical-device",
+      "year": 2021,
+      "status": "Action Plan",
+      "key_points": [
+        "Predetermined Change Control Plan framework for AI/ML-based SaMD",
+        "Good Machine Learning Practice (GMLP) development",
+        "Patient-centered approach for AI/ML transparency",
+        "Regulatory science for AI/ML evaluation",
+        "Real-world performance monitoring requirements",
+        "Total Product Lifecycle (TPLC) approach for AI/ML devices"
+      ]
+    },
+    "electronic_records": {
+      "title": "21 CFR Part 11: Electronic Records; Electronic Signatures",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/part-11-electronic-records-electronic-signatures-scope-and-application",
+      "year": 2003,
+      "status": "Final (Guidance on Scope and Application)",
+      "key_points": [
+        "Requirements for electronic records to be considered trustworthy, reliable, and equivalent to paper",
+        "Electronic signature requirements: unique to individual, not reused, verified identity",
+        "Audit trail: computer-generated, time-stamped trail of system activities",
+        "Validation of computerized systems used to manage electronic records",
+        "Access controls: physical and logical restrictions",
+        "Applies to clinical trial data management, EDC systems, ePRO platforms",
+        "Scope clarification: risk-based approach to Part 11 compliance"
+      ],
+      "protocol_requirements": [
+        "EDC system Part 11 compliance documented",
+        "Audit trail capability for all electronic clinical data",
+        "Electronic signature policy for investigators and sponsors",
+        "System validation documentation for electronic data capture"
+      ]
+    }
+  },
+  "oncology_specific_guidance": {
+    "project_optimus": {
+      "title": "Project Optimus: Reforming the Dose Optimization and Dose Selection Paradigm in Oncology",
+      "url": "https://www.fda.gov/about-fda/oncology-center-excellence/project-optimus",
+      "year": 2023,
+      "status": "Active Initiative",
+      "key_points": [
+        "Paradigm shift: maximum tolerated dose (MTD) no longer the default for oncology dose selection",
+        "Dose optimisation required: efficacy AND safety data at multiple doses before Phase III",
+        "Randomised dose-finding studies expected (not just dose-escalation to MTD)",
+        "Applies especially to molecularly targeted therapies and immunotherapies",
+        "Dose optimisation data may be required for accelerated approval",
+        "FDA may request additional dose optimisation studies during review",
+        "Dose reduction strategies and dose modifications should be pre-specified",
+        "Exposure-response analysis required to support dose selection rationale"
+      ],
+      "protocol_requirements": [
+        "Dose selection rationale with exposure-response data",
+        "Multiple dose levels evaluated in randomised comparison where feasible",
+        "Patient-reported outcomes by dose level to assess tolerability",
+        "Dose modification guidelines in protocol",
+        "PK/PD modelling supporting selected dose(s)"
+      ]
+    },
+    "tissue_agnostic_approvals": {
+      "title": "Tissue Agnostic Drug Development in Oncology",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs",
+      "year": 2024,
+      "status": "Evolving Framework",
+      "key_points": [
+        "Approvals based on biomarker rather than tumor site (e.g., NTRK fusion, MSI-H/dMMR, TMB-H)",
+        "Basket trial design required to demonstrate activity across tumor types",
+        "Central testing for biomarker (companion diagnostic) required",
+        "Response rate as primary endpoint acceptable for accelerated approval",
+        "Confirmatory evidence requirements across tumor types",
+        "Durability of response critical for regulatory assessment"
+      ]
+    },
+    "ctdna_mrd": {
+      "title": "Circulating Tumor DNA (ctDNA) and Minimal Residual Disease (MRD) as Endpoints",
+      "year": 2024,
+      "status": "Emerging Framework",
+      "key_points": [
+        "ctDNA clearance as potential surrogate endpoint in select settings",
+        "MRD negativity accepted in haematologic malignancies (e.g., multiple myeloma, CLL)",
+        "Assay validation requirements: sensitivity, specificity, analytical validity",
+        "ctDNA for treatment monitoring and response assessment",
+        "FDA qualification pathway for ctDNA as drug development tool",
+        "Not yet accepted as sole primary endpoint for regular approval in solid tumors"
+      ]
+    }
+  },
+  "cell_gene_therapy_guidance": {
+    "gene_therapy_general": {
+      "title": "Human Gene Therapy Products Incorporating Human Genome Editing",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/human-gene-therapy-products-incorporating-human-genome-editing",
+      "year": 2022,
+      "status": "Final",
+      "key_points": [
+        "Genome editing products: CRISPR-Cas, ZFN, TALEN-based therapies",
+        "Off-target analysis requirements: whole genome sequencing, unbiased methods",
+        "Long-term follow-up: minimum 15 years for integrating vectors, 5 years for non-integrating",
+        "Manufacturing considerations: potency assays, identity testing, sterility",
+        "Nonclinical requirements: biodistribution, tumorigenicity, immunogenicity",
+        "Clinical considerations: dose escalation design, patient selection, monitoring plan"
+      ],
+      "protocol_requirements": [
+        "Off-target editing assessment methodology specified",
+        "Long-term follow-up plan with specific monitoring endpoints",
+        "Dose escalation/de-escalation rules with safety stopping criteria",
+        "Immunogenicity monitoring plan (anti-vector and anti-transgene)",
+        "Patient eligibility based on prior gene therapy exposure"
+      ]
+    },
+    "car_t_cell_therapy": {
+      "title": "Considerations for the Development of Chimeric Antigen Receptor (CAR) T Cell Products",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/considerations-development-chimeric-antigen-receptor-car-t-cell-products",
+      "year": 2024,
+      "status": "Draft",
+      "key_points": [
+        "Manufacturing: vein-to-vein process, turnaround time, cell identity/potency",
+        "Clinical considerations: lymphodepleting conditioning, cytokine release syndrome (CRS) management, neurotoxicity (ICANS)",
+        "CRS grading: ASTCT consensus grading system",
+        "REMS may be required for CRS/ICANS management",
+        "Long-term safety: secondary malignancies including T-cell lymphoma (FDA boxed warning class-wide 2024)",
+        "Bridging therapy during manufacturing allowance"
+      ]
+    },
+    "regenerative_medicine": {
+      "title": "Regenerative Medicine Advanced Therapy (RMAT) Designation",
+      "url": "https://www.fda.gov/vaccines-blood-biologics/cellular-gene-therapy-products/regenerative-medicine-advanced-therapy-designation",
+      "year": 2024,
+      "status": "Active Pathway",
+      "key_points": [
+        "Expedited development for regenerative medicine therapies (gene therapies, cell therapies, tissue engineering)",
+        "Early interactions with FDA for development planning",
+        "Eligibility for priority review and accelerated approval",
+        "Preliminary clinical evidence of potential to address unmet need required",
+        "Applies to gene therapies, therapeutic tissue engineering products, human cell/tissue products, combination products"
+      ]
+    }
+  },
+  "biosimilar_guidance": {
+    "biosimilar_development": {
+      "title": "Biosimilar Development and the BPCI Act",
+      "url": "https://www.fda.gov/drugs/biosimilars/biosimilar-development-and-bpci-act",
+      "year": 2024,
+      "status": "Framework",
+      "key_points": [
+        "Totality of evidence approach for biosimilar approval",
+        "Stepwise approach: analytical → functional → animal → clinical (PK/PD → comparative efficacy/safety)",
+        "Clinical study may be waived if analytical and functional similarity is high",
+        "Interchangeability designation: automatic substitution at pharmacy level",
+        "Reference product designation requirements",
+        "Extrapolation of indications: biosimilar approved for one indication may be extrapolated to other approved indications of reference product"
+      ],
+      "protocol_requirements": [
+        "Comparative analytical characterisation vs reference product",
+        "PK equivalence study design: crossover or parallel, 80-125% bioequivalence range",
+        "Comparative clinical study (if required): non-inferiority or equivalence design",
+        "Immunogenicity comparative assessment: parallel design, 12+ months",
+        "Switching study for interchangeability: multiple switch crossover design"
+      ]
+    }
+  },
+  "diversity_and_inclusion": {
+    "diversity_action_plans": {
+      "title": "Diversity Plans to Improve Enrollment of Participants from Underrepresented Populations in Clinical Studies",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/diversity-plans-improve-enrollment-participants-underrepresented-populations-clinical-studies",
+      "year": 2024,
+      "status": "Final",
+      "key_points": [
+        "Required for Phase III and certain pivotal studies (as of 2024)",
+        "Must include enrollment goals for underrepresented populations",
+        "Underrepresented: based on disease epidemiology — sex, age, race, ethnicity",
+        "Sponsors must submit diversity plan as part of IND or with protocol",
+        "FDA can grant waivers for rare diseases or when diversity goals are impractical",
+        "Decentralised trial elements may improve diversity",
+        "Community engagement strategies required",
+        "Reporting: demographic data included in labeling and FDA review"
+      ],
+      "protocol_requirements": [
+        "Diversity enrollment targets specified in protocol",
+        "Recruitment strategies for underrepresented populations",
+        "Site selection strategy to access diverse populations",
+        "Language and cultural considerations for consent documents",
+        "Subgroup analyses by race, ethnicity, sex, age pre-specified"
+      ]
+    }
+  },
+  "informed_consent_and_irb": {
+    "informed_consent_21cfr50": {
+      "title": "21 CFR Part 50: Protection of Human Subjects — Informed Consent",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-50",
+      "status": "Federal Regulation",
+      "key_points": [
+        "8 basic elements of informed consent (21 CFR 50.25(a)): purpose, procedures, risks, benefits, alternatives, confidentiality, compensation/treatment for injury, voluntary participation",
+        "6 additional elements when appropriate (21 CFR 50.25(b)): unforeseeable risks, circumstances for termination, additional costs, consequences of withdrawal, new findings disclosure, number of subjects",
+        "IRB-approved consent form required",
+        "Language understandable to subject",
+        "No exculpatory language permitted",
+        "eConsent allowed: 21 CFR Part 11 compliant, option for paper copy"
+      ]
+    },
+    "irb_requirements_21cfr56": {
+      "title": "21 CFR Part 56: Institutional Review Boards",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-56",
+      "status": "Federal Regulation",
+      "key_points": [
+        "IRB approval required before human subject enrollment",
+        "IRB composition: at least 5 members, diverse backgrounds, at least one non-scientist, at least one non-affiliated member",
+        "Criteria for approval: risks minimised, risks reasonable relative to benefits, equitable selection, informed consent, data monitoring, privacy protections, vulnerable population safeguards",
+        "Continuing review: at least annually",
+        "Expedited review categories for minimal risk changes",
+        "Suspension/termination authority for non-compliance or harm"
+      ]
+    }
+  }
+}

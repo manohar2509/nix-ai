@@ -4,7 +4,7 @@ import {
   AlertTriangle, Search, Filter, Loader2, FolderOpen, X, Shield, Info,
   ArrowLeft, ShieldAlert, Clock, HardDrive, BarChart3, AlertCircle,
   Download, Eye, EyeOff, Zap, Heart, ChevronDown, ChevronRight, Copy,
-  Check, RotateCcw, Sparkles,
+  Check, RotateCcw, Sparkles, Pencil,
 } from 'lucide-react';
 import { useAppStore, useAuth, useUI, useKB } from '../stores/useAppStore';
 import kbService from '../services/kbService';
@@ -27,11 +27,10 @@ const getCategoryStyle = (cat) =>
 const ACCEPTED_EXTENSIONS = '.pdf,.json,.txt,.csv,.docx,.doc,.xlsx,.xls,.html,.md';
 
 export default function KnowledgeBaseView() {
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { kbDocuments, isKbLoading } = useKB();
   const { isKbSyncing } = useUI();
   const showToast = useAppStore((s) => s.showToast);
-  const setActiveView = useAppStore((s) => s.setActiveView);
   const setKbDocuments = useAppStore((s) => s.setKbDocuments);
   const addKbDocument = useAppStore((s) => s.addKbDocument);
   const removeKbDocument = useAppStore((s) => s.removeKbDocument);
@@ -47,8 +46,6 @@ export default function KnowledgeBaseView() {
   const [selectedDocs, setSelectedDocs] = useState(new Set());
   const [sanityResults, setSanityResults] = useState(null);
   const [sanityLoading, setSanityLoading] = useState(false);
-  const [kbStats, setKbStats] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(false);
 
   // Upload state
   const [files, setFiles] = useState([]);
@@ -61,11 +58,22 @@ export default function KnowledgeBaseView() {
 
   // Sync state
   const syncInFlightRef = useRef(false);
-  const [syncStatus, setSyncStatus] = useState(null);
+
+  // Reconcile state
+  const [isReconciling, setIsReconciling] = useState(false);
 
   // Delete
   const [deletingId, setDeletingId] = useState(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Edit metadata modal state
+  const [editModal, setEditModal] = useState({ open: false, doc: null });
+  const [editForm, setEditForm] = useState({ name: '', description: '', category: 'general' });
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Replace progress state
+  const [replacingId, setReplacingId] = useState(null);
+  const [replaceProgress, setReplaceProgress] = useState(0);
 
   // Drawer state
   const [drawer, setDrawer] = useState({ open: false, type: null, context: null });
@@ -80,18 +88,6 @@ export default function KnowledgeBaseView() {
     }
   }, [isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!isAdmin) {
-    return (
-      <div className="h-full flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <Shield size={48} className="mx-auto text-slate-300 mb-4" />
-          <h2 className="text-lg font-bold text-slate-700 mb-2">Admin Access Required</h2>
-          <p className="text-sm text-slate-400">Only administrators can manage the Knowledge Base.</p>
-        </div>
-      </div>
-    );
-  }
-
   const loadKbDocuments = async () => {
     setIsKbLoading(true);
     try {
@@ -105,14 +101,10 @@ export default function KnowledgeBaseView() {
   };
 
   const loadStats = async () => {
-    setStatsLoading(true);
     try {
-      const data = await kbService.getStats();
-      setKbStats(data);
+      await kbService.getStats();
     } catch (err) {
       console.error('Failed to load KB stats:', err);
-    } finally {
-      setStatsLoading(false);
     }
   };
 
@@ -126,6 +118,39 @@ export default function KnowledgeBaseView() {
       showToast({ type: 'error', title: 'Sanity check failed', message: err.message });
     } finally {
       setSanityLoading(false);
+    }
+  };
+
+  const handleReconcile = async () => {
+    setIsReconciling(true);
+    try {
+      const data = await kbService.reconcileDocuments();
+      if (data.imported_count > 0) {
+        showToast({
+          type: 'success',
+          title: 'Reconciliation complete',
+          message: `Imported ${data.imported_count} new document(s) from S3`,
+        });
+        await loadKbDocuments();
+        await loadStats();
+      } else {
+        showToast({
+          type: 'info',
+          title: 'Already in sync',
+          message: `All ${data.total_s3_objects} S3 files are already registered`,
+        });
+      }
+      if (data.error_count > 0) {
+        showToast({
+          type: 'warning',
+          title: 'Some imports failed',
+          message: `${data.error_count} file(s) could not be imported`,
+        });
+      }
+    } catch (err) {
+      showToast({ type: 'error', title: 'Reconciliation failed', message: err.message });
+    } finally {
+      setIsReconciling(false);
     }
   };
 
@@ -250,7 +275,7 @@ export default function KnowledgeBaseView() {
   const handleResync = async (kbDocId) => {
     try {
       await kbService.resyncDocument(kbDocId);
-      const updatedDocs = kbDocuments.map((d) => d.id === kbDocId ? { ...d, status: 'uploaded' } : d);
+      const updatedDocs = kbDocuments.map((d) => d.id === kbDocId ? { ...d, status: 'sync_pending' } : d);
       setKbDocuments(updatedDocs);
       showToast({ type: 'success', title: 'Re-synced', message: 'Document will be included in next Bedrock sync.' });
     } catch (err) {
@@ -258,19 +283,93 @@ export default function KnowledgeBaseView() {
     }
   };
 
+  const handleEditMetadata = async (doc) => {
+    // Open edit modal with current values pre-populated
+    setEditForm({
+      name: doc.name || '',
+      description: doc.description || '',
+      category: doc.category || 'general',
+    });
+    setEditModal({ open: true, doc });
+  };
+
+  const handleEditMetadataSave = async () => {
+    const doc = editModal.doc;
+    if (!doc) return;
+    setEditSaving(true);
+    try {
+      const updated = await kbService.updateDocument(doc.id, {
+        name: editForm.name.trim(),
+        description: editForm.description,
+        category: editForm.category,
+      });
+      setKbDocuments(kbDocuments.map((d) => (d.id === doc.id ? updated : d)));
+      showToast({ type: 'success', title: 'Updated', message: 'KB metadata updated.' });
+      setEditModal({ open: false, doc: null });
+      loadStats();
+    } catch (err) {
+      showToast({ type: 'error', title: 'Update failed', message: err.message });
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleReplaceFile = async (doc) => {
+    const file = await new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = ACCEPTED_EXTENSIONS;
+      input.onchange = (e) => resolve(e.target?.files?.[0] || null);
+      input.click();
+    });
+
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      showToast({ type: 'error', title: 'File too large', message: `${file.name} exceeds 50MB limit` });
+      return;
+    }
+
+    const changeNote = window.prompt('Change note (optional)', 'Updated file content');
+    if (changeNote === null) return;
+
+    setReplacingId(doc.id);
+    setReplaceProgress(0);
+    try {
+      const { url, key } = await kbService.getUploadUrl(file.name, file.type || 'application/pdf');
+      await kbService.uploadToKBBucket(file, url, (pct) => setReplaceProgress(pct));
+      const updated = await kbService.replaceDocument(doc.id, {
+        s3_key: key,
+        size: file.size,
+        name: file.name,
+        change_note: changeNote || '',
+      });
+
+      setKbDocuments(kbDocuments.map((d) => (d.id === doc.id ? updated : d)));
+      showToast({
+        type: 'success',
+        title: 'File replaced',
+        message: 'Document updated. Run sync if not already queued.',
+      });
+      loadStats();
+    } catch (err) {
+      showToast({ type: 'error', title: 'Replace failed', message: err.message });
+    } finally {
+      setReplacingId(null);
+      setReplaceProgress(0);
+    }
+  };
+
   const handleKbSync = useCallback(async () => {
     if (syncInFlightRef.current || isKbSyncing) return;
     syncInFlightRef.current = true;
     setIsKbSyncing(true);
-    setSyncStatus('syncing');
     try {
       const response = await kbService.syncKnowledgeBase();
       if (response.deduplicated) {
         showToast({ type: 'info', title: 'Sync already running', message: `Job ${response.jobId} in progress` });
-        setSyncStatus(null); return;
+        return;
       }
       if (response.inline) {
-        setSyncStatus(response.status === 'COMPLETE' ? 'complete' : 'failed');
         showToast({ type: response.status === 'COMPLETE' ? 'success' : 'error', title: `KB Sync ${response.status === 'COMPLETE' ? 'complete' : 'failed'}`, message: response.error || 'Bedrock re-indexed.' });
         loadKbDocuments(); loadStats(); return;
       }
@@ -283,11 +382,9 @@ export default function KnowledgeBaseView() {
         status = result.status;
         if (status !== 'QUEUED' && status !== 'IN_PROGRESS') break;
       }
-      setSyncStatus(status === 'COMPLETE' ? 'complete' : status === 'FAILED' ? 'failed' : null);
       showToast({ type: status === 'COMPLETE' ? 'success' : status === 'FAILED' ? 'error' : 'info', title: `KB Sync ${status === 'COMPLETE' ? 'complete' : status === 'FAILED' ? 'failed' : 'processing'}`, message: status === 'COMPLETE' ? 'Knowledge Base updated.' : 'Check Job Monitor.' });
       loadKbDocuments(); loadStats();
     } catch (err) {
-      setSyncStatus('failed');
       showToast({ type: 'error', title: 'Sync failed', message: err.message });
     } finally {
       setIsKbSyncing(false);
@@ -300,9 +397,10 @@ export default function KnowledgeBaseView() {
     .filter((d) => {
       if (searchQuery && !d.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       if (filterCategory !== 'all' && d.category !== filterCategory) return false;
+      const isDocUnsynced = ['unsynced', 'error', 'sync_pending'].includes(d.status);
       if (filterStatus !== 'all') {
-        if (filterStatus === 'synced' && d.status === 'unsynced') return false;
-        if (filterStatus === 'unsynced' && d.status !== 'unsynced') return false;
+        if (filterStatus === 'synced' && isDocUnsynced) return false;
+        if (filterStatus === 'unsynced' && !isDocUnsynced) return false;
       }
       return true;
     })
@@ -330,8 +428,20 @@ export default function KnowledgeBaseView() {
     });
   };
 
-  const syncedCount = kbDocuments.filter((d) => d.status !== 'unsynced').length;
-  const unsyncedCount = kbDocuments.filter((d) => d.status === 'unsynced').length;
+  const syncedCount = kbDocuments.filter((d) => d.status === 'indexed').length;
+  const unsyncedCount = kbDocuments.filter((d) => ['unsynced', 'error', 'sync_pending'].includes(d.status)).length;
+
+  if (!isAdmin) {
+    return (
+      <div className="h-full flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <Shield size={48} className="mx-auto text-slate-300 mb-4" />
+          <h2 className="text-lg font-bold text-slate-700 mb-2">Admin Access Required</h2>
+          <p className="text-sm text-slate-400">Only administrators can manage the Knowledge Base.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-purple-50/20">
@@ -408,6 +518,21 @@ export default function KnowledgeBaseView() {
               {isKbSyncing ? 'Syncing...' : 'Sync Knowledge Base'}
             </button>
 
+            {/* Reconcile Button */}
+            <button
+              onClick={handleReconcile}
+              disabled={isReconciling}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all',
+                isReconciling
+                  ? 'bg-emerald-100 text-emerald-600 cursor-wait'
+                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+              )}
+            >
+              {isReconciling ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              {isReconciling ? 'Importing...' : 'Import from S3'}
+            </button>
+
             {/* Sanity Check Button */}
             <button
               onClick={runSanityCheck}
@@ -434,6 +559,7 @@ export default function KnowledgeBaseView() {
             sortBy={sortBy}
             setSortBy={setSortBy}
             selectedDocs={selectedDocs}
+            setSelectedDocs={setSelectedDocs}
             toggleSelect={toggleSelect}
             toggleSelectAll={toggleSelectAll}
             deletingId={deletingId}
@@ -443,6 +569,10 @@ export default function KnowledgeBaseView() {
             bulkDeleting={bulkDeleting}
             handleUnsync={handleUnsync}
             handleResync={handleResync}
+            handleEditMetadata={handleEditMetadata}
+            handleReplaceFile={handleReplaceFile}
+            replacingId={replacingId}
+            replaceProgress={replaceProgress}
             isLoading={isKbLoading}
             setActiveSection={setActiveSection}
           />
@@ -522,6 +652,7 @@ export default function KnowledgeBaseView() {
           <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {kbDocuments.map((doc, idx) => {
               const catStyle = getCategoryStyle(doc.category);
+              const isUnsynced = ['unsynced', 'error', 'sync_pending'].includes(doc.status);
               return (
                 <div key={doc.id || idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-purple-200 cursor-pointer transition-colors"
                   onClick={() => openDrawer('docDetail', doc)}>
@@ -537,9 +668,9 @@ export default function KnowledgeBaseView() {
                     </div>
                   </div>
                   <span className={cn('text-[9px] font-bold px-2 py-0.5 rounded-full',
-                    doc.status === 'unsynced' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                    isUnsynced ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
                   )}>
-                    {doc.status === 'unsynced' ? 'Unsynced' : 'Synced'}
+                    {isUnsynced ? 'Unsynced' : 'Synced'}
                   </span>
                   <ChevronRight size={12} className="text-slate-300" />
                 </div>
@@ -562,7 +693,7 @@ export default function KnowledgeBaseView() {
         <p className="text-xs text-slate-400 mt-2 mb-6">These documents are indexed in Amazon Bedrock and available for RAG-powered chat queries.</p>
         <DetailSection title="Synced Document List">
           <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-            {kbDocuments.filter(d => d.status !== 'unsynced').map((doc, idx) => {
+            {kbDocuments.filter(d => d.status === 'indexed').map((doc, idx) => {
               const catStyle = getCategoryStyle(doc.category);
               return (
                 <div key={doc.id || idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-green-50/50 border border-green-100 hover:border-green-200 cursor-pointer transition-colors"
@@ -594,7 +725,7 @@ export default function KnowledgeBaseView() {
         <p className="text-xs text-slate-400 mt-2 mb-6">These documents are uploaded but not yet indexed. Click "Sync Knowledge Base" to include them in Bedrock.</p>
         <DetailSection title="Unsynced Document List">
           <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-            {kbDocuments.filter(d => d.status === 'unsynced').map((doc, idx) => {
+            {kbDocuments.filter(d => ['unsynced', 'error', 'sync_pending'].includes(d.status)).map((doc, idx) => {
               const catStyle = getCategoryStyle(doc.category);
               return (
                 <div key={doc.id || idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-amber-50/50 border border-amber-100 hover:border-amber-200 cursor-pointer transition-colors"
@@ -790,11 +921,12 @@ export default function KnowledgeBaseView() {
         {drawer.context && (() => {
           const doc = drawer.context;
           const catStyle = getCategoryStyle(doc.category);
+          const isUnsynced = ['unsynced', 'error', 'sync_pending'].includes(doc.status);
           return (
             <>
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <DetailStat label="Size" value={formatBytes(doc.size)} color="text-indigo-600" />
-                <DetailStat label="Status" value={doc.status === 'unsynced' ? 'Unsynced' : 'Synced'} color={doc.status === 'unsynced' ? 'text-amber-600' : 'text-green-600'} />
+                <DetailStat label="Status" value={isUnsynced ? 'Unsynced' : 'Synced'} color={isUnsynced ? 'text-amber-600' : 'text-green-600'} />
               </div>
               <DetailRow label="Filename" value={doc.name} />
               <DetailRow label="Category" value={
@@ -806,11 +938,11 @@ export default function KnowledgeBaseView() {
               {doc.id && <DetailRow label="Document ID" value={<span className="font-mono text-[10px]">{doc.id}</span>} />}
               <div className={cn(
                 'mt-4 rounded-xl p-3 border text-xs',
-                doc.status === 'unsynced'
+                isUnsynced
                   ? 'bg-amber-50 border-amber-200 text-amber-700'
                   : 'bg-green-50 border-green-200 text-green-700'
               )}>
-                {doc.status === 'unsynced'
+                {isUnsynced
                   ? '🔶 This document is not yet indexed. Sync the Knowledge Base to make it available for RAG queries.'
                   : '✅ This document is indexed in Bedrock and available for RAG-powered chat.'}
               </div>
@@ -818,6 +950,98 @@ export default function KnowledgeBaseView() {
           );
         })()}
       </DetailDrawer>
+
+      {/* ── Edit Metadata Modal ── */}
+      {editModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Pencil size={16} className="text-purple-600" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-800">Edit Document Metadata</h3>
+              </div>
+              <button onClick={() => setEditModal({ open: false, doc: null })} className="text-slate-400 hover:text-slate-600">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Document Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
+                  placeholder="e.g. ICH E6(R3) Guidelines"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Description</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-purple-400 focus:ring-2 focus:ring-purple-100 outline-none transition-all resize-none"
+                  placeholder="Brief description of this document..."
+                />
+              </div>
+
+              {/* Category — proper dropdown instead of window.prompt */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => setEditForm((f) => ({ ...f, category: cat.value }))}
+                      className={cn(
+                        'px-2 py-1.5 rounded-lg text-[10px] font-semibold border transition-all text-center',
+                        editForm.category === cat.value
+                          ? `${cat.color} ${cat.borderColor} ring-2 ring-purple-300 shadow-sm`
+                          : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                      )}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category context hint */}
+              <div className="text-[10px] text-slate-400 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                <strong>Regulatory</strong> = Binding standards (ICH, FDA, EMA) · <strong>Guideline</strong> = Best practices, checklists · <strong>Reference</strong> = Benchmarks, citations · <strong>Template</strong> = Protocol templates · <strong>General</strong> = Other
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button
+                onClick={() => setEditModal({ open: false, doc: null })}
+                className="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditMetadataSave}
+                disabled={editSaving || !editForm.name.trim()}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all',
+                  editSaving
+                    ? 'bg-purple-100 text-purple-500 cursor-wait'
+                    : 'bg-purple-600 text-white hover:bg-purple-700 shadow-sm'
+                )}
+              >
+                {editSaving && <Loader2 size={12} className="animate-spin" />}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -828,9 +1052,9 @@ export default function KnowledgeBaseView() {
    ════════════════════════════════════════════════════════════════ */
 function DocumentsSection({
   documents, allDocuments, searchQuery, setSearchQuery, filterCategory, setFilterCategory,
-  filterStatus, setFilterStatus, sortBy, setSortBy, selectedDocs, toggleSelect, toggleSelectAll,
+  filterStatus, setFilterStatus, sortBy, setSortBy, selectedDocs, setSelectedDocs, toggleSelect, toggleSelectAll,
   deletingId, setDeletingId, handleDelete, handleBulkDelete, bulkDeleting,
-  handleUnsync, handleResync, isLoading, setActiveSection,
+  handleUnsync, handleResync, handleEditMetadata, handleReplaceFile, replacingId, replaceProgress, isLoading, setActiveSection,
 }) {
   return (
     <div className="space-y-4">
@@ -972,6 +1196,10 @@ function DocumentsSection({
                 onDeleteCancel={() => setDeletingId(null)}
                 onUnsync={() => handleUnsync(doc.id)}
                 onResync={() => handleResync(doc.id)}
+                onEdit={() => handleEditMetadata(doc)}
+                onReplace={() => handleReplaceFile(doc)}
+                isReplacing={replacingId === doc.id}
+                replaceProgress={replacingId === doc.id ? replaceProgress : 0}
               />
             ))}
           </div>
@@ -989,17 +1217,27 @@ function DocumentsSection({
 }
 
 
-function KBDocumentRow({ doc, isSelected, onToggle, isDeleting, onDeleteClick, onDeleteConfirm, onDeleteCancel, onUnsync, onResync }) {
+function KBDocumentRow({ doc, isSelected, onToggle, isDeleting, onDeleteClick, onDeleteConfirm, onDeleteCancel, onUnsync, onResync, onEdit, onReplace, isReplacing, replaceProgress }) {
   const catStyle = getCategoryStyle(doc.category);
-  const isUnsynced = doc.status === 'unsynced';
+  const isUnsynced = ['unsynced', 'sync_pending'].includes(doc.status);
   const isError = doc.status === 'error';
 
   return (
     <div className={cn(
-      'flex items-center gap-3 px-5 py-3 hover:bg-slate-50/50 transition-colors group',
+      'flex items-center gap-3 px-5 py-3 hover:bg-slate-50/50 transition-colors group relative',
       isSelected && 'bg-purple-50/40',
       isUnsynced && 'opacity-70',
+      isReplacing && 'opacity-80',
     )}>
+      {/* Replace progress bar overlay */}
+      {isReplacing && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-100 overflow-hidden rounded-b-lg">
+          <div
+            className="h-full bg-purple-500 transition-all duration-300 ease-out"
+            style={{ width: `${replaceProgress || 0}%` }}
+          />
+        </div>
+      )}
       <input
         type="checkbox"
         checked={isSelected}
@@ -1053,6 +1291,12 @@ function KBDocumentRow({ doc, isSelected, onToggle, isDeleting, onDeleteClick, o
           </div>
         ) : (
           <>
+            <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all" title="Edit metadata">
+              <Pencil size={13} className="text-blue-500" />
+            </button>
+            <button onClick={onReplace} disabled={isReplacing} className={cn("p-1.5 rounded-lg hover:bg-indigo-50 opacity-0 group-hover:opacity-100 transition-all", isReplacing && "opacity-50 cursor-wait")} title={isReplacing ? `Replacing ${replaceProgress}%` : "Replace file"}>
+              {isReplacing ? <Loader2 size={13} className="text-indigo-500 animate-spin" /> : <Upload size={13} className="text-indigo-500" />}
+            </button>
             {isUnsynced ? (
               <button onClick={onResync} className="p-1.5 rounded-lg hover:bg-green-50 opacity-0 group-hover:opacity-100 transition-all" title="Re-sync document">
                 <RotateCcw size={13} className="text-green-500" />

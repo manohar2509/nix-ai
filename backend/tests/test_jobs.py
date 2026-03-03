@@ -1,6 +1,6 @@
 """Tests for job endpoints."""
 
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 
 
 def test_list_jobs(test_client, mock_user):
@@ -57,7 +57,7 @@ def test_cancel_job(test_client, mock_user):
         data = response.json()
         assert data["success"] is True
         assert data["jobId"] == "job-1"
-        mock_svc.cancel_job.assert_called_once_with("job-1")
+        mock_svc.cancel_job.assert_called_once_with(ANY, "job-1")
 
 
 def test_get_job_status(test_client, mock_user):
@@ -78,3 +78,4 @@ def test_get_job_status(test_client, mock_user):
         data = response.json()
         assert data["status"] == "IN_PROGRESS"
         assert data["id"] == "job-1"
+        mock_svc.get_job_status.assert_called_once_with("job-1", ANY)

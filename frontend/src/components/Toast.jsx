@@ -50,7 +50,7 @@ export function Toast() {
       : Info;
 
   return (
-    <div className={`fixed bottom-4 right-4 max-w-md p-4 rounded-lg border ${bgColor} shadow-lg flex items-start gap-3 animate-in slide-in-from-bottom-2 fade-in`}>
+    <div className={`fixed bottom-4 right-4 max-w-md p-4 rounded-xl border ${bgColor} shadow-xl shadow-slate-200/30 flex items-start gap-3 animate-fade-in z-[100]`}>
       <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${iconColor}`} />
       <div className="flex-1">
         <p className="text-sm font-medium text-slate-900">

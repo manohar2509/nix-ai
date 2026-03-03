@@ -95,6 +95,17 @@ export const useAppStore = create(
       setDocumentError: (error) =>
         set({ documentError: error }, false, 'setDocumentError'),
 
+      removeDocument: (docId) =>
+        set(
+          (state) => ({
+            documents: state.documents.filter((d) => d.id !== docId),
+            currentDocument:
+              state.currentDocument?.id === docId ? null : state.currentDocument,
+          }),
+          false,
+          'removeDocument'
+        ),
+
       setIsUploading: (bool) =>
         set({ isUploading: bool }, false, 'setIsUploading'),
 
@@ -294,13 +305,84 @@ export const useAppStore = create(
       // ============================================================================
       // UI STATE
       // ============================================================================
-      activeView: 'protocol', // 'dashboard' | 'protocol' | 'history' | 'admin-analytics' | 'settings'
-      activeTab: 'analysis', // 'analysis' | 'chat' | 'factory' (admin only)
+      activeView: 'protocol', // 'dashboard' | 'protocol' | 'history' | 'admin-analytics' | 'settings' | 'comparison' | 'benchmark'
+      activeTab: 'analysis', // 'analysis' | 'chat' | 'factory' (admin only) | 'jurisdiction' | 'payer' | 'simulation' | 'timeline'
       sidebarExpanded: true,
       selectedSection: null, // Section ID highlighted in EditorWindow
       showNotification: false,
       notification: null, // { type: 'success'|'error'|'info', message }
       isKbSyncing: false, // Knowledge base is updating
+
+      // ============================================================================
+      // REGULATORY INTELLIGENCE STATE (REQ-1 through REQ-10)
+      // ============================================================================
+      jurisdictionScores: [],       // REQ-2: per-jurisdiction scores
+      globalReadiness: 0,           // REQ-2: global readiness score
+      simulations: [],              // REQ-3: amendment simulations
+      isSimulating: false,          // REQ-3: simulation in progress
+      timeline: [],                 // REQ-4: risk timeline events
+      payerGaps: [],                // REQ-5: payer evidence gaps
+      htaBodyScores: {},            // REQ-5: HTA body scores
+      comparisons: [],              // REQ-6: protocol comparisons
+      activeComparison: null,       // REQ-6: currently viewed comparison
+      isComparing: false,           // REQ-6: comparison in progress
+      report: null,                 // REQ-8: generated report
+      isGeneratingReport: false,    // REQ-8: report generation in progress
+      benchmark: null,              // REQ-10: benchmark results
+      isBenchmarking: false,        // REQ-10: benchmark in progress
+      guidelines: [],               // REQ-1: ICH guideline database
+
+      setJurisdictionScores: (scores) =>
+        set({ jurisdictionScores: scores }, false, 'setJurisdictionScores'),
+
+      setGlobalReadiness: (score) =>
+        set({ globalReadiness: score }, false, 'setGlobalReadiness'),
+
+      setSimulations: (sims) =>
+        set({ simulations: sims }, false, 'setSimulations'),
+
+      addSimulation: (sim) =>
+        set(
+          (state) => ({ simulations: [sim, ...state.simulations] }),
+          false,
+          'addSimulation'
+        ),
+
+      setIsSimulating: (bool) =>
+        set({ isSimulating: bool }, false, 'setIsSimulating'),
+
+      setTimeline: (events) =>
+        set({ timeline: events }, false, 'setTimeline'),
+
+      setPayerGaps: (gaps) =>
+        set({ payerGaps: gaps }, false, 'setPayerGaps'),
+
+      setHtaBodyScores: (scores) =>
+        set({ htaBodyScores: scores }, false, 'setHtaBodyScores'),
+
+      setComparisons: (cmps) =>
+        set({ comparisons: cmps }, false, 'setComparisons'),
+
+      setActiveComparison: (cmp) =>
+        set({ activeComparison: cmp }, false, 'setActiveComparison'),
+
+      setIsComparing: (bool) =>
+        set({ isComparing: bool }, false, 'setIsComparing'),
+
+      setReport: (report) =>
+        set({ report: report }, false, 'setReport'),
+
+      setIsGeneratingReport: (bool) =>
+        set({ isGeneratingReport: bool }, false, 'setIsGeneratingReport'),
+
+      setBenchmark: (data) =>
+        set({ benchmark: data }, false, 'setBenchmark'),
+
+      setIsBenchmarking: (bool) =>
+        set({ isBenchmarking: bool }, false, 'setIsBenchmarking'),
+
+      setGuidelines: (guidelines) =>
+        set({ guidelines: guidelines }, false, 'setGuidelines'),
 
       setActiveView: (view) =>
         set({ activeView: view }, false, 'setActiveView'),
@@ -384,6 +466,22 @@ export const useAppStore = create(
             showNotification: false,
             notification: null,
             isKbSyncing: false,
+            // Regulatory intelligence state
+            jurisdictionScores: [],
+            globalReadiness: 0,
+            simulations: [],
+            isSimulating: false,
+            timeline: [],
+            payerGaps: [],
+            htaBodyScores: {},
+            comparisons: [],
+            activeComparison: null,
+            isComparing: false,
+            report: null,
+            isGeneratingReport: false,
+            benchmark: null,
+            isBenchmarking: false,
+            guidelines: [],
           },
           false,
           'reset'
@@ -467,4 +565,24 @@ export const useKB = () =>
     kbDocuments: state.kbDocuments,
     isKbLoading: state.isKbLoading,
     kbStats: state.kbStats,
+  })));
+
+// Regulatory Intelligence selectors (REQ-1 through REQ-10)
+export const useRegulatory = () =>
+  useAppStore(useShallow((state) => ({
+    jurisdictionScores: state.jurisdictionScores,
+    globalReadiness: state.globalReadiness,
+    simulations: state.simulations,
+    isSimulating: state.isSimulating,
+    timeline: state.timeline,
+    payerGaps: state.payerGaps,
+    htaBodyScores: state.htaBodyScores,
+    comparisons: state.comparisons,
+    activeComparison: state.activeComparison,
+    isComparing: state.isComparing,
+    report: state.report,
+    isGeneratingReport: state.isGeneratingReport,
+    benchmark: state.benchmark,
+    isBenchmarking: state.isBenchmarking,
+    guidelines: state.guidelines,
   })));

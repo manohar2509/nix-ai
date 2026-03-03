@@ -1,0 +1,337 @@
+{
+  "metadata": {
+    "title": "Clinical Trial Design Standards & Best Practices",
+    "version": "2.0",
+    "last_updated": "2026-03-01",
+    "description": "Comprehensive best practices for clinical trial protocol design, used by NIX AI for analysis, scoring, and recommendations."
+  },
+  "protocol_essential_elements": {
+    "description": "Elements every clinical trial protocol must contain per ICH E6(R3) Section 6 and ICH M11",
+    "sections": {
+      "title_page_synopsis": {
+        "required_elements": [
+          "Protocol title and identifier",
+          "Version number and date",
+          "Sponsor name and address",
+          "Protocol synopsis / summary",
+          "Coordinating investigator(s)"
+        ]
+      },
+      "background_and_rationale": {
+        "required_elements": [
+          "Disease/condition background with epidemiology",
+          "Current standard of care",
+          "Nonclinical and clinical data summary",
+          "Rationale for the study",
+          "Known and potential risks and benefits",
+          "Description of study drug(s) and mechanism of action"
+        ],
+        "quality_indicators": [
+          "References to published literature",
+          "Clear unmet medical need statement",
+          "Benefit-risk justification"
+        ]
+      },
+      "objectives_and_endpoints": {
+        "required_elements": [
+          "Primary objective(s) clearly stated",
+          "Primary endpoint(s) with definition and measurement",
+          "Secondary objectives and endpoints",
+          "Exploratory objectives and endpoints",
+          "Safety objectives"
+        ],
+        "best_practices": [
+          "Endpoints should be clinically meaningful and patient-relevant",
+          "Primary endpoint must be measurable, objective, and validated",
+          "Safety endpoints should include AEs, SAEs, laboratory, vital signs, ECG",
+          "Patient-reported outcomes should be included (NICE/IQWiG requirement)",
+          "Health economic endpoints (resource use, QoL) for HTA submissions"
+        ],
+        "common_endpoint_issues": [
+          "Composite endpoints mixing hard and soft outcomes",
+          "Surrogate endpoints without validated link to clinical outcomes",
+          "Missing QoL measurement (critical for HTA submissions)",
+          "Primary endpoint not aligned with regulatory guidance for indication",
+          "Time-to-event endpoint without adequate follow-up duration"
+        ]
+      },
+      "study_design": {
+        "required_elements": [
+          "Study type (interventional, observational, etc.)",
+          "Design (parallel, crossover, factorial, adaptive, etc.)",
+          "Number of arms and description",
+          "Randomization method and ratio",
+          "Blinding (double-blind, single-blind, open-label) with justification",
+          "Study phases and duration",
+          "Study schematic/flow diagram"
+        ],
+        "design_quality_criteria": {
+          "randomization": [
+            "Computer-generated randomization sequence",
+            "Stratification factors clinically relevant and limited (2-3 maximum)",
+            "Block randomization with variable block sizes",
+            "Central randomization via IRT/IWRS system"
+          ],
+          "blinding": [
+            "Matching placebo for double-blind studies",
+            "Emergency unblinding procedures documented",
+            "Blinding assessment at end of study",
+            "Personnel with access to unblinded data specified (DMC, IRT)"
+          ],
+          "control_arm": [
+            "Control selection justified per ICH E10",
+            "Placebo use ethically justified (Declaration of Helsinki)",
+            "Active comparator reflects standard of care in target jurisdictions",
+            "Add-on design considered when placebo alone is unethical"
+          ]
+        }
+      },
+      "study_population": {
+        "required_elements": [
+          "Target population description",
+          "Inclusion criteria (specific, measurable)",
+          "Exclusion criteria (scientifically justified, not overly restrictive)",
+          "Criteria for withdrawal/discontinuation",
+          "Replacement policy for dropouts"
+        ],
+        "diversity_and_inclusion": {
+          "fda_requirement_2024": "FDA Diversity Action Plan required for Phase III trials",
+          "best_practices": [
+            "No arbitrary upper age limits (ICH E7)",
+            "Inclusion of women of childbearing potential with appropriate precautions",
+            "Racial and ethnic diversity targets",
+            "Geographic diversity in multi-regional trials",
+            "Avoid overly restrictive exclusion criteria that limit generalizability"
+          ]
+        }
+      },
+      "statistical_methods": {
+        "required_elements": [
+          "Primary analysis method",
+          "Sample size calculation with assumptions",
+          "Power (typically 80-90%)",
+          "Significance level (typically two-sided 0.05)",
+          "Analysis populations (ITT, mITT, PP, Safety)",
+          "Handling of missing data",
+          "Multiplicity adjustment for multiple endpoints/comparisons",
+          "Interim analysis plan (if applicable)",
+          "Subgroup analyses (pre-specified)"
+        ],
+        "estimand_framework": {
+          "description": "ICH E9(R1) estimand framework — now expected by FDA and EMA",
+          "required_elements": [
+            "Primary estimand with 5 attributes defined",
+            "Intercurrent events identified",
+            "Strategy for each intercurrent event",
+            "Main estimator aligned with estimand",
+            "Sensitivity analyses for estimand robustness"
+          ]
+        },
+        "common_statistical_issues": [
+          "Sample size based on unrealistic effect size assumptions",
+          "Missing multiplicity adjustment for co-primary or key secondary endpoints",
+          "No pre-specified interim analysis despite long trial duration",
+          "Missing data handled inappropriately (LOCF without justification)",
+          "Subgroup analyses not pre-specified but used for regulatory claims",
+          "Estimand framework missing from SAP (now expected by regulators)"
+        ]
+      },
+      "safety_monitoring": {
+        "required_elements": [
+          "AE and SAE definitions (aligned with ICH E2A)",
+          "AE grading scale (CTCAE for oncology, specific scales for other areas)",
+          "AE collection period (start and end)",
+          "SAE reporting timelines to sponsor, IRB, regulators",
+          "DSMB/DMC charter (required for Phase III, recommended for Phase II)",
+          "Stopping rules for safety",
+          "Pregnancy reporting procedures",
+          "Follow-up for ongoing AEs after treatment completion"
+        ],
+        "best_practices": [
+          "Independent DMC for all controlled Phase III trials",
+          "Regular DSUR (Development Safety Update Report) per ICH E2F",
+          "Cardiac safety monitoring plan (ECG schedule) per ICH E14",
+          "Hepatotoxicity monitoring (Hy's Law criteria) for hepatotoxic risk drugs",
+          "Suicidality monitoring (Columbia Scale - C-SSRS) for CNS drugs"
+        ]
+      }
+    }
+  },
+  "therapeutic_area_specific": {
+    "oncology": {
+      "primary_endpoints": {
+        "overall_survival": "Gold standard; required for most regular approvals",
+        "progression_free_survival": "Acceptable for some tumor types with validated link to OS",
+        "objective_response_rate": "Accelerated approval basis; confirmatory study required",
+        "duration_of_response": "Important supplementary endpoint",
+        "disease_free_survival": "Adjuvant settings",
+        "pathological_complete_response": "Neoadjuvant; accelerated approval in breast cancer"
+      },
+      "design_standards": [
+        "RECIST v1.1 for tumor response assessment",
+        "Independent central review (IRC/BICR) for imaging endpoints",
+        "Stratification by PD-L1, ECOG, prior lines of therapy common",
+        "Biomarker-driven enrichment with companion diagnostic when applicable",
+        "Overall survival analysis as key secondary or co-primary",
+        "Quality of life (EORTC QLQ-C30) data collection recommended"
+      ],
+      "regulatory_expectations": {
+        "FDA": "Flexible on surrogate endpoints for accelerated approval; confirmatory study required",
+        "EMA": "PFS acceptable if clinically meaningful magnitude; QoL data valued",
+        "PMDA": "Emphasis on Japanese subgroup data; bridging studies for non-MRCT",
+        "NICE": "OS preferred; PFS accepted if linked to QALY gains; EQ-5D required",
+        "IQWiG": "OS and morbidity primary; PFS often insufficient alone; QoL required"
+      }
+    },
+    "cardiovascular": {
+      "primary_endpoints": {
+        "MACE": "Major Adverse Cardiovascular Events (CV death, MI, stroke)",
+        "heart_failure_hospitalization": "Common in HF trials",
+        "all_cause_mortality": "Most robust endpoint"
+      },
+      "design_standards": [
+        "Event-driven sample size calculation",
+        "Central adjudication committee for endpoints",
+        "Cardiac safety monitoring per ICH E14 (QTc assessment)",
+        "Long follow-up periods (often 2-5 years for CV outcomes trials)",
+        "FDA CV Outcomes Trial (CVOT) guidance for diabetes drugs"
+      ]
+    },
+    "neurology_psychiatry": {
+      "primary_endpoints": {
+        "cognitive_scales": "ADAS-Cog (Alzheimer's), EDSS (MS), UPDRS (Parkinson's)",
+        "clinical_global_impression": "CGI-S, CGI-I as co-primary",
+        "patient_reported": "PHQ-9 (depression), HAM-D, MADRS"
+      },
+      "design_standards": [
+        "Placebo-controlled with rescue medication provisions",
+        "Suicidality monitoring (C-SSRS) per FDA guidance",
+        "Extended treatment periods for progressive diseases",
+        "Cognitive testing training for raters",
+        "Central rating or video rating for consistency"
+      ]
+    },
+    "rare_diseases": {
+      "design_considerations": [
+        "Natural history data as foundation for study design",
+        "Small sample sizes acceptable with appropriate statistical approaches",
+        "Single-arm trials with external controls may be considered",
+        "Adaptive designs to optimize limited patient population",
+        "Bayesian approaches to incorporate prior information",
+        "Patient registries for long-term follow-up",
+        "N-of-1 trials for ultra-rare conditions"
+      ],
+      "regulatory_pathways": {
+        "FDA": "Orphan Drug Designation + Accelerated/Fast Track/Breakthrough",
+        "EMA": "Orphan Designation + Conditional MA + PRIME",
+        "PMDA": "SAKIGAKE + Orphan Designation + Conditional Early Approval",
+        "NMPA": "Priority Review + Conditional Approval for urgent clinical needs"
+      }
+    },
+    "immunology_autoimmune": {
+      "primary_endpoints": {
+        "rheumatoid_arthritis": "ACR20/ACR50/ACR70 response rates (ACR20 typical primary for Phase III)",
+        "systemic_lupus": "SRI-4 (SLE Responder Index) or BICLA (BILAG-based Composite Lupus Assessment)",
+        "psoriasis": "PASI 75/90/100 response rates at Week 12-16",
+        "atopic_dermatitis": "EASI-75 (Eczema Area and Severity Index) or IGA 0/1 response"
+      },
+      "design_standards": [
+        "Placebo-controlled add-on to background therapy (methotrexate for RA)",
+        "Central assessment for skin diseases (photography-based)",
+        "Biologic-experienced subgroup stratification",
+        "Co-primary with patient-reported outcomes (HAQ-DI for RA, DLQI for dermatology)",
+        "Treat-to-target designs increasingly used"
+      ]
+    },
+    "infectious_disease": {
+      "antibacterial_design": {
+        "description": "Per FDA/EMA guidance on clinical trials for antibacterial drugs",
+        "design_standards": [
+          "Non-inferiority design with agreed-upon NI margin (10-15%)",
+          "Site-specific infection indication trials (ABSSSI, CABP, cUTI, cIAI, HAP/VAP)",
+          "Microbiological per-pathogen analysis",
+          "LPAD pathway for limited-population antibacterials",
+          "QIDP designation for 5 additional years exclusivity",
+          "PK/PD target attainment analysis"
+        ]
+      },
+      "antiviral_design": {
+        "description": "Design standards for antiviral agents",
+        "hcv": "SVR12 as primary endpoint; near 95-100% efficacy expected for DAA regimens",
+        "hiv": "HIV-1 RNA <50 copies/mL at Week 48 (FDA Snapshot algorithm)",
+        "rsv": "Prevention of medically attended RSV LRTI in infants/elderly"
+      },
+      "vaccine_design": {
+        "description": "Design standards for prophylactic vaccines",
+        "design_standards": [
+          "Event-driven efficacy trial (VE) with pre-specified VE threshold",
+          "FDA: VE ≥50% with lower CI bound >30%",
+          "Immunobridging for population extrapolation",
+          "Lot-to-lot consistency studies",
+          "Co-administration studies with routine vaccines",
+          "Large safety database (≥3000 in treatment arm minimum)",
+          "DSMB mandatory with pre-specified interim analyses"
+        ]
+      }
+    },
+    "gene_cell_therapy": {
+      "design_standards": [
+        "Single-arm with historical/natural history comparator (most common for rare disease gene therapy)",
+        "Intra-patient comparison (pre-treatment vs post-treatment)",
+        "Long-term follow-up: 15 years for integrating vectors per FDA guidance",
+        "RMAT (Regenerative Medicine Advanced Therapy) designation pathway",
+        "EMA ATMP regulation via CAT (Committee for Advanced Therapies) assessment",
+        "Manufacturing: vein-to-vein process documentation, potency assays",
+        "Risk monitoring: insertional mutagenesis, immunogenicity, off-target effects (genome editing)",
+        "CAR-T specific: CRS/ICANS grading (ASTCT scale), REMS requirements, manufacturing success rate reporting"
+      ],
+      "regulatory_pathways": {
+        "FDA": "BLA via CBER; RMAT designation; accelerated approval; long-term follow-up",
+        "EMA": "ATMP classification; CAT assessment; conditional MA; PRIME eligible",
+        "PMDA": "SAKIGAKE designation; conditional and time-limited approval for regenerative medicine"
+      }
+    },
+    "decentralized_clinical_trials": {
+      "description": "FDA DCT Guidance 2024 — design standards for remote/hybrid trials",
+      "key_principles": [
+        "Patient-centricity: reduce site visits, increase accessibility",
+        "Technology-enabled: remote consent, wearables, telemedicine visits",
+        "Regulatory compliance: 21 CFR Part 11 for electronic data, local investigator oversight",
+        "Data integrity: validated digital health technologies, central monitoring"
+      ],
+      "design_elements": [
+        "Electronic informed consent (eConsent) per FDA eConsent guidance",
+        "Remote patient monitoring via wearable devices and ePRO",
+        "Telemedicine visits for safety assessments",
+        "Direct-to-patient drug shipping with chain-of-custody",
+        "Local (home) healthcare provider visits for lab/physical exams",
+        "Central oversight by principal investigator for delegated activities",
+        "Hybrid design: some visits in-person, some remote"
+      ],
+      "regulatory_requirements": {
+        "FDA": "FDA DCT Guidance (2024); 21 CFR Parts 11, 50, 56 compliance; IRB oversight",
+        "EMA": "EU CTR 536/2014; GCP Inspectors Working Group guidance on DCTs",
+        "ICH": "ICH E6(R3) Annex 2 addresses technology-enabled clinical trials"
+      }
+    }
+  },
+  "quality_scoring_rubric": {
+    "description": "Scoring criteria used by NIX AI to evaluate protocol quality",
+    "regulatory_score_components": {
+      "protocol_completeness": {"weight": 15, "criteria": "All ICH E6(R3) Section 6 elements present"},
+      "endpoint_quality": {"weight": 20, "criteria": "Clinically meaningful, validated, aligned with regulatory guidance"},
+      "statistical_rigor": {"weight": 20, "criteria": "Sample size justified, estimand defined, multiplicity addressed, interim analysis planned"},
+      "safety_monitoring": {"weight": 15, "criteria": "DMC, SAE reporting, stopping rules, DSUR plan"},
+      "gcp_compliance": {"weight": 10, "criteria": "Informed consent, IRB, data integrity, monitoring plan"},
+      "regulatory_alignment": {"weight": 10, "criteria": "IND/CTA requirements, jurisdiction-specific compliance"},
+      "design_quality": {"weight": 10, "criteria": "Randomization, blinding, control selection, population definition"}
+    },
+    "payer_score_components": {
+      "comparator_relevance": {"weight": 25, "criteria": "Active comparator reflecting standard of care across HTA jurisdictions"},
+      "endpoint_payer_relevance": {"weight": 25, "criteria": "OS, QoL, patient-reported outcomes, healthcare resource use"},
+      "evidence_completeness": {"weight": 20, "criteria": "EQ-5D, resource use, sufficient follow-up for extrapolation"},
+      "hta_alignment": {"weight": 15, "criteria": "Addresses NICE, IQWiG, CADTH, PBAC-specific requirements"},
+      "budget_impact_data": {"weight": 15, "criteria": "Cost data, comparator pricing, population size estimates"}
+    }
+  }
+}

@@ -67,6 +67,13 @@ def send_message(
             user=user,
         )
 
+        # If the direct fallback returned no citations, extract inline ones
+        if not rag_result.get("citations"):
+            from app.services.regulatory_engine import ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
+            rag_result["citations"] = bedrock_service._extract_inline_guideline_citations(
+                rag_result.get("text", ""), ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
+            )
+
     # 4. Persist the AI response
     ai_msg = dynamo_service.create_chat_message(
         doc_id=effective_doc_id,
@@ -264,13 +271,19 @@ def send_message_stream(
                 full_text += chunk
                 yield _sse({"event": "token", "text": chunk})
 
+            # Extract inline guideline citations from the full response
+            from app.services.regulatory_engine import ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
+            inline_citations = bedrock_service._extract_inline_guideline_citations(
+                full_text, ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
+            )
+
             # Persist the complete response
-            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, [])
+            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, inline_citations)
             yield _sse({
                 "event": "done",
                 "messageId": ai_msg_id,
                 "fullText": full_text,
-                "citations": [],
+                "citations": inline_citations,
             })
         except Exception as exc:
             logger.error("Streaming chat failed: %s", exc)

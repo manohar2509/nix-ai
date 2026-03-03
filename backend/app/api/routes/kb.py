@@ -20,13 +20,18 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.schemas.kb import (
     KBDocumentItem,
+    KBDocumentHistoryResponse,
     KBDocumentListResponse,
     KBDuplicateCheckResponse,
+    KBIngestionListResponse,
     KBPresignedUrlResponse,
+    KBReconcileResponse,
     KBSanityCheckResponse,
     KBStatsResponse,
     KBSyncResponse,
+    ReplaceKBDocumentRequest,
     RegisterKBDocumentRequest,
+    UpdateKBDocumentRequest,
 )
 from app.core.auth import CurrentUser, require_admin
 from app.services import kb_service
@@ -98,11 +103,56 @@ async def delete_kb_document(
 
     After deletion, run Sync to remove it from Bedrock's index.
     """
-    return kb_service.delete_kb_document(kb_doc_id)
+    return kb_service.delete_kb_document(kb_doc_id, user)
+
+
+@router.put("/documents/{kb_doc_id}", response_model=KBDocumentItem)
+async def update_kb_document(
+    kb_doc_id: str,
+    body: UpdateKBDocumentRequest,
+    user: CurrentUser = Depends(require_admin),
+):
+    """Update KB document metadata (name / description / category)."""
+    return kb_service.update_kb_document_metadata(
+        kb_doc_id=kb_doc_id,
+        user=user,
+        name=body.name,
+        description=body.description,
+        category=body.category,
+    )
+
+
+@router.post("/documents/{kb_doc_id}/replace", response_model=KBDocumentItem)
+async def replace_kb_document(
+    kb_doc_id: str,
+    body: ReplaceKBDocumentRequest,
+    user: CurrentUser = Depends(require_admin),
+):
+    """Replace a KB document's source file after uploading new bytes to S3."""
+    return kb_service.replace_kb_document_file(
+        kb_doc_id=kb_doc_id,
+        user=user,
+        s3_key=body.s3_key,
+        size=body.size,
+        name=body.name,
+        change_note=body.change_note,
+    )
+
+
+@router.get("/documents/{kb_doc_id}/history", response_model=KBDocumentHistoryResponse)
+async def get_kb_document_history(
+    kb_doc_id: str,
+    limit: int = Query(100, ge=1, le=500),
+    user: CurrentUser = Depends(require_admin),
+):
+    """Get immutable change history for one KB document."""
+    return {"history": kb_service.get_kb_document_history(kb_doc_id, limit=limit)}
 
 
 @router.post("/sync", response_model=KBSyncResponse)
 async def sync_knowledge_base(
+    category: str | None = Query(None, pattern="^(regulatory|template|guideline|reference|general)$"),
+    onlyChanged: bool = Query(False),
     user: CurrentUser = Depends(require_admin),
 ):
     """Trigger Bedrock to re-index the KB bucket.
@@ -110,7 +160,7 @@ async def sync_knowledge_base(
     This should be called after uploading or deleting KB documents
     so Bedrock's vector store stays in sync.
     """
-    return kb_service.submit_kb_sync(user)
+    return kb_service.submit_kb_sync(user, category=category, only_changed=onlyChanged)
 
 
 @router.get("/stats", response_model=KBStatsResponse)
@@ -142,6 +192,22 @@ async def run_sanity_check(
     return kb_service.run_sanity_check()
 
 
+@router.post("/reconcile", response_model=KBReconcileResponse)
+async def reconcile_s3_documents(
+    user: CurrentUser = Depends(require_admin),
+):
+    """Reconcile S3 bucket with DynamoDB — import any unregistered files.
+
+    Scans the KB S3 bucket for files that exist in S3 but have no
+    corresponding DynamoDB metadata record. Automatically registers
+    them with category inferred from YAML frontmatter or filename.
+
+    Use this after uploading files via CLI, build scripts, or any
+    method outside the UI's presigned-URL flow.
+    """
+    return kb_service.reconcile_s3_documents(user)
+
+
 @router.post("/documents/{kb_doc_id}/unsync")
 async def unsync_kb_document(
     kb_doc_id: str,
@@ -171,4 +237,13 @@ async def bulk_delete_kb_documents(
 ):
     """Delete multiple KB documents at once."""
     doc_ids = body.get("document_ids", [])
-    return kb_service.bulk_delete_kb_documents(doc_ids)
+    return kb_service.bulk_delete_kb_documents(doc_ids, user)
+
+
+@router.get("/ingestions", response_model=KBIngestionListResponse)
+async def list_kb_ingestions(
+    syncJobId: str | None = Query(None),
+    user: CurrentUser = Depends(require_admin),
+):
+    """List tracked Bedrock ingestion jobs for KB sync observability."""
+    return {"ingestions": kb_service.list_kb_ingestions(sync_job_id=syncJobId)}

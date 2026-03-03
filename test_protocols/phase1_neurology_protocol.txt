@@ -1,0 +1,449 @@
+CLINICAL TRIAL PROTOCOL
+
+Protocol Number: NIX-NEURO-2026-003
+Version: 1.0
+Date: March 1, 2026
+
+TITLE: A Phase 1, Open-Label, Dose-Escalation and Dose-Expansion Study to Evaluate
+the Safety, Tolerability, Pharmacokinetics, and Preliminary Efficacy of Neuronix
+(NIX-9150) in Patients with Early-Stage Alzheimer's Disease
+
+Short Title: CLARITY-AD Phase 1
+
+Sponsor: NixBio Therapeutics, Inc.
+1200 Innovation Drive, Cambridge, MA 02142, USA
+
+IND Number: 198562
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SYNOPSIS
+
+Study Title:        CLARITY-AD Phase 1
+Phase:              Phase 1 (dose escalation + expansion)
+Study Design:       Open-label, 3+3 dose escalation with expansion cohorts
+Indication:         Early-stage Alzheimer's disease (prodromal AD or mild AD dementia)
+Study Population:   Adults 50-85 years with biomarker-confirmed amyloid pathology
+Target Enrollment:  Part A: ~30 patients (escalation)
+                    Part B: ~60 patients (expansion at RP2D)
+Number of Sites:    ~20 specialized memory centers in the United States
+
+Treatment:
+  Part A (Escalation): Neuronix 5 mg, 15 mg, 30 mg, 60 mg, 120 mg SC Q2W
+  Part B (Expansion):  Neuronix at RP2D SC Q2W
+
+Primary Endpoint:   Dose-limiting toxicities (DLTs) and maximum tolerated dose (MTD)
+Key Secondary:      PK parameters, CSF biomarkers (Aβ42, p-tau181, NfL),
+                    amyloid PET (Centiloid), cognitive assessments (ADAS-Cog 13, CDR-SB)
+
+Study Duration:     ~48 months total
+Treatment Duration: 52 weeks
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2. INTRODUCTION AND BACKGROUND
+
+2.1 Disease Background
+
+Alzheimer's disease (AD) affects approximately 55 million people worldwide, with
+prevalence projected to triple by 2050. AD is characterized by progressive
+neurodegeneration driven by:
+- Extracellular amyloid-β (Aβ) plaque accumulation
+- Intracellular neurofibrillary tangles (hyperphosphorylated tau)
+- Neuroinflammation (microglial activation)
+- Synaptic dysfunction and neuronal loss
+
+Recent anti-amyloid antibodies (lecanemab, donanemab) have demonstrated modest
+clinical benefit but carry significant risks of amyloid-related imaging
+abnormalities (ARIA), limiting their broad applicability.
+
+2.2 Investigational Product: Neuronix (NIX-9150)
+
+Neuronix is a novel, subcutaneously administered, bispecific antibody-peptide
+conjugate that simultaneously targets:
+
+1. Soluble Aβ oligomers (primary neurotoxic species)
+2. TREM2 receptor activation (anti-inflammatory microglial phenotype)
+
+This dual mechanism aims to both clear the toxic amyloid species driving
+neurodegeneration AND shift microglial response from pro-inflammatory (M1)
+to neuroprotective (M2) phenotype — addressing two key pathological drivers
+simultaneously.
+
+Mechanism of Action:
+- Fab arm 1: High-affinity binding to Aβ oligomers (KD = 45 pM)
+- Fab arm 2: Agonistic binding to TREM2 (activating signal)
+- Conjugated neuroprotective peptide: blood-brain barrier shuttle (transferrin
+  receptor-mediated transcytosis)
+- Enhanced microglial phagocytosis of Aβ plaques
+- Reduced NLRP3 inflammasome activation
+- Preserved synaptic density (preclinical data)
+
+2.3 Preclinical Data
+
+5xFAD transgenic mouse model:
+- Amyloid plaque burden: -65% (Neuronix) vs. -30% (anti-Aβ only), p < 0.001
+- Microglial activation (Iba1): -45% in cortex and hippocampus
+- Synaptic markers (PSD-95, synaptophysin): preserved at wild-type levels
+- Morris Water Maze: latency normalized to wild-type performance
+- ARIA-like MRI findings: 0% (Neuronix) vs. 15% (anti-Aβ only)
+
+NHP (cynomolgus macaque) toxicology:
+- 26-week GLP study, SC dosing up to 100 mg/kg Q2W
+- NOAEL: 30 mg/kg (corresponding to human ~120 mg)
+- No CNS toxicity, no ARIA signals on brain MRI
+- CSF penetration: ~2% of plasma levels (therapeutic range based on PD modeling)
+- Anti-drug antibodies: 8% incidence, non-neutralizing, no impact on PK
+
+2.4 Rationale
+
+Current anti-amyloid therapies achieve plaque clearance but do not adequately
+address the neuroinflammatory component of AD pathology. TREM2 loss-of-function
+variants (R47H) are among the strongest genetic risk factors for late-onset AD,
+and TREM2 agonism has emerged as a promising therapeutic strategy.
+
+By combining amyloid clearance with TREM2-mediated neuroprotection in a single
+molecule, Neuronix is designed to provide superior efficacy with a potentially
+improved safety profile (reduced ARIA risk through controlled microglial activation).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3. STUDY OBJECTIVES AND ENDPOINTS
+
+3.1 Primary Objectives
+
+Part A: To determine the MTD and/or RP2D of Neuronix in early-stage AD patients.
+Part B: To further evaluate safety and tolerability at the RP2D.
+
+Primary Endpoints:
+- Incidence and severity of DLTs (DLT evaluation period: 28 days after first dose)
+- Incidence, severity, and relatedness of treatment-emergent AEs (TEAEs)
+
+3.2 Secondary Objectives and Endpoints
+
+  Objective                                    Endpoint
+  ─────────────────────────────────────────    ──────────────────────────────
+  Characterize PK                              Cmax, AUC, T½, clearance, Vd
+  Evaluate target engagement                   CSF Aβ42, Aβ42/40 ratio
+  Assess tau pathology                         CSF p-tau181, p-tau217, t-tau
+  Evaluate neurodegeneration                   CSF NfL, plasma NfL
+  Assess amyloid clearance                     Amyloid PET (Centiloid change)
+  Preliminary cognitive efficacy               ADAS-Cog 13, CDR-SB, MMSE
+  Evaluate immunogenicity                      ADA incidence and titers
+
+3.3 Exploratory Objectives
+
+- Tau PET (18F-flortaucipir) change at 52 weeks (optional)
+- Volumetric MRI (hippocampal/whole brain atrophy rates)
+- Digital biomarkers (speech patterns, typing speed, actigraphy)
+- Plasma p-tau217 as non-invasive monitoring tool
+- Single-cell RNA-seq of CSF immune cells (optional lumbar puncture substudy)
+- Gut microbiome composition and relationship to drug response
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4. STUDY DESIGN
+
+4.1 Part A: Dose Escalation (3+3 Design)
+
+Dose Level 1:  5 mg SC Q2W
+Dose Level 2:  15 mg SC Q2W
+Dose Level 3:  30 mg SC Q2W
+Dose Level 4:  60 mg SC Q2W
+Dose Level 5:  120 mg SC Q2W
+
+DLT evaluation period: 28 days after first dose.
+Dose escalation rules:
+- 0/3 DLTs → escalate to next dose level
+- 1/3 DLTs → expand to 6 patients
+- ≤ 1/6 DLTs → escalate
+- ≥ 2/6 DLTs → dose level exceeds MTD; previous level is MTD
+
+DLT Definitions:
+- Grade ≥ 3 AE considered related to Neuronix (excluding injection site reactions)
+- ARIA-E (moderate or severe, symptomatic)
+- ARIA-H (> 2 microhemorrhages or any macrohemorrhage)
+- Grade ≥ 3 infusion/injection-related reaction
+- Any AE leading to treatment discontinuation during DLT period
+
+4.2 Part B: Dose Expansion
+
+- RP2D (determined from Part A) × 52 weeks
+- Two expansion cohorts:
+  Cohort B1 (n=30): Prodromal AD (CDR 0.5)
+  Cohort B2 (n=30): Mild AD dementia (CDR 1.0)
+
+4.3 MRI Safety Monitoring Protocol
+
+Given ARIA risk with anti-amyloid therapies:
+- Brain MRI (FLAIR + T2*-GRE) at: screening, Week 4, 8, 16, 24, 36, 52
+- Standardized ARIA reading by central neuroradiology core lab
+- ARIA management algorithm (see Section 7.3)
+- APOE ε4 genotyping mandatory (stratification factor for ARIA risk)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5. STUDY POPULATION
+
+5.1 Inclusion Criteria
+
+  1. Age 50-85 years (inclusive)
+  2. Clinical diagnosis of:
+     a. Prodromal AD (CDR Global Score = 0.5, Memory Box ≥ 0.5), OR
+     b. Mild AD dementia (CDR Global Score = 1.0)
+  3. MMSE score 20-28 (inclusive)
+  4. Amyloid-positive by EITHER:
+     a. Amyloid PET (visual read positive), OR
+     b. CSF Aβ42 < 600 pg/mL (or Aβ42/40 ratio < 0.089)
+  5. APOE genotype documented (not exclusionary; used for ARIA risk stratification)
+  6. Stable doses of AD medications (cholinesterase inhibitors, memantine)
+     for ≥ 3 months prior to screening. Initiation or dose changes during
+     the study are not permitted.
+  7. Reliable study partner who spends ≥ 10 hours/week with patient
+  8. Adequate visual and auditory acuity for neuropsychological testing
+  9. Written informed consent (patient and study partner)
+
+5.2 Exclusion Criteria
+
+  1. Any significant neurological condition other than AD
+  2. History of seizures within 5 years
+  3. Brain MRI at screening showing:
+     a. > 4 cerebral microhemorrhages
+     b. Any area of superficial siderosis
+     c. Evidence of prior macrohemorrhage
+     d. > 1 lacunar infarct
+     e. Any stroke within 12 months
+  4. Current treatment with anti-amyloid therapy (lecanemab, donanemab, aducanumab)
+     or treatment within 6 months of screening
+  5. Treatment with immunosuppressants within 12 months
+  6. Anticoagulant therapy (antiplatelet agents allowed except during LP windows)
+  7. Uncontrolled hypertension (SBP > 160 or DBP > 100 mmHg)
+  8. History of autoimmune disease
+  9. Known immunodeficiency
+  10. Severe renal impairment (eGFR < 30 mL/min/1.73 m²)
+  11. Hepatic impairment (ALT/AST > 2× ULN)
+  12. Suicidal ideation (C-SSRS score ≥ 4) within 12 months
+  13. MRI contraindications (pacemaker, certain metallic implants)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6. TREATMENT PLAN
+
+6.1 Investigational Medicinal Product
+
+Drug:               Neuronix (NIX-9150)
+Formulation:        Solution for subcutaneous injection, 50 mg/mL
+Dose levels:        5 mg, 15 mg, 30 mg, 60 mg, 120 mg
+Route:              Subcutaneous (abdomen, thigh, or upper arm)
+Schedule:           Every 2 weeks (Q2W), administered at study site
+Duration:           Part A: 12 weeks (6 doses) + extension to 52 weeks if tolerated
+                    Part B: 52 weeks (26 doses)
+
+6.2 Administration
+
+- All doses administered by qualified site staff
+- Post-injection observation: 60 minutes (Part A), 30 minutes (Part B)
+- Injection site rotation required
+
+6.3 Concomitant Medications
+
+Permitted (stable dose required):
+- Cholinesterase inhibitors (donepezil, rivastigmine, galantamine)
+- Memantine
+- SSRIs/SNRIs for depression/anxiety (stable ≥ 3 months)
+- Low-dose aspirin (≤ 325 mg/day)
+
+Prohibited:
+- Anti-amyloid antibodies
+- Other investigational drugs
+- Immunosuppressants (including systemic corticosteroids > 10 mg/day prednisone)
+- Anticoagulants (warfarin, DOACs) — 7-day washout needed for lumbar puncture
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7. SAFETY ASSESSMENTS
+
+7.1 General Safety
+
+AE collection from informed consent through 12 weeks after last dose.
+SAE collection through 24 weeks after last dose.
+AE grading per NCI CTCAE v5.0.
+
+7.2 Key Safety Evaluations
+
+Assessment                     Schedule
+──────────────────────────────────────────────────────────────────
+Physical/Neurological Exam     Each visit
+Vital Signs                    Each visit (pre- and post-dose)
+12-Lead ECG                    Screening, Weeks 4, 12, 24, 52
+C-SSRS (Suicidality)          Screening, Weeks 4, 12, 24, 36, 52
+Hematology/Chemistry           Each visit
+Urinalysis                     Screening, Q12W
+Brain MRI (ARIA monitoring)    Screen, Wks 4, 8, 16, 24, 36, 52
+Immunogenicity (ADA)           Pre-dose Wks 1, 4, 12, 24, 52 + FU
+
+7.3 ARIA Management Algorithm
+
+ARIA-E (Edema):
+  Mild (radiographic only):         Continue dosing, recheck MRI in 4 weeks
+  Moderate (mild symptoms):         Hold dosing, recheck MRI Q4W until resolved,
+                                    may resume at same dose
+  Severe (significant symptoms):    Permanent discontinuation
+
+ARIA-H (Hemorrhage):
+  1-2 new microhemorrhages:        Continue dosing, recheck MRI in 4 weeks
+  3-4 new microhemorrhages:        Hold dosing, recheck MRI Q4W
+  > 4 new or any macrohemorrhage:  Permanent discontinuation
+  Symptomatic hemorrhage:           Permanent discontinuation, urgent neuroimaging
+
+7.4 Immunogenicity Monitoring
+
+- Anti-drug antibody (ADA) screening and confirmatory assay
+- Neutralizing antibody (NAb) characterization if ADA positive
+- PK correlation analysis for ADA-positive patients
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+8. EFFICACY ASSESSMENTS (Part B Expansion)
+
+8.1 Cognitive Endpoints
+
+ADAS-Cog 13:  Baseline, Weeks 12, 24, 36, 52 (trained raters, inter-rater
+              reliability checks Q6M)
+CDR-SB:       Baseline, Weeks 24, 52 (conducted by certified CDR raters)
+MMSE:         Screening, baseline, Weeks 24, 52
+ADCS-ADL:     Baseline, Weeks 24, 52
+
+8.2 Biomarker Assessments
+
+CSF Collection (lumbar puncture):
+- Baseline, Week 24, Week 52
+- Analytes: Aβ40, Aβ42, p-tau181, p-tau217, t-tau, NfL, YKL-40, sTREM2
+
+Amyloid PET (18F-florbetapir or 18F-flutemetamol):
+- Screening (confirmation), Week 52
+- Quantified in Centiloid units (central reading)
+
+Volumetric MRI:
+- Baseline, Week 52
+- Hippocampal volume, whole brain volume, ventricular volume (FreeSurfer 7.x)
+
+Plasma Biomarkers:
+- p-tau217 (Lilly MSD), NfL (Quanterix Simoa), GFAP: each visit
+
+8.3 Digital Biomarkers (Exploratory)
+
+- Smartphone-based cognitive battery (Linus Health platform): weekly
+- Continuous actigraphy (Fitbit Sense 2): throughout study
+- Passive speech analysis during study visits
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+9. STATISTICAL CONSIDERATIONS
+
+9.1 Sample Size
+
+Part A (Dose Escalation):
+- 3+3 design: 3-6 patients per dose level, up to 5 levels = 15-30 patients
+- Standard justification per FDA Phase 1 guidance
+
+Part B (Dose Expansion):
+- 30 patients per CDR subgroup (0.5 and 1.0) = 60 total
+- Provides ≥ 80% probability of detecting ≥ 1 AE occurring at ≥ 5% incidence
+- Exploratory efficacy: 80% power to detect 25% reduction in CSF p-tau181
+  (SD = 40%, two-sided α = 0.10)
+
+9.2 Analysis Populations
+
+- DLT-evaluable: Patients completing DLT evaluation period (Part A)
+- Safety: All patients receiving ≥ 1 dose (Parts A+B)
+- PK: All patients with ≥ 1 evaluable PK sample
+- Biomarker: All patients with baseline and ≥ 1 post-baseline biomarker
+
+9.3 Safety Analysis
+
+- Descriptive statistics for TEAEs, SAEs, DLTs by dose level
+- Exposure-safety analyses (dose/concentration vs. ARIA incidence)
+- Kaplan-Meier for time to first ARIA event
+
+9.4 PK Analysis
+
+- Non-compartmental analysis (NCA) for single-dose PK
+- Population PK modeling (nonlinear mixed effects)
+- Dose proportionality assessment (power model)
+
+9.5 Preliminary Efficacy Analysis (Part B)
+
+- Within-group paired t-tests for biomarker changes from baseline
+- MMRM for cognitive endpoints
+- All efficacy analyses considered exploratory (not powered for significance)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+10. REGULATORY AND ETHICAL CONSIDERATIONS
+
+10.1 Regulatory Compliance
+
+This study will be conducted per:
+- ICH E6(R2) Good Clinical Practice
+- ICH E8(R1) General Considerations for Clinical Studies
+- ICH M3(R2) Nonclinical Safety Studies
+- FDA Guidance: Early Alzheimer's Disease — Developing Drugs for Treatment (2018)
+- FDA Guidance: Suicidal Ideation and Behavior (2012)
+- 21 CFR Parts 11, 50, 56, 312, 361
+
+10.2 Informed Consent
+
+Due to the cognitive impairment inherent in the study population:
+- Both patient AND study partner must provide written informed consent
+- Capacity to consent assessed by qualified investigator
+- If capacity is questionable, legally authorized representative (LAR)
+  must co-sign consent per local regulations
+- Re-consent at 6 months and if significant cognitive decline noted
+
+10.3 Ethics Committee
+
+- Central IRB (Advarra) for US sites
+- Protocol, ICF, recruitment materials must be approved before enrollment
+- Annual continuing review
+
+10.4 Data Protection
+
+- HIPAA compliance (US)
+- Neuroimaging data de-identified and stored in XNAT repository
+- Genetic data (APOE) stored separately with additional consent
+- Data retention: 15 years per FDA requirements for biologics
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+11. REFERENCES
+
+1. Scheltens P, et al. Alzheimer's disease. Lancet. 2021;397:1577-1590.
+2. van Dyck CH, et al. Lecanemab in Early Alzheimer's Disease.
+   N Engl J Med. 2023;388:9-21.
+3. Sims JR, et al. Donanemab in Early Symptomatic Alzheimer Disease.
+   JAMA. 2023;330:512-527.
+4. Jonsson T, et al. Variant of TREM2 associated with the risk of
+   Alzheimer's disease. N Engl J Med. 2013;368:107-116.
+5. Sperling RA, et al. Amyloid-related imaging abnormalities in
+   amyloid-modifying therapeutic trials. Alzheimers Dement. 2011;7:367-385.
+6. Jack CR Jr, et al. NIA-AA Research Framework for Alzheimer's disease.
+   Alzheimers Dement. 2018;14:535-562.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+APPENDICES
+
+Appendix A: Schedule of Assessments
+Appendix B: ARIA Classification and Management Algorithm
+Appendix C: DLT Definition Details
+Appendix D: ADAS-Cog 13 Administration Guide
+Appendix E: CDR Rating Guide
+Appendix F: C-SSRS Administration Guide
+Appendix G: Lumbar Puncture Procedure and Safety Guidelines
+Appendix H: MRI Acquisition Protocol (ARIA Monitoring)
+Appendix I: Digital Biomarker Device Setup and Compliance Guide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+END OF PROTOCOL

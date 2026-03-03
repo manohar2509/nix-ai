@@ -264,7 +264,7 @@ export default function LoginPage() {
      ═══════════════════════════════════════════ */
   const headers = {
     [MODE.SIGN_IN]: { title: 'Welcome back', subtitle: 'Sign in to access your clinical trial workspace' },
-    [MODE.SIGN_UP]: { title: 'Create your account', subtitle: 'Join NIX AI to start analysing clinical protocols' },
+    [MODE.SIGN_UP]: { title: 'Create your account', subtitle: 'Join NIX AI to start analyzing clinical trial protocols' },
     [MODE.VERIFY]: { title: 'Verify your email', subtitle: `We sent a 6-digit code to ${email || 'your email'}` },
     [MODE.FORGOT_PASSWORD]: { title: 'Forgot password?', subtitle: 'Enter your email and we\'ll send a reset code' },
     [MODE.RESET_PASSWORD]: { title: 'Reset password', subtitle: 'Enter the code from your email and a new password' },
@@ -625,7 +625,7 @@ export default function LoginPage() {
             </div>
             <span className="font-bold text-2xl tracking-tight">NIX AI</span>
           </div>
-          <p className="text-slate-500 text-sm ml-14">Adversarial Intelligence Platform</p>
+          <p className="text-slate-500 text-sm ml-14">Regulatory Intelligence Platform</p>
         </div>
 
         {/* Hero Content */}
@@ -635,15 +635,15 @@ export default function LoginPage() {
             <span className="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent"> before the FDA does.</span>
           </h1>
           <p className="text-slate-400 text-lg leading-relaxed mb-10">
-            AI-powered adversarial agents that simulate regulatory and payer conflicts,
+            AI-powered agents that analyze FDA/EMA regulatory and payer compliance risks,
             so you can fix protocol issues before they become rejection letters.
           </p>
 
           {/* Feature cards */}
           <div className="space-y-4">
             <FeatureRow icon={<Shield size={18} />} title="Regulatory Agent" desc="Simulates FDA/EMA review committee objections" color="risk" />
-            <FeatureRow icon={<TrendingUp size={18} />} title="Payer Agent" desc="Models CMS reimbursement & cost-effectiveness hurdles" color="money" />
-            <FeatureRow icon={<Zap size={18} />} title="Smart Pivots" desc="AI-generated protocol amendments with confidence scores" color="brand" />
+            <FeatureRow icon={<TrendingUp size={18} />} title="Payer Agent" desc="Models HTA body, CMS reimbursement & cost-effectiveness hurdles" color="money" />
+            <FeatureRow icon={<Zap size={18} />} title="Actionable Recommendations" desc="AI-generated protocol amendments with confidence scores" color="brand" />
           </div>
         </div>
 

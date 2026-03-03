@@ -1,0 +1,411 @@
+{
+  "metadata": {
+    "title": "Payer Evidence Frameworks — Market Access Requirements",
+    "version": "2.0",
+    "last_updated": "2026-03-01",
+    "description": "Detailed evidence requirements from major payer bodies worldwide. Designed to help clinical teams optimise protocols for both regulatory approval AND market access from Day 1 of trial design."
+  },
+  "payer_landscape_overview": {
+    "key_principle": "Regulatory approval ≠ payer acceptance. Trials must be designed to generate evidence that satisfies BOTH regulatory and HTA requirements simultaneously.",
+    "common_payer_gaps_in_protocols": [
+      "No active comparator (or comparator not standard of care in target market)",
+      "Missing quality of life / PRO data collection",
+      "Insufficient follow-up for long-term outcomes",
+      "No health economic data collection (resource use, costs)",
+      "Population not representative of real-world patients",
+      "Subgroup analyses not pre-specified for HTA-relevant populations",
+      "Missing indirect comparison feasibility (no common comparator arm)"
+    ]
+  },
+  "nice_england": {
+    "body": "National Institute for Health and Care Excellence",
+    "country": "England and Wales",
+    "manual_url": "https://www.nice.org.uk/process/pmg36",
+    "evidence_requirements": {
+      "comparator": {
+        "requirement": "Must compare against NHS standard of care",
+        "detail": "If direct comparison unavailable, network meta-analysis (NMA) via common comparator required",
+        "common_deficiency": "International trials using US standard of care that differs from NHS practice"
+      },
+      "outcomes": {
+        "preferred_primary": "Quality-adjusted life years (QALYs) using EQ-5D-5L",
+        "required_instruments": {
+          "generic_QoL": "EQ-5D-5L (preferred) or EQ-5D-3L (acceptable)",
+          "mapping": "If disease-specific instrument used, validated mapping to EQ-5D required",
+          "note": "NICE DSU Technical Support Documents provide mapping guidance"
+        },
+        "additional": ["Overall survival", "Progression-free survival", "Disease-specific outcomes"]
+      },
+      "cost_effectiveness": {
+        "threshold": "£20,000-£30,000 per QALY (standard)",
+        "severity_modifier": {
+          "description": "Severity modifier applies based on absolute and proportional shortfall",
+          "multipliers": {
+            "no_modifier": "1.0x — shortfall < threshold",
+            "modifier_1.2": "1.2x — moderate severity",
+            "modifier_1.7": "1.7x — high severity"
+          },
+          "effective_thresholds": {
+            "standard": "£20,000 - £30,000",
+            "moderate_severity": "£24,000 - £36,000",
+            "high_severity": "£34,000 - £51,000"
+          }
+        },
+        "HST_threshold": "Up to £100,000-£300,000/QALY for Highly Specialised Technologies (ultra-rare diseases)"
+      },
+      "statistical_requirements": [
+        "ITT population as primary analysis",
+        "Pre-specified subgroup analyses",
+        "Kaplan-Meier and Cox PH model for time-to-event",
+        "Extrapolation of survival data beyond trial: multiple parametric models required",
+        "NICE DSU TSD 14 for survival extrapolation methods"
+      ],
+      "submission_elements": [
+        "Company evidence submission with systematic literature review",
+        "De novo economic model (cost-effectiveness analysis)",
+        "Budget impact analysis",
+        "Patient and clinical expert testimony"
+      ]
+    }
+  },
+  "iqwig_gba_germany": {
+    "body": "Institute for Quality and Efficiency in Health Care / Federal Joint Committee",
+    "country": "Germany",
+    "methods_url": "https://www.iqwig.de/en/about-us/methods/methods-paper/",
+    "evidence_requirements": {
+      "amnog_process": {
+        "description": "AMNOG (Arzneimittelmarktordnungsgesetz) benefit assessment",
+        "timeline": "Dossier due within 3 months of market launch",
+        "comparator": {
+          "requirement": "G-BA determines the Appropriate Comparator Therapy (ACT)",
+          "critical_note": "ACT may differ from ICH E10 active comparator — must confirm with G-BA early",
+          "consequence": "If trial comparator ≠ ACT, benefit cannot be proven → lowest price tier"
+        }
+      },
+      "benefit_categories": {
+        "major": {"description": "Sustained and large improvement in therapy-relevant benefit, especially survival or cure", "typical_evidence": "RCT with OS benefit, large effect size"},
+        "considerable": {"description": "Considerable improvement in therapy-relevant benefit", "typical_evidence": "RCT with clinically meaningful PFS or PRO benefit"},
+        "minor": {"description": "Moderate and not merely minor improvement", "typical_evidence": "RCT with statistically significant but smaller benefit"},
+        "non_quantifiable": {"description": "Added benefit not quantifiable", "typical_evidence": "Indirect comparison, mixed evidence"},
+        "no_added_benefit": {"description": "No added benefit over comparator proven", "consequence": "Reference price applies"},
+        "less_benefit": {"description": "Less benefit than comparator", "consequence": "Rare but possible → major pricing impact"}
+      },
+      "endpoint_requirements": {
+        "patient_relevant_endpoints_only": true,
+        "accepted_endpoints": ["Overall survival", "Morbidity (symptoms, functional status)", "Health-related quality of life", "Side effects"],
+        "NOT_accepted_as_primary": ["PFS (unless validated surrogate)", "Biomarkers", "Imaging endpoints"],
+        "surrogate_endpoints": "Only accepted if validated per IQWiG methodology — very high bar"
+      },
+      "statistical_standards": [
+        "p < 0.05 for added benefit",
+        "Confidence intervals required",
+        "Subgroup analyses by age, sex, disease severity, prior treatment",
+        "Effect size classification per IQWiG methods"
+      ]
+    }
+  },
+  "cadth_canada": {
+    "body": "Canada's Drug Agency (formerly CADTH)",
+    "country": "Canada",
+    "guidelines_url": "https://www.cda-amc.ca/guidelines-economic-evaluation-health-technologies-canada",
+    "evidence_requirements": {
+      "review_types": {
+        "CADTH_Reimbursement_Review": "Standard new drug reviews",
+        "pCODR": "Pan-Canadian Oncology Drug Review (now integrated)"
+      },
+      "comparator": {
+        "requirement": "Canadian standard of care as determined by CADTH",
+        "consideration": "Provincial formulary may differ — check by province"
+      },
+      "outcomes": {
+        "primary": ["Clinical effectiveness (OS, PFS, ORR as applicable)", "Patient-reported outcomes", "Safety"],
+        "economic": ["Cost-utility analysis (cost per QALY)", "Budget impact analysis over 3 years"],
+        "qol_instruments": "EQ-5D preferred, HUI3 also accepted in Canadian context"
+      },
+      "deliberative_framework": [
+        "Clinical benefit and harms",
+        "Patient values and preferences (via patient group input)",
+        "Economic evaluation",
+        "Feasibility of implementation in Canadian healthcare system"
+      ],
+      "icer_threshold": {
+        "description": "No explicit threshold but ~$50,000-$100,000 CAD/QALY informally used",
+        "context": "CADTH considers willingness-to-pay in context of severity and unmet need"
+      }
+    }
+  },
+  "pbac_australia": {
+    "body": "Pharmaceutical Benefits Advisory Committee",
+    "country": "Australia",
+    "guidelines_url": "https://www.pbs.gov.au/info/industry/listing/elements/pbac-guidelines",
+    "evidence_requirements": {
+      "submission_types": {
+        "major": "New chemical entity or new indication",
+        "minor": "Change to existing listing"
+      },
+      "comparator": {
+        "requirement": "Main comparator = therapy most likely to be replaced in Australian clinical practice",
+        "PBS_listing": "Must be PBS-listed comparator"
+      },
+      "clinical_evaluation": [
+        "Systematic review of direct RCT evidence",
+        "GRADE framework for evidence quality assessment",
+        "Network meta-analysis if no head-to-head data"
+      ],
+      "economic_evaluation": {
+        "types": ["Cost-effectiveness analysis (CEA)", "Cost-utility analysis (CUA) using QALY"],
+        "qol_instruments": "EQ-5D or other validated instrument with Australian utility weights",
+        "discount_rate": "5% for both costs and outcomes",
+        "perspective": "Australian healthcare system perspective"
+      },
+      "additional_requirements": [
+        "Risk-sharing arrangements considered for uncertain evidence",
+        "Real-world evidence may be required post-listing",
+        "Managed entry schemes for high-cost therapies"
+      ]
+    }
+  },
+  "pmda_japan": {
+    "body": "Pharmaceuticals and Medical Devices Agency",
+    "country": "Japan",
+    "evidence_requirements": {
+      "bridging_strategy": {
+        "requirement": "ICH E5(R1) bridging study may be required",
+        "when_needed": "When intrinsic/extrinsic ethnic factors suggest different response in Japanese population",
+        "typical_design": "Japanese bridging study with PK/PD + efficacy/safety in Japanese patients"
+      },
+      "cost_effectiveness": {
+        "description": "HTA introduced in 2019 (Chuikyo)",
+        "threshold": "¥5-10 million/QALY (approximately)",
+        "scope": "Applies to drugs exceeding peak sales thresholds"
+      }
+    }
+  },
+  "has_france": {
+    "body": "Haute Autorité de Santé",
+    "country": "France",
+    "guidelines_url": "https://www.has-sante.fr",
+    "evidence_requirements": {
+      "dual_assessment": {
+        "SMR": {
+          "description": "Service Médical Rendu — determines reimbursement eligibility and rate",
+          "levels": ["Major (100% reimbursement)", "Important (65%)", "Moderate (30%)", "Low (15%)", "Insufficient (no reimbursement)"]
+        },
+        "ASMR": {
+          "description": "Amélioration du SMR — determines price premium vs existing therapies",
+          "levels": ["I - Major improvement", "II - Important", "III - Moderate", "IV - Minor", "V - No improvement"],
+          "pricing_impact": "ASMR I-III: EU reference pricing with premium; ASMR IV: modest premium; ASMR V: price ≤ comparator"
+        }
+      },
+      "comparator": {
+        "requirement": "Must reflect French clinical practice and guidelines",
+        "critical_note": "French treatment patterns may differ significantly from US/UK — early engagement with HAS essential"
+      },
+      "outcomes": {
+        "primary": ["Clinical benefit (mortality, morbidity, QoL)", "Place in therapeutic strategy"],
+        "economic": "CEESP evaluation required for ASMR I-III products and those with significant budget impact",
+        "discount_rate": "2.5% (lower than NICE 3.5%)",
+        "perspective": "Collective (broader than just healthcare)"
+      }
+    }
+  },
+  "aifa_italy": {
+    "body": "Agenzia Italiana del Farmaco",
+    "country": "Italy",
+    "guidelines_url": "https://www.aifa.gov.it",
+    "evidence_requirements": {
+      "innovation_designation": {
+        "full_innovation": {
+          "criteria": ["Unmet therapeutic need", "Added therapeutic value", "Quality of evidence"],
+          "benefit": "Automatic regional reimbursement + dedicated innovation fund (€1B/year)"
+        }
+      },
+      "managed_entry_agreements": {
+        "description": "Italy is a pioneer in outcome-based pricing — most new drugs have some form of MEA",
+        "types": ["Payment by Results", "Risk Sharing", "Cost Sharing", "Capping", "Success Fee"],
+        "protocol_impact": [
+          "Must define clear responder criteria at protocol level",
+          "Early response biomarkers needed for cost-sharing triggers",
+          "AIFA Monitoring Registry integration required"
+        ]
+      },
+      "comparator": {
+        "requirement": "Italian standard of care — may differ from other EU countries",
+        "note": "Generic penetration and biosimilar uptake in Italy affects comparator selection"
+      }
+    }
+  },
+  "eu_jca": {
+    "body": "EU Joint Clinical Assessment",
+    "jurisdiction": "European Union (27 member states)",
+    "regulation": "EU HTA Regulation 2021/2282",
+    "effective_date": "January 2025 — oncology + ATMPs first; all new drugs from 2030",
+    "evidence_requirements": {
+      "scope": {
+        "description": "Centralized EU-wide assessment of relative clinical effectiveness — replaces individual national clinical assessments",
+        "what_it_covers": ["Relative clinical effectiveness", "Relative safety"],
+        "what_remains_national": ["Economic evaluation", "Budget impact", "Pricing decisions", "Reimbursement decisions"]
+      },
+      "comparator": {
+        "requirement": "Must address comparators relevant across ALL EU member states",
+        "challenge": "Different EU countries may have different SOC — multi-comparator strategy or NMA essential",
+        "recommendation": "Joint scientific consultation with EU coordination group during protocol development"
+      },
+      "endpoints": {
+        "requirement": "Patient-relevant outcomes (IQWiG tradition applied EU-wide)",
+        "mandatory": ["Survival", "Morbidity", "HRQoL", "Safety"],
+        "surrogate_risk": "EU JCA will apply stricter surrogate endpoint scrutiny than individual countries previously did"
+      },
+      "protocol_implications": [
+        "Single pan-EU evidence package replaces 27 national dossiers for clinical component",
+        "Comparator selection becomes more complex — must satisfy multiple national perspectives",
+        "QoL data collection mandatory from trial start",
+        "Subgroup analyses for EU-relevant populations pre-specified",
+        "Standardized PICO framework mandatory for submission"
+      ]
+    }
+  },
+  "icer_usa": {
+    "body": "Institute for Clinical and Economic Review",
+    "country": "United States",
+    "guidelines_url": "https://icer.org/our-approach/methods-process/",
+    "role": "Independent HTA body — not government-mandated but increasingly influential on US payer decisions",
+    "evidence_requirements": {
+      "value_framework": {
+        "description": "ICER Value Assessment Framework 2020-2023",
+        "components": [
+          "Comparative clinical effectiveness review",
+          "Cost-effectiveness analysis (cost per QALY, cost per evLYG)",
+          "Budget impact analysis (5-year US budget impact)",
+          "Voting by independent evidence review committee"
+        ]
+      },
+      "thresholds": {
+        "cost_per_qaly": "$50,000-$150,000/QALY (range used for value-based price benchmarks)",
+        "cost_per_evlyg": "Equal value of life years gained — adjustment for treatments that extend life with low QoL",
+        "budget_impact_threshold": "$819M/year (2023-2024 threshold, updated annually)"
+      },
+      "influence": {
+        "payer_impact": "Major US commercial payers (Aetna, Cigna, Express Scripts) reference ICER reports in formulary decisions",
+        "PBM_impact": "Pharmacy Benefit Managers use ICER value-based benchmarks for price negotiations",
+        "limitations": "ICER is advisory only; CMS (Medicare) does not formally use ICER thresholds for Part D"
+      },
+      "protocol_implications": [
+        "Include active comparator relevant to US clinical practice",
+        "Collect US-specific resource use and cost data",
+        "EQ-5D-5L for QALY estimation",
+        "Plan for ICER evidence review timeline (often during FDA review period)",
+        "Consider ICER's evLYG alongside QALY to address concerns about disability discrimination"
+      ]
+    }
+  },
+  "outcomes_based_contracting": {
+    "description": "Framework for outcome-based and value-based pricing agreements globally",
+    "growing_importance": "Increasing number of payers require outcome-based pricing evidence, especially for gene therapies, CAR-T, and high-cost drugs",
+    "contract_types": {
+      "outcomes_based": {
+        "payment_by_results": "Full/partial refund if treatment doesn't achieve pre-defined clinical outcome",
+        "risk_sharing": "Price reduction proportional to non-responders in real-world use",
+        "success_fee": "Payment contingent on achieving specified outcome"
+      },
+      "financial_based": {
+        "volume_caps": "Maximum spend per patient or per year",
+        "dose_capping": "Free drug after maximum number of doses/cycles",
+        "instalment_payments": "Annuity-based payment for one-time therapies (gene therapy model)"
+      }
+    },
+    "protocol_design_requirements": [
+      "Define clear, measurable responder criteria early in protocol",
+      "Include biomarkers or clinical assessments that can serve as early response triggers",
+      "Plan for real-world outcome tracking (registry, EHR linkage)",
+      "Align trial endpoints with payer-relevant outcome measures",
+      "Consider durability of response endpoints for long-term agreements",
+      "Gene therapies: include long-term follow-up plan for outcome verification (5-15 years)"
+    ],
+    "examples": {
+      "gene_therapy": "Novartis Zolgensma — outcomes-based agreement in multiple EU markets",
+      "car_t": "Kymriah — payment by results in UK (NICE) and Italy (AIFA)",
+      "oncology": "Multiple outcomes-based contracts for PD-1/PD-L1 inhibitors in Italy"
+    }
+  },
+  "cross_cutting_payer_requirements": {
+    "protocol_design_recommendations": {
+      "comparator_alignment": {
+        "description": "Align trial comparator with the most common standard of care across target markets",
+        "action_items": [
+          "Conduct early parallel scientific advice with EMA + NICE/G-BA",
+          "Map comparator requirements across FDA, EMA, NICE, G-BA, CADTH, PBAC",
+          "If multiple comparators needed, consider multi-arm trial design",
+          "Document comparator rationale per ICH E10 AND per HTA body requirements"
+        ]
+      },
+      "qol_data_collection": {
+        "description": "Collect generic + disease-specific QoL data from Day 1",
+        "mandatory_instruments": [
+          "EQ-5D-5L (required by NICE, accepted everywhere)",
+          "Disease-specific PRO instrument validated for therapeutic area"
+        ],
+        "timing": [
+          "Baseline (pre-randomisation)",
+          "Every cycle or visit (during treatment)",
+          "End of treatment",
+          "Follow-up visits (every 3-6 months)",
+          "Disease progression event",
+          "End of study"
+        ],
+        "compliance_target": ">80% completion rate to support economic analysis"
+      },
+      "health_economics_data": {
+        "description": "Resource use data collection in clinical trial",
+        "items_to_collect": [
+          "Hospitalisations (reason, duration, costs)",
+          "Emergency department visits",
+          "Outpatient visits (specialist, GP)",
+          "Concomitant medications",
+          "Laboratory tests and imaging",
+          "Home care / nursing visits",
+          "Work productivity (if relevant)"
+        ],
+        "instrument": "Resource Use Questionnaire (RUQ) or electronic case report form fields"
+      },
+      "subgroup_analyses_for_hta": {
+        "description": "Pre-specify HTA-relevant subgroups in protocol and SAP",
+        "common_subgroups": [
+          "Prior treatment history (treatment-naive vs experienced)",
+          "Disease severity (mild/moderate/severe)",
+          "Biomarker status (positive vs negative)",
+          "Age groups (< 65, 65-75, > 75)",
+          "Geographic region (for MRCT)",
+          "Comorbidities (cardiovascular, renal, hepatic)"
+        ]
+      },
+      "long_term_data": {
+        "description": "Plan for long-term data collection beyond primary analysis",
+        "strategies": [
+          "Open-label extension study for safety and durability",
+          "Registry-based follow-up for OS and long-term outcomes",
+          "Database linkage (claims data, electronic health records)",
+          "Post-marketing commitment studies"
+        ]
+      }
+    }
+  },
+  "payer_score_calculation": {
+    "description": "NIX AI Payer Readiness Score methodology",
+    "components": {
+      "comparator_alignment": {"weight": 0.25, "criteria": ["Comparator is current SoC", "Active (not placebo-only)", "Aligned across target markets"]},
+      "qol_data_collection": {"weight": 0.20, "criteria": ["EQ-5D-5L included", "Disease-specific PRO included", "Adequate collection timepoints", ">80% completion plan"]},
+      "health_economic_data": {"weight": 0.15, "criteria": ["Resource use data collected", "Cost categories pre-specified", "Modeling inputs available"]},
+      "endpoint_relevance": {"weight": 0.15, "criteria": ["Patient-relevant endpoints (IQWiG accepted)", "Clinically meaningful thresholds defined", "Validated surrogate endpoints if used"]},
+      "subgroup_pre_specification": {"weight": 0.10, "criteria": ["HTA-relevant subgroups in protocol", "Adequate power for key subgroups", "Interaction tests planned"]},
+      "long_term_evidence_plan": {"weight": 0.10, "criteria": ["Extension study planned", "Long-term follow-up strategy", "Real-world evidence generation plan"]},
+      "indirect_comparison_feasibility": {"weight": 0.05, "criteria": ["Common comparator arm enables NMA", "Endpoint definitions match published trials", "Patient population comparable to existing evidence"]}
+    },
+    "scoring_thresholds": {
+      "payer_ready": {"score_range": "80-100", "description": "Protocol optimised for HTA submissions across major markets"},
+      "mostly_ready": {"score_range": "60-79", "description": "Minor gaps addressable via protocol amendment or parallel data collection"},
+      "significant_gaps": {"score_range": "40-59", "description": "Notable deficiencies that may delay or limit reimbursement"},
+      "not_payer_ready": {"score_range": "0-39", "description": "Major redesign needed for market access evidence requirements"}
+    }
+  }
+}

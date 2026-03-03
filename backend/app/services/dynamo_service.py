@@ -17,6 +17,7 @@ GSI1 (reverse lookup):
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import time
 import uuid
@@ -118,10 +119,17 @@ def get_document(doc_id: str) -> Optional[dict]:
 
 def list_documents(user_id: str) -> list[dict]:
     table = get_dynamodb_table()
-    resp = table.query(
-        KeyConditionExpression=Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("DOC#"),
-    )
-    return [_clean_item(i) for i in resp.get("Items", [])]
+    items: list[dict] = []
+    params = {
+        "KeyConditionExpression": Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("DOC#"),
+    }
+    while True:
+        resp = table.query(**params)
+        items.extend(resp.get("Items", []))
+        if "LastEvaluatedKey" not in resp:
+            break
+        params["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
+    return [_clean_item(i) for i in items]
 
 
 def update_document(doc_id: str, updates: dict) -> Optional[dict]:
@@ -201,11 +209,18 @@ def get_chat_message(message_id: str) -> Optional[dict]:
 
 def get_chat_history(doc_id: str) -> list[dict]:
     table = get_dynamodb_table()
-    resp = table.query(
-        KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("MSG#"),
-        ScanIndexForward=True,  # oldest first
-    )
-    return [_clean_item(i) for i in resp.get("Items", [])]
+    items: list[dict] = []
+    params = {
+        "KeyConditionExpression": Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("MSG#"),
+        "ScanIndexForward": True,  # oldest first
+    }
+    while True:
+        resp = table.query(**params)
+        items.extend(resp.get("Items", []))
+        if "LastEvaluatedKey" not in resp:
+            break
+        params["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
+    return [_clean_item(i) for i in items]
 
 
 def update_chat_message(message_id: str, updates: dict) -> Optional[dict]:
@@ -241,6 +256,56 @@ def delete_chat_history(doc_id: str) -> int:
             batch.delete_item(Key={"PK": msg["PK"], "SK": msg["SK"]})
             count += 1
     logger.info("Deleted %d messages for doc %s", count, doc_id)
+    return count
+
+
+def delete_analyses_for_document(doc_id: str) -> int:
+    """Delete all ANALYSIS records for a document (cascade cleanup)."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("ANALYSIS#"),
+    )
+    items = resp.get("Items", [])
+    count = 0
+    with table.batch_writer() as batch:
+        for item in items:
+            batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+            count += 1
+    if count:
+        logger.info("Deleted %d analysis records for doc %s", count, doc_id)
+    return count
+
+
+def delete_simulations_for_document(doc_id: str) -> int:
+    """Delete all SIM records for a document (cascade cleanup)."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("SIM#"),
+    )
+    items = resp.get("Items", [])
+    count = 0
+    with table.batch_writer() as batch:
+        for item in items:
+            batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+            count += 1
+    if count:
+        logger.info("Deleted %d simulation records for doc %s", count, doc_id)
+    return count
+
+
+def cancel_jobs_for_document(user_id: str, doc_id: str) -> int:
+    """Cancel all QUEUED/IN_PROGRESS jobs linked to a document."""
+    jobs = list_jobs(user_id, limit=100)
+    count = 0
+    for job in jobs:
+        params = job.get("params", {}) or {}
+        if params.get("document_id") != doc_id:
+            continue
+        if job.get("status") in ("QUEUED", "IN_PROGRESS"):
+            update_job(job["id"], {"status": "CANCELLED", "error": "Document deleted"})
+            count += 1
+    if count:
+        logger.info("Cancelled %d active jobs for doc %s", count, doc_id)
     return count
 
 
@@ -374,7 +439,9 @@ def get_analysis_for_document(doc_id: str) -> Optional[dict]:
 def update_analysis(doc_id: str, analysis_id: str, updates: dict) -> Optional[dict]:
     table = get_dynamodb_table()
     key = {"PK": f"DOC#{doc_id}", "SK": f"ANALYSIS#{analysis_id}"}
-    updates["completed_at"] = _now_iso()
+    # Only set completed_at when the analysis reaches a terminal state
+    if updates.get("status") in ("COMPLETE", "FAILED"):
+        updates["completed_at"] = _now_iso()
     expr_parts = []
     expr_values = {}
     expr_names = {}
@@ -405,7 +472,176 @@ def update_analysis(doc_id: str, analysis_id: str, updates: dict) -> Optional[di
 # are indexed by Bedrock.  User documents live in the uploads
 # bucket (nixai-clinical-uploads) and are NEVER sent to RAG.
 # ════════════════════════════════════════════════════════════════
+
+
+# ════════════════════════════════════════════════════════════════
+# AMENDMENT SIMULATIONS  (REQ-3)
+#
+#   PK:     DOC#{doc_id}
+#   SK:     SIM#{sim_id}
+#   GSI1PK: JOB#{job_id}
+#   GSI1SK: SIM#{sim_id}
+# ════════════════════════════════════════════════════════════════
+def create_simulation(
+    doc_id: str,
+    job_id: str,
+    amendment_text: str,
+    user_id: str,
+) -> dict:
+    """Create a simulation record for an amendment impact analysis."""
+    table = get_dynamodb_table()
+    sim_id = _uuid()
+    now = _now_iso()
+    item = {
+        "PK": f"DOC#{doc_id}",
+        "SK": f"SIM#{sim_id}",
+        "GSI1PK": f"JOB#{job_id}",
+        "GSI1SK": f"SIM#{sim_id}",
+        "entity": "SIMULATION",
+        "id": sim_id,
+        "doc_id": doc_id,
+        "job_id": job_id,
+        "user_id": user_id,
+        "amendment_text": amendment_text,
+        "status": "QUEUED",
+        "result": None,
+        "created_at": now,
+        "completed_at": None,
+    }
+    table.put_item(Item=_prepare_item(item))
+    logger.info("Created simulation %s for doc %s", sim_id, doc_id)
+    return _clean_item(item)
+
+
+def get_simulations_for_document(doc_id: str) -> list[dict]:
+    """Get all simulations for a document."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("SIM#"),
+        ScanIndexForward=False,
+    )
+    return [_clean_item(i) for i in resp.get("Items", [])]
+
+
+def update_simulation(doc_id: str, sim_id: str, updates: dict) -> Optional[dict]:
+    """Update a simulation record."""
+    table = get_dynamodb_table()
+    key = {"PK": f"DOC#{doc_id}", "SK": f"SIM#{sim_id}"}
+    # Only set completed_at on terminal states
+    if updates.get("status") in ("COMPLETE", "FAILED"):
+        updates["completed_at"] = _now_iso()
+    expr_parts = []
+    expr_values = {}
+    expr_names = {}
+    for k, v in updates.items():
+        safe_key = f"#{k}"
+        expr_names[safe_key] = k
+        expr_parts.append(f"{safe_key} = :{k}")
+        expr_values[f":{k}"] = _prepare_value(v)
+    table.update_item(
+        Key=key,
+        UpdateExpression="SET " + ", ".join(expr_parts),
+        ExpressionAttributeValues=expr_values,
+        ExpressionAttributeNames=expr_names,
+    )
+    return updates
+
+
+# ════════════════════════════════════════════════════════════════
+# PROTOCOL COMPARISONS  (REQ-6)
+#
+#   PK:     USER#{user_id}
+#   SK:     CMP#{cmp_id}
+#   GSI1PK: CMP#{cmp_id}
+#   GSI1SK: #META
+# ════════════════════════════════════════════════════════════════
+def create_comparison(
+    user_id: str,
+    document_ids: list[str],
+    job_id: str,
+) -> dict:
+    """Create a comparison record."""
+    table = get_dynamodb_table()
+    cmp_id = _uuid()
+    now = _now_iso()
+    item = {
+        "PK": f"USER#{user_id}",
+        "SK": f"CMP#{cmp_id}",
+        "GSI1PK": f"CMP#{cmp_id}",
+        "GSI1SK": "#META",
+        "entity": "COMPARISON",
+        "id": cmp_id,
+        "user_id": user_id,
+        "document_ids": document_ids,
+        "job_id": job_id,
+        "status": "QUEUED",
+        "result": None,
+        "created_at": now,
+        "completed_at": None,
+    }
+    table.put_item(Item=_prepare_item(item))
+    logger.info("Created comparison %s for user %s", cmp_id, user_id)
+    return _clean_item(item)
+
+
+def get_comparison(cmp_id: str) -> Optional[dict]:
+    """Get a comparison by ID via GSI1."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        IndexName="GSI1",
+        KeyConditionExpression=Key("GSI1PK").eq(f"CMP#{cmp_id}") & Key("GSI1SK").eq("#META"),
+        Limit=1,
+    )
+    items = resp.get("Items", [])
+    return _clean_item(items[0]) if items else None
+
+
+def update_comparison(cmp_id: str, updates: dict) -> Optional[dict]:
+    """Update a comparison record."""
+    cmp = get_comparison(cmp_id)
+    if not cmp:
+        return None
+    table = get_dynamodb_table()
+    updates["completed_at"] = _now_iso()
+    expr_parts = []
+    expr_values = {}
+    expr_names = {}
+    for k, v in updates.items():
+        safe_key = f"#{k}"
+        expr_names[safe_key] = k
+        expr_parts.append(f"{safe_key} = :{k}")
+        expr_values[f":{k}"] = _prepare_value(v)
+    table.update_item(
+        Key={"PK": cmp["PK"], "SK": cmp["SK"]},
+        UpdateExpression="SET " + ", ".join(expr_parts),
+        ExpressionAttributeValues=expr_values,
+        ExpressionAttributeNames=expr_names,
+    )
+    cmp.update(updates)
+    return _clean_item(cmp)
+
+
+def list_comparisons(user_id: str) -> list[dict]:
+    """List all comparisons for a user."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("CMP#"),
+        ScanIndexForward=False,
+    )
+    return [_clean_item(i) for i in resp.get("Items", [])]
+
+
 KB_DOCS_PK = "KB#DOCS"
+KB_INGESTION_PK = "KB#INGESTION"
+
+
+def _content_hash_for_version(name: str, s3_key: str, size: int) -> str:
+    """Best-effort deterministic content signature for KB version tracking.
+
+    Uses metadata fallback (name + key + size) when file bytes are not available.
+    """
+    raw = f"{name}|{s3_key}|{size}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 def create_kb_document(
@@ -433,11 +669,38 @@ def create_kb_document(
         "size": size,
         "description": description,
         "category": category,
-        "status": "uploaded",
+        "status": "sync_pending",
+        "bedrock_sync_pending": True,
+        "current_version": 1,
+        "versions": [
+            {
+                "version": 1,
+                "name": name,
+                "s3_key": s3_key,
+                "size": size,
+                "hash": _content_hash_for_version(name, s3_key, size),
+                "changed_by": uploaded_by,
+                "change_note": "Initial upload",
+                "created_at": now,
+            }
+        ],
+        "last_synced_at": None,
+        "last_sync_job_id": None,
         "created_at": now,
         "updated_at": now,
     }
     table.put_item(Item=_prepare_item(item))
+    create_kb_change_record(
+        kb_doc_id=kb_doc_id,
+        changed_by=uploaded_by,
+        change_type="CREATED",
+        details={
+            "name": name,
+            "s3_key": s3_key,
+            "size": size,
+            "category": category,
+        },
+    )
     logger.info("Created KB document %s (category=%s) by %s", kb_doc_id, category, uploaded_by)
     return _clean_item(item)
 
@@ -454,14 +717,17 @@ def get_kb_document(kb_doc_id: str) -> Optional[dict]:
     return _clean_item(items[0]) if items else None
 
 
-def list_kb_documents() -> list[dict]:
+def list_kb_documents(include_deleted: bool = False) -> list[dict]:
     """List all KB documents (shared across all admins)."""
     table = get_dynamodb_table()
     resp = table.query(
         KeyConditionExpression=Key("PK").eq(KB_DOCS_PK) & Key("SK").begins_with("KBDOC#"),
         ScanIndexForward=False,  # newest first
     )
-    return [_clean_item(i) for i in resp.get("Items", [])]
+    items = [_clean_item(i) for i in resp.get("Items", [])]
+    if include_deleted:
+        return items
+    return [i for i in items if i.get("status") != "deleted"]
 
 
 def update_kb_document(kb_doc_id: str, updates: dict) -> Optional[dict]:
@@ -489,16 +755,144 @@ def update_kb_document(kb_doc_id: str, updates: dict) -> Optional[dict]:
     return _clean_item(doc)
 
 
-def delete_kb_document(kb_doc_id: str) -> bool:
-    """Delete a KB document record.
+def delete_kb_document(kb_doc_id: str, hard_delete: bool = False) -> bool:
+    """Delete or soft-delete a KB document record.
 
-    Uses the deterministic PK/SK pattern directly to avoid an extra
-    GSI lookup (the caller already verified existence).
+    Soft delete is the default to preserve auditability until Bedrock re-sync
+    confirms deletion propagation.
     """
+    if not hard_delete:
+        return bool(update_kb_document(kb_doc_id, {"status": "deleted"}))
+
+    # Hard delete path
     table = get_dynamodb_table()
     table.delete_item(Key={"PK": KB_DOCS_PK, "SK": f"KBDOC#{kb_doc_id}"})
     logger.info("Deleted KB document %s", kb_doc_id)
     return True
+
+
+def create_kb_change_record(
+    kb_doc_id: str,
+    changed_by: str,
+    change_type: str,
+    details: dict,
+) -> dict:
+    """Create an immutable audit entry for KB document changes."""
+    table = get_dynamodb_table()
+    change_id = _uuid()
+    now = _now_iso()
+    item = {
+        "PK": f"KBDOC#{kb_doc_id}",
+        "SK": f"CHANGE#{now}#{change_id}",
+        "GSI1PK": f"KBCHANGE#{kb_doc_id}",
+        "GSI1SK": f"CHANGE#{now}",
+        "entity": "KB_CHANGE",
+        "id": change_id,
+        "kb_doc_id": kb_doc_id,
+        "changed_by": changed_by,
+        "change_type": change_type,
+        "details": details,
+        "created_at": now,
+    }
+    table.put_item(Item=_prepare_item(item))
+    return _clean_item(item)
+
+
+def list_kb_change_records(kb_doc_id: str, limit: int = 100) -> list[dict]:
+    """List change history for one KB document (newest first)."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=Key("PK").eq(f"KBDOC#{kb_doc_id}") & Key("SK").begins_with("CHANGE#"),
+        ScanIndexForward=False,
+        Limit=limit,
+    )
+    return [_clean_item(i) for i in resp.get("Items", [])]
+
+
+def create_kb_ingestion_record(
+    sync_job_id: str,
+    knowledge_base_id: str,
+    data_source_id: str,
+    ingestion_job_id: str,
+    category: str | None = None,
+    only_changed: bool = False,
+    affected_doc_ids: list[str] | None = None,
+) -> dict:
+    """Track a Bedrock ingestion job for observability and reconciliation."""
+    table = get_dynamodb_table()
+    now = _now_iso()
+    ing_id = _uuid()
+    item = {
+        "PK": KB_INGESTION_PK,
+        "SK": f"INGESTION#{ingestion_job_id}",
+        "GSI1PK": f"JOB#{sync_job_id}",
+        "GSI1SK": f"INGESTION#{ingestion_job_id}",
+        "entity": "KB_INGESTION",
+        "id": ing_id,
+        "sync_job_id": sync_job_id,
+        "knowledge_base_id": knowledge_base_id,
+        "data_source_id": data_source_id,
+        "ingestion_job_id": ingestion_job_id,
+        "status": "STARTED",
+        "category": category,
+        "only_changed": only_changed,
+        "affected_doc_ids": affected_doc_ids or [],
+        "started_at": now,
+        "completed_at": None,
+        "error": None,
+        "stats": {},
+        "created_at": now,
+        "updated_at": now,
+    }
+    table.put_item(Item=_prepare_item(item))
+    return _clean_item(item)
+
+
+def get_kb_ingestion_record(ingestion_job_id: str) -> Optional[dict]:
+    """Get one KB ingestion record by Bedrock ingestion job id."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=Key("PK").eq(KB_INGESTION_PK) & Key("SK").eq(f"INGESTION#{ingestion_job_id}"),
+        Limit=1,
+    )
+    items = resp.get("Items", [])
+    return _clean_item(items[0]) if items else None
+
+
+def update_kb_ingestion_record(ingestion_job_id: str, updates: dict) -> Optional[dict]:
+    """Update a tracked KB ingestion job."""
+    rec = get_kb_ingestion_record(ingestion_job_id)
+    if not rec:
+        return None
+    table = get_dynamodb_table()
+    updates["updated_at"] = _now_iso()
+    expr_parts = []
+    expr_values = {}
+    expr_names = {}
+    for k, v in updates.items():
+        safe_key = f"#{k}"
+        expr_names[safe_key] = k
+        expr_parts.append(f"{safe_key} = :{k}")
+        expr_values[f":{k}"] = _prepare_value(v)
+    table.update_item(
+        Key={"PK": rec["PK"], "SK": rec["SK"]},
+        UpdateExpression="SET " + ", ".join(expr_parts),
+        ExpressionAttributeValues=expr_values,
+        ExpressionAttributeNames=expr_names,
+    )
+    rec.update(updates)
+    return _clean_item(rec)
+
+
+def list_kb_ingestions_for_job(sync_job_id: str) -> list[dict]:
+    """List ingestion records created for one sync job."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        IndexName="GSI1",
+        KeyConditionExpression=Key("GSI1PK").eq(f"JOB#{sync_job_id}") & Key("GSI1SK").begins_with("INGESTION#"),
+        ScanIndexForward=True,
+    )
+    return [_clean_item(i) for i in resp.get("Items", [])]
 
 
 def get_kb_stats() -> dict:
@@ -577,7 +971,7 @@ def count_chat_messages_for_document(doc_id: str) -> dict:
 def get_last_kb_sync_job() -> Optional[dict]:
     """Find the most recent KB_SYNC job across all users."""
     all_jobs = scan_all_jobs()
-    kb_jobs = [j for j in all_jobs if j.get("type") == "KB_SYNC"]
+    kb_jobs = [j for j in all_jobs if j.get("type") in ("SYNC_KB", "SYNC_KB_DELETE")]
     if not kb_jobs:
         return None
     kb_jobs.sort(key=lambda j: j.get("created_at", ""), reverse=True)

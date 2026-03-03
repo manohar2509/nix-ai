@@ -73,9 +73,37 @@ def send_analysis_task(
     return send_message("ANALYZE_DOCUMENT", payload)
 
 
-def send_kb_sync_task(job_id: str, user_id: str) -> str:
+def send_kb_sync_task(job_id: str, user_id: str, sync_params: dict | None = None) -> str:
     """Convenience: queue a Knowledge Base sync job."""
-    return send_message("SYNC_KB", {
+    payload = {
         "job_id": job_id,
+        "user_id": user_id,
+    }
+    if sync_params:
+        payload["sync_params"] = sync_params
+    return send_message("SYNC_KB", payload)
+
+
+def send_simulation_task(
+    job_id: str, doc_id: str, sim_id: str, amendment_text: str, user_id: str,
+) -> str:
+    """Convenience: queue an amendment impact simulation job."""
+    return send_message("SIMULATE_AMENDMENT", {
+        "job_id": job_id,
+        "doc_id": doc_id,
+        "sim_id": sim_id,
+        "amendment_text": amendment_text,
+        "user_id": user_id,
+    })
+
+
+def send_comparison_task(
+    job_id: str, cmp_id: str, document_ids: list[str], user_id: str,
+) -> str:
+    """Convenience: queue a protocol comparison job."""
+    return send_message("COMPARE_PROTOCOLS", {
+        "job_id": job_id,
+        "cmp_id": cmp_id,
+        "document_ids": document_ids,
         "user_id": user_id,
     })

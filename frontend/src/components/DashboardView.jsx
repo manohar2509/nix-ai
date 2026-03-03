@@ -160,7 +160,7 @@ export default function DashboardView() {
               Welcome back, {firstName}
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Your protocol intelligence overview &middot; {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              Your clinical trial protocol intelligence overview &middot; {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export default function DashboardView() {
               className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors shadow-sm"
             >
               <Zap size={14} />
-              New Analysis
+              Analyze Protocol
             </button>
           </div>
         </div>
@@ -194,12 +194,12 @@ export default function DashboardView() {
         />
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <SummaryCard
-            label="Documents"
+            label="Protocols"
             value={summary.totalDocuments}
             icon={<FileText size={18} />}
             color="brand"
             subtitle="uploaded"
-            tooltip="Total number of clinical protocol documents you have uploaded to the platform for analysis."
+            tooltip="Total number of clinical trial protocols uploaded to your workspace for regulatory analysis."
             onClick={handleOpenDocuments}
           />
           <SummaryCard
@@ -208,27 +208,27 @@ export default function DashboardView() {
             icon={<BarChart3 size={18} />}
             color="indigo"
             subtitle="completed"
-            tooltip="Number of completed AI-powered adversarial analyses run against your protocol documents."
+            tooltip="Number of completed AI regulatory and payer analyses. Each analysis evaluates your protocol against ICH, FDA, EMA, and HTA body requirements."
             onClick={handleOpenAnalyses}
           />
           <SummaryCard
-            label="Reg. Score"
+            label="Compliance Score"
             value={summary.avgRegulatorScore}
             icon={<ShieldAlert size={18} />}
             color={summary.avgRegulatorScore >= 60 ? 'green' : summary.avgRegulatorScore >= 40 ? 'amber' : 'red'}
             subtitle="avg"
             isScore
-            tooltip="Average Regulatory Compliance Score across all analyses. ≥60% is good, 40-59% needs improvement, <40% has significant issues. This measures alignment with FDA/EMA regulatory requirements."
+            tooltip="Average Regulatory Compliance Score across all analyses. ≥60% indicates strong ICH/FDA/EMA alignment, 40–59% needs improvement, <40% has significant compliance gaps that could delay approval."
             onClick={handleOpenRegScore}
           />
           <SummaryCard
-            label="Payer Score"
+            label="Payer Readiness"
             value={summary.avgPayerScore}
             icon={<BadgeDollarSign size={18} />}
             color={summary.avgPayerScore >= 60 ? 'green' : summary.avgPayerScore >= 40 ? 'amber' : 'red'}
             subtitle="avg"
             isScore
-            tooltip="Average Payer Viability Score across all analyses. ≥60% suggests strong reimbursement potential, 40-59% flags cost concerns, <40% indicates significant payer objections."
+            tooltip="Average Payer & HTA Readiness Score. ≥60% suggests strong reimbursement potential, 40–59% means some evidence gaps for NICE/IQWiG/CADTH, <40% indicates significant barriers to market access."
             onClick={handleOpenPayScore}
           />
           <SummaryCard
@@ -237,7 +237,7 @@ export default function DashboardView() {
             icon={<AlertTriangle size={18} />}
             color="orange"
             subtitle="total"
-            tooltip="Total number of issues, conflicts, and recommendations detected across all your protocol analyses."
+            tooltip="Total number of regulatory compliance issues, payer evidence gaps, and improvement recommendations identified across all protocol analyses."
             onClick={handleOpenFindings}
           />
           <SummaryCard
@@ -246,7 +246,7 @@ export default function DashboardView() {
             icon={<Activity size={18} />}
             color="slate"
             subtitle="processed"
-            tooltip="Total background jobs processed including document analyses, KB syncs, and synthetic data generation tasks."
+            tooltip="Total background processing tasks completed, including protocol analyses, reference library updates, and comparison jobs."
             onClick={handleOpenJobs}
           />
         </div>
@@ -280,7 +280,7 @@ export default function DashboardView() {
                 <TrendingUp size={16} />
               </div>
             </div>
-            <InfoBanner text="Regulatory Score measures FDA/EMA compliance (study design, endpoints, safety). Payer Score evaluates reimbursement potential (cost-effectiveness, comparators, real-world evidence). Both are generated by NIX AI's adversarial council." />
+            <InfoBanner text="Regulatory Score measures FDA/EMA compliance (study design, endpoints, safety). Payer Score evaluates reimbursement potential (cost-effectiveness, comparators, real-world evidence). Both are generated by NIX AI's regulatory intelligence engine." />
             <ScoreOverview
               regScore={summary.avgRegulatorScore}
               payScore={summary.avgPayerScore}
@@ -339,7 +339,7 @@ export default function DashboardView() {
               <div className="text-center py-8">
                 <Activity size={32} className="mx-auto text-slate-300 mb-2" />
                 <p className="text-sm text-slate-500 font-medium">No activity yet</p>
-                <p className="text-xs text-slate-400 mt-1">Upload a document and run an analysis to get started</p>
+                <p className="text-xs text-slate-400 mt-1">Upload a protocol and run an analysis to get started</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -356,8 +356,8 @@ export default function DashboardView() {
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow group" onClick={handleOpenChatUsage}>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-800">RAG Chat Usage</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Your interaction with the knowledge base</p>
+                <h3 className="text-sm font-bold text-slate-800">AI Consultation Activity</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Your interactions with the regulatory AI assistant</p>
               </div>
               <div className="flex items-center gap-2">
                 <ChevronRight size={14} className="text-slate-300 group-hover:text-brand-500 transition-colors" />
@@ -366,7 +366,7 @@ export default function DashboardView() {
                 </div>
               </div>
             </div>
-            <InfoBanner text="Tracks your Consultant Chat interactions. Citations indicate how many KB references grounded the AI's response — higher citation rates mean better factual grounding. Low citation rates may indicate the KB needs more content." />
+            <InfoBanner text="Tracks your AI regulatory consultation interactions. Citations indicate how many regulatory reference documents grounded the AI’s response — higher citation rates mean better evidence-based answers. Low citation rates may indicate the reference library needs more content." />
             {chatUsage && chatUsage.totalMessages > 0 ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -408,8 +408,8 @@ export default function DashboardView() {
             ) : (
               <div className="text-center py-8">
                 <MessageSquare size={32} className="mx-auto text-slate-300 mb-2" />
-                <p className="text-sm text-slate-500 font-medium">No chat activity yet</p>
-                <p className="text-xs text-slate-400 mt-1">Ask questions about your protocols using the chat panel</p>
+                <p className="text-sm text-slate-500 font-medium">No AI consultations yet</p>
+                <p className="text-xs text-slate-400 mt-1">Use the Ask AI tab in the protocol view to get regulatory guidance</p>
               </div>
             )}
           </div>
@@ -418,14 +418,14 @@ export default function DashboardView() {
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-800">Document Comparison</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Side-by-side protocol scores</p>
+                <h3 className="text-sm font-bold text-slate-800">Protocol Score Comparison</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Side-by-side regulatory & payer scores</p>
               </div>
               <div className="h-8 w-8 bg-brand-50 rounded-lg flex items-center justify-center text-brand-600">
                 <BarChart3 size={16} />
               </div>
             </div>
-            <InfoBanner text="Compare your protocol documents side-by-side. REG = Regulatory Compliance Score, PAY = Payer Viability Score. Use this to identify which protocols are strongest and which need the most work." />
+            <InfoBanner text="Compare your clinical trial protocols side-by-side. REG = Regulatory Compliance Score (ICH/FDA/EMA), PAY = Payer Readiness Score (HTA bodies). Use this to identify which protocols need the most attention." />
             {documentComparison && documentComparison.length > 0 ? (
               <div className="space-y-3">
                 {documentComparison.map((doc, idx) => (
@@ -458,8 +458,8 @@ export default function DashboardView() {
             ) : (
               <div className="text-center py-8">
                 <BarChart3 size={32} className="mx-auto text-slate-300 mb-2" />
-                <p className="text-sm text-slate-500 font-medium">No comparisons yet</p>
-                <p className="text-xs text-slate-400 mt-1">Analyze multiple documents to compare scores</p>
+                <p className="text-sm text-slate-500 font-medium">No protocol comparisons yet</p>
+                <p className="text-xs text-slate-400 mt-1">Analyze multiple protocols to compare compliance scores side by side</p>
               </div>
             )}
           </div>
@@ -470,8 +470,8 @@ export default function DashboardView() {
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-800">Score Trend</h3>
-                <p className="text-xs text-slate-400 mt-0.5">How your protocol scores are changing over time</p>
+                <h3 className="text-sm font-bold text-slate-800">Compliance Score Trend</h3>
+                <p className="text-xs text-slate-400 mt-0.5">How your protocol compliance scores are evolving over time</p>
               </div>
               <div className="h-8 w-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500">
                 <TrendingUp size={16} />
@@ -520,20 +520,20 @@ export default function DashboardView() {
             </div>
             <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
               <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                <ShieldAlert size={10} /> REG = Regulatory Score
+                <ShieldAlert size={10} /> REG = Regulatory Compliance
               </div>
               <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                <BadgeDollarSign size={10} /> PAY = Payer Score
+                <BadgeDollarSign size={10} /> PAY = Payer Readiness
               </div>
             </div>
           </div>
         )}
 
         {/* ── Quick Actions Footer ── */}
-        <div className="bg-gradient-to-r from-brand-600 via-brand-600 to-purple-600 rounded-2xl p-6 flex items-center justify-between shadow-lg">
+        <div className="bg-gradient-to-r from-brand-600 via-brand-500 to-purple-500 rounded-2xl p-6 flex items-center justify-between shadow-md">
           <div>
-            <h3 className="text-white font-bold text-lg">Ready to analyze?</h3>
-            <p className="text-brand-100 text-sm mt-1">Upload a new clinical protocol for adversarial review</p>
+            <h3 className="text-white font-bold text-lg">Ready to review a protocol?</h3>
+            <p className="text-brand-100/80 text-sm mt-1">Upload a new clinical trial protocol for regulatory and payer readiness analysis</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -541,14 +541,14 @@ export default function DashboardView() {
               className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-brand-100 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
             >
               <Eye size={16} />
-              Past Analyses
+              Analysis History
             </button>
             <button
               onClick={() => setActiveView('protocol')}
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-brand-700 bg-white rounded-xl hover:bg-brand-50 transition-colors shadow-sm"
             >
               <Upload size={16} />
-              Upload &amp; Analyze
+              Upload Protocol
             </button>
           </div>
         </div>
@@ -562,10 +562,10 @@ export default function DashboardView() {
       <DetailDrawer
         open={drawer.open && drawer.type === 'documents'}
         onClose={closeDrawer}
-        title="All Documents"
-        subtitle={`${allDocuments.length} documents uploaded`}
+        title="All Protocols"
+        subtitle={`${allDocuments.length} protocols uploaded`}
         icon={<FileText size={20} />}
-        breadcrumb={[{ label: 'Dashboard' }, { label: 'Documents' }]}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Protocols' }]}
       >
         <DetailSection title="Document List">
           <DetailList
@@ -900,10 +900,10 @@ export default function DashboardView() {
       <DetailDrawer
         open={drawer.open && drawer.type === 'payScore'}
         onClose={closeDrawer}
-        title="Payer Viability Score"
+        title="Payer Readiness Score"
         subtitle={`Average: ${summary.avgPayerScore}% across ${summary.totalAnalyses} analyses`}
         icon={<BadgeDollarSign size={20} />}
-        breadcrumb={[{ label: 'Dashboard' }, { label: 'Payer Score' }]}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'Payer Readiness' }]}
       >
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -989,10 +989,10 @@ export default function DashboardView() {
       <DetailDrawer
         open={drawer.open && drawer.type === 'chatUsage'}
         onClose={closeDrawer}
-        title="RAG Chat Analytics"
-        subtitle="Detailed chat interaction metrics"
+        title="AI Consultation Analytics"
+        subtitle="Detailed regulatory AI chat interaction metrics"
         icon={<MessageSquare size={20} />}
-        breadcrumb={[{ label: 'Dashboard' }, { label: 'Chat Usage' }]}
+        breadcrumb={[{ label: 'Dashboard' }, { label: 'AI Consultation' }]}
       >
         {chatUsage && (
           <>
@@ -1201,7 +1201,7 @@ function ScoreOverview({ regScore, payScore, totalAnalyses }) {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <BadgeDollarSign size={14} className="text-slate-400" />
-            <span className="text-xs font-semibold text-slate-600">Payer Viability</span>
+            <span className="text-xs font-semibold text-slate-600">Payer Readiness</span>
           </div>
           <span className={cn(
             'text-lg font-bold tabular-nums',
@@ -1361,7 +1361,7 @@ function InfoBanner({ text }) {
 }
 
 function formatJobType(type) {
-  const map = { ANALYZE_DOCUMENT: 'Document Analysis', KB_SYNC: 'KB Sync', SYNTHETIC_GENERATION: 'Synthetic Generation' };
+  const map = { ANALYZE_DOCUMENT: 'Protocol Analysis', KB_SYNC: 'Reference Library Sync', SYNTHETIC_GENERATION: 'Synthetic Generation' };
   return map[type] || type || 'Unknown';
 }
 

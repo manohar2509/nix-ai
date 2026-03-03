@@ -147,6 +147,7 @@ Resources:
                 - bedrock:ConverseStream
                 - bedrock-agent:ListDataSources
                 - bedrock-agent:StartIngestionJob
+                - bedrock-agent:GetIngestionJob
               Resource: "*"
 
 Outputs:

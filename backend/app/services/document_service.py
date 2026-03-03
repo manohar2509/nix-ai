@@ -71,7 +71,16 @@ def get_document(doc_id: str, user: CurrentUser | None = None) -> dict:
 
 
 def delete_document(user: CurrentUser, doc_id: str) -> dict:
-    """Delete a document and all associated resources from DynamoDB and S3."""
+    """Delete a document and ALL associated resources.
+
+    Cascade cleanup order:
+      1. S3 object
+      2. Chat messages   (PK=DOC#{doc_id}, SK=MSG#*)
+      3. Analysis records (PK=DOC#{doc_id}, SK=ANALYSIS#*)
+      4. Simulation records (PK=DOC#{doc_id}, SK=SIM#*)
+      5. Associated jobs  (mark CANCELLED so workers stop)
+      6. Document record  (PK=USER#{user_id}, SK=DOC#{doc_id})
+    """
     doc = dynamo_service.get_document(doc_id)
     if not doc:
         raise DocumentNotFoundError(doc_id)
@@ -80,7 +89,7 @@ def delete_document(user: CurrentUser, doc_id: str) -> dict:
     if doc.get("user_id") != user.user_id:
         raise DocumentNotFoundError(doc_id)
 
-    # Delete from S3
+    # 1. Delete from S3
     s3_key = doc.get("s3_key", "")
     if s3_key:
         try:
@@ -88,13 +97,31 @@ def delete_document(user: CurrentUser, doc_id: str) -> dict:
         except Exception as exc:
             logger.warning("S3 delete failed for %s: %s", s3_key, exc)
 
-    # Cascade delete: analysis records, chat messages for this document
+    # 2. Cascade delete: chat messages
     try:
         dynamo_service.delete_chat_history(doc_id)
     except Exception as exc:
         logger.warning("Chat history cleanup failed for doc %s: %s", doc_id, exc)
 
-    # Delete from DynamoDB
+    # 3. Cascade delete: analysis records
+    try:
+        dynamo_service.delete_analyses_for_document(doc_id)
+    except Exception as exc:
+        logger.warning("Analysis cleanup failed for doc %s: %s", doc_id, exc)
+
+    # 4. Cascade delete: simulation records
+    try:
+        dynamo_service.delete_simulations_for_document(doc_id)
+    except Exception as exc:
+        logger.warning("Simulation cleanup failed for doc %s: %s", doc_id, exc)
+
+    # 5. Cancel any active jobs for this document
+    try:
+        dynamo_service.cancel_jobs_for_document(user.user_id, doc_id)
+    except Exception as exc:
+        logger.warning("Job cancellation failed for doc %s: %s", doc_id, exc)
+
+    # 6. Delete document record from DynamoDB
     dynamo_service.delete_document(doc_id)
     return {"success": True, "id": doc_id}
 

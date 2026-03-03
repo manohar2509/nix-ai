@@ -1,0 +1,502 @@
+{
+  "metadata": {
+    "title": "HTA Body Requirements — Evidence Standards for Reimbursement",
+    "version": "2.0",
+    "last_updated": "2026-03-01",
+    "description": "Detailed evidence requirements for major Health Technology Assessment bodies. Used by NIX AI payer gap analysis to identify missing evidence for reimbursement."
+  },
+  "hta_bodies": {
+    "NICE": {
+      "full_name": "National Institute for Health and Care Excellence",
+      "country": "United Kingdom",
+      "website": "https://www.nice.org.uk",
+      "manual_url": "https://www.nice.org.uk/process/pmg36",
+      "appraisal_types": ["Technology Appraisal (TA)", "Highly Specialised Technologies (HST)"],
+      "decision_framework": "Cost-effectiveness analysis with ICER threshold",
+      "icer_thresholds": {
+        "standard": "£20,000-£30,000 per QALY",
+        "end_of_life": "Up to £50,000 per QALY with life-extending criteria",
+        "hst": "Up to £100,000 per QALY for highly specialised technologies",
+        "severity_modifier": "Up to 3.2x weighting for most severe conditions (QALY shortfall ≥18 years)"
+      },
+      "evidence_requirements": {
+        "clinical_effectiveness": {
+          "preferred_evidence": "Systematic review of RCTs with meta-analysis",
+          "comparator": "NHS standard of care (active comparator preferred)",
+          "endpoints_required": [
+            "Overall survival or equivalent clinical outcome",
+            "Health-related quality of life (EQ-5D-5L preferred)",
+            "Disease-specific clinical endpoints",
+            "Patient-reported outcomes"
+          ],
+          "data_quality": [
+            "RCTs with active comparator strongly preferred",
+            "Network meta-analysis acceptable when no head-to-head data",
+            "Real-world evidence can supplement but not replace RCT data",
+            "Subgroup analyses should be pre-specified"
+          ]
+        },
+        "cost_effectiveness": {
+          "perspective": "NHS and Personal Social Services (PSS)",
+          "preferred_model_type": "Markov or partitioned survival model",
+          "discount_rate": "3.5% for costs and health outcomes",
+          "time_horizon": "Lifetime (must capture all relevant costs and outcomes)",
+          "utility_measurement": "EQ-5D-5L mapped to EQ-5D-3L value set (2022 update: EQ-5D-5L value set preferred)",
+          "cost_sources": [
+            "NHS Reference Costs (latest year)",
+            "PSSRU Unit Costs of Health and Social Care",
+            "BNF for drug costs",
+            "eMIT for generic drug costs"
+          ],
+          "sensitivity_analyses": [
+            "Deterministic sensitivity analysis (tornado diagram)",
+            "Probabilistic sensitivity analysis (PSA) — minimum 10,000 iterations",
+            "Scenario analyses for key structural assumptions",
+            "Cost-effectiveness acceptability curve (CEAC)"
+          ]
+        },
+        "budget_impact": {
+          "required": true,
+          "time_horizon": "5 years from launch",
+          "population_estimates": "UK eligible patient numbers with uptake curve"
+        },
+        "submission_requirements": [
+          "Executable economic model (Excel)",
+          "Full systematic literature review",
+          "Clinical study report access",
+          "Patient expert testimony",
+          "NHS clinical expert input",
+          "Budget impact analysis"
+        ]
+      },
+      "common_gaps_in_protocols": [
+        "No EQ-5D quality of life measurement",
+        "Placebo comparator instead of active standard of care",
+        "No head-to-head comparison with NHS-relevant comparator",
+        "Insufficient follow-up duration for lifetime extrapolation",
+        "Missing healthcare resource use data collection",
+        "No pre-specified subgroup for UK/European population",
+        "Surrogate endpoints without validated link to OS/QALYs",
+        "No patient-reported outcomes mapped to utilities"
+      ],
+      "recent_updates": [
+        "2025: Updated severity modifier replacing end-of-life criteria",
+        "2024: EQ-5D-5L value set now preferred over mapped EQ-5D-3L",
+        "2024: Enhanced real-world evidence framework for post-approval commitments",
+        "2023: Managed access agreements and commercial arrangements framework updated"
+      ]
+    },
+    "IQWiG": {
+      "full_name": "Institut für Qualität und Wirtschaftlichkeit im Gesundheitswesen",
+      "country": "Germany",
+      "website": "https://www.iqwig.de",
+      "appraisal_types": ["Early Benefit Assessment (AMNOG)", "Health Technology Assessment"],
+      "decision_framework": "Added therapeutic benefit assessment (6 categories)",
+      "benefit_categories": [
+        "Major added benefit",
+        "Considerable added benefit", 
+        "Minor added benefit",
+        "Non-quantifiable added benefit",
+        "No added benefit proven",
+        "Lesser benefit"
+      ],
+      "evidence_requirements": {
+        "clinical_effectiveness": {
+          "preferred_evidence": "RCTs vs. appropriate comparator therapy (ACT) as defined by G-BA",
+          "comparator": "Appropriate Comparator Therapy (ACT) — defined by Federal Joint Committee (G-BA)",
+          "endpoints_required": [
+            "Mortality (overall survival)",
+            "Morbidity (validated disease-specific instruments)",
+            "Health-related quality of life (validated instruments, not restricted to EQ-5D)",
+            "Side effects (all-cause AEs, serious AEs, treatment discontinuation due to AEs)"
+          ],
+          "endpoint_categories": {
+            "patient_relevant": "Mortality, morbidity, HRQoL, side effects — ONLY these count",
+            "surrogate_not_accepted": "Surrogate endpoints NOT accepted unless validated link to patient-relevant endpoints",
+            "pfs_controversial": "PFS alone is often NOT sufficient — must demonstrate link to OS or QoL"
+          }
+        },
+        "assessment_methodology": {
+          "certainty_of_evidence": ["Proof (RCT, p<0.05)", "Indication (RCT with limitations)", "Hint (observational or limited data)"],
+          "subgroup_analysis": "IQWiG performs own subgroup analyses — pre-specified subgroups in protocol improve dossier quality",
+          "indirect_comparisons": "Accepted only if no direct comparison available, using adjusted indirect comparison methods"
+        },
+        "dossier_requirements": [
+          "Module 1: Administrative information",
+          "Module 2: Summary",
+          "Module 3: Clinical study data (most critical)",
+          "Module 4: Health economic evaluation (for G-BA price negotiation)",
+          "Module 5: Budget impact analysis",
+          "Full clinical study reports required",
+          "Individual patient data access may be requested"
+        ]
+      },
+      "common_gaps_in_protocols": [
+        "Active comparator does not match G-BA's ACT (most critical gap)",
+        "Reliance on surrogate endpoints without validated link to patient-relevant outcomes",
+        "PFS as primary endpoint without OS or QoL co-primary",
+        "Missing quality of life data collection with validated instrument",
+        "No pre-specified subgroup analyses for German population",
+        "Missing side effect endpoints (all-cause AE rate, discontinuation rate)",
+        "Single-arm study design (no added benefit can be proven)",
+        "Composite endpoints that mix patient-relevant and surrogate components"
+      ],
+      "recent_updates": [
+        "2025: Updated methodological guidance on indirect comparisons",
+        "2024: New framework for gene therapies and ATMPs",
+        "2024: Enhanced requirements for RWE in post-marketing studies"
+      ]
+    },
+    "CADTH": {
+      "full_name": "Canada's Drug Agency (formerly Canadian Agency for Drugs and Technologies in Health)",
+      "country": "Canada",
+      "website": "https://www.cda-amc.ca",
+      "appraisal_types": ["CADTH Reimbursement Review", "pan-Canadian Oncology Drug Review (pCODR)"],
+      "decision_framework": "Deliberative framework with cost-effectiveness, patient values, clinical benefit",
+      "evidence_requirements": {
+        "clinical_effectiveness": {
+          "preferred_evidence": "Systematic review with meta-analysis of RCTs",
+          "comparator": "Canadian standard of care (may differ from US/EU)",
+          "endpoints_required": [
+            "Overall survival or disease-specific survival",
+            "Health-related quality of life (EQ-5D preferred)",
+            "Symptom improvement / patient-reported outcomes",
+            "Safety profile (AEs, SAEs, discontinuation)"
+          ]
+        },
+        "cost_effectiveness": {
+          "perspective": "Publicly funded healthcare payer",
+          "preferred_model_type": "State-transition or partitioned survival model",
+          "discount_rate": "1.5% for costs and health outcomes (updated 2017)",
+          "time_horizon": "Lifetime",
+          "utility_measurement": "EQ-5D with Canadian value set preferred",
+          "drug_costs": "Submitted price; pCPA negotiated price for final assessment"
+        },
+        "budget_impact": {
+          "required": true,
+          "time_horizon": "3 years",
+          "perspective": "Public drug plan"
+        }
+      },
+      "common_gaps_in_protocols": [
+        "Comparator not reflecting Canadian standard of care",
+        "Missing EQ-5D data collection for utility estimation",
+        "No Canadian sites in multi-regional trial (external validity concern)",
+        "Insufficient follow-up for long-term cost-effectiveness extrapolation",
+        "Missing patient group input and patient values data"
+      ]
+    },
+    "PBAC": {
+      "full_name": "Pharmaceutical Benefits Advisory Committee",
+      "country": "Australia",
+      "website": "https://www.pbs.gov.au/info/industry/listing/participants/pbac",
+      "decision_framework": "Cost-effectiveness or cost-minimization analysis",
+      "evidence_requirements": {
+        "clinical_effectiveness": {
+          "preferred_evidence": "Direct randomized head-to-head comparisons",
+          "comparator": "PBS-listed therapy or current clinical practice in Australia",
+          "endpoints_required": [
+            "Clinical outcomes relevant to Australian clinical practice",
+            "Quality of life (preferably EQ-5D or AQoL)",
+            "Overall survival (oncology)",
+            "Safety: treatment-related AEs, SAEs"
+          ]
+        },
+        "cost_effectiveness": {
+          "perspective": "Australian healthcare system (PBS + MBS)",
+          "discount_rate": "5% for costs and health outcomes",
+          "preferred_model": "Matched to disease progression and clinical pathway",
+          "utility_measurement": "EQ-5D or AQoL (Australian Quality of Life)"
+        }
+      },
+      "common_gaps_in_protocols": [
+        "No Australian QoL instrument (AQoL) data",
+        "Comparator not on PBS",
+        "Missing Australian healthcare resource use data",
+        "High discount rate means long-term benefits discounted heavily"
+      ]
+    },
+    "AMNOG": {
+      "full_name": "Arzneimittelmarktneuordnungsgesetz (German Drug Market Restructuring Act)",
+      "country": "Germany",
+      "note": "AMNOG is the legislative framework; IQWiG conducts the assessment, G-BA makes the decision",
+      "decision_framework": "Early benefit assessment within 3 months of launch",
+      "process": {
+        "timeline": [
+          "Day 0: Market entry at manufacturer's price",
+          "Month 3: Dossier submission to G-BA",
+          "Month 6: IQWiG assessment report published",
+          "Month 9: G-BA decision on added benefit",
+          "Month 12: Price negotiation with GKV-SV completed",
+          "Month 15: Arbitration if no agreement"
+        ],
+        "price_impact": {
+          "major_benefit": "Premium price negotiable",
+          "considerable_benefit": "Good price achievable",
+          "minor_benefit": "Moderate premium",
+          "no_added_benefit": "Price capped at comparator therapy cost"
+        }
+      },
+      "common_gaps_in_protocols": [
+        "Study comparator does not match G-BA's appropriate comparator therapy",
+        "Endpoints are surrogates rather than patient-relevant",
+        "No quality of life data collected",
+        "Missing mortality and morbidity endpoints",
+        "Study population does not match German treatment landscape"
+      ]
+    },
+    "HAS": {
+      "full_name": "Haute Autorité de Santé",
+      "country": "France",
+      "website": "https://www.has-sante.fr",
+      "appraisal_types": ["Transparency Committee (CT) Assessment", "Economic and Public Health Assessment (CEESP)"],
+      "decision_framework": "Dual assessment: clinical benefit (SMR) + improvement in clinical benefit (ASMR)",
+      "smr_rating": {
+        "description": "Service Médical Rendu — determines reimbursement eligibility",
+        "levels": ["Sufficient (Major/Important/Moderate/Low)", "Insufficient (no reimbursement)"],
+        "factors": ["Severity of disease", "Efficacy", "Safety", "Place in therapeutic strategy", "Public health impact"]
+      },
+      "asmr_rating": {
+        "description": "Amélioration du Service Médical Rendu — determines price premium",
+        "levels": [
+          {"level": "ASMR I", "description": "Major improvement"},
+          {"level": "ASMR II", "description": "Important improvement"},
+          {"level": "ASMR III", "description": "Moderate improvement"},
+          {"level": "ASMR IV", "description": "Minor improvement"},
+          {"level": "ASMR V", "description": "No improvement (price = comparator)"}
+        ],
+        "note": "ASMR I-III allow premium pricing; ASMR IV modest premium; ASMR V price at comparator level"
+      },
+      "evidence_requirements": {
+        "clinical_effectiveness": {
+          "preferred_evidence": "RCTs with active comparator reflecting French clinical practice",
+          "comparator": "French standard of care as defined by CT; must match what French clinicians use",
+          "endpoints_required": [
+            "Mortality (overall survival)",
+            "Morbidity with validated instruments",
+            "Quality of life (disease-specific and generic)",
+            "Safety profile"
+          ],
+          "french_specific": [
+            "Clinical benefit vs. existing therapies in French treatment landscape",
+            "Absolute benefit assessment (SMR), not just comparative (ASMR)",
+            "Public health interest assessment for population-level impact"
+          ]
+        },
+        "economic_evaluation": {
+          "when_required": "CEESP assessment required for products claiming ASMR I-III or significant budget impact",
+          "perspective": "Collective perspective (societal preferred, healthcare system accepted)",
+          "discount_rate": "2.5% for costs and outcomes (differs from NICE 3.5%)",
+          "modelling": "Cost-effectiveness or cost-utility analysis (QALY)",
+          "utility_instrument": "EQ-5D or HUI accepted; French tariff preferred"
+        }
+      },
+      "common_gaps_in_protocols": [
+        "Comparator not matching French clinical practice (most common gap)",
+        "No quality of life data collection in clinical trial",
+        "Missing assessment of place in therapeutic strategy for France",
+        "Surrogate endpoints without clinical outcome validation",
+        "No French sites or French patient subgroup in MRCT",
+        "Insufficient long-term follow-up data for CEESP economic modelling"
+      ]
+    },
+    "AIFA": {
+      "full_name": "Agenzia Italiana del Farmaco",
+      "country": "Italy",
+      "website": "https://www.aifa.gov.it",
+      "appraisal_types": ["Pricing and Reimbursement Negotiation", "Managed Entry Agreement (MEA)"],
+      "decision_framework": "Clinical value + budget impact + innovative therapy designation",
+      "innovative_therapy": {
+        "description": "Full Innovation designation provides automatic regional reimbursement + dedicated fund",
+        "criteria": ["Unmet therapeutic need", "Added therapeutic value", "Quality of evidence"],
+        "levels": ["Full Innovation (highest — automatic reimbursement)", "Conditional Innovation", "No Innovation"],
+        "benefit": "Full Innovation: automatic listing on regional formularies, dedicated innovation fund (€1B/year)"
+      },
+      "evidence_requirements": {
+        "clinical_effectiveness": {
+          "preferred_evidence": "RCTs demonstrating clinical benefit over available therapies in Italy",
+          "comparator": "Italian standard of care (may differ from other EU countries)",
+          "endpoints_required": [
+            "Overall survival or other hard clinical endpoints",
+            "Quality of life (generic and disease-specific)",
+            "Clinically meaningful benefit thresholds"
+          ]
+        },
+        "managed_entry_agreements": {
+          "description": "Italy is a global leader in MEAs — most new drugs negotiated under some form of MEA",
+          "types": [
+            {"type": "Payment by Results", "description": "Full/partial refund if patient does not respond"},
+            {"type": "Risk Sharing", "description": "Discount applied proportional to non-responders"},
+            {"type": "Cost Sharing", "description": "Discount on initial treatment period"},
+            {"type": "Capping", "description": "Maximum expenditure per patient"},
+            {"type": "Success Fee", "description": "Payment only upon treatment success"}
+          ],
+          "registry": "AIFA Monitoring Registry (Registri di Monitoraggio) required for MEA tracking",
+          "protocol_impact": "Trials must define clear responder criteria to support outcome-based MEAs"
+        }
+      },
+      "common_gaps_in_protocols": [
+        "No clear responder definition to support payment-by-results MEA",
+        "Missing early response biomarker for cost-sharing trigger",
+        "No Italian sites in MRCT (limits innovation designation)",
+        "Insufficient real-world evidence plan for registry monitoring",
+        "Comparator not available/standard in Italy"
+      ]
+    },
+    "EU_JCA": {
+      "full_name": "EU Joint Clinical Assessment",
+      "jurisdiction": "European Union (all 27 member states)",
+      "regulation": "EU HTA Regulation 2021/2282",
+      "effective_date": "January 2025 (oncology and ATMPs first; all new active substances from 2030)",
+      "website": "https://health.ec.europa.eu/health-technology-assessment_en",
+      "decision_framework": "Joint clinical assessment of relative effectiveness — pricing/reimbursement remains national",
+      "scope": {
+        "phase_1_from_2025": ["Oncology products", "ATMPs (Advanced Therapy Medicinal Products)"],
+        "phase_2_from_2028": ["Orphan medicinal products"],
+        "phase_3_from_2030": ["All new active substances and new therapeutic indications"]
+      },
+      "assessment_elements": {
+        "mandatory": [
+          "Description of the health condition and current clinical management",
+          "Description of the health technology",
+          "Relative clinical effectiveness vs appropriate comparator(s)",
+          "Relative safety"
+        ],
+        "not_included": "Health economic evaluation, budget impact, pricing — remains at national level"
+      },
+      "evidence_requirements": {
+        "comparator": "Must address comparators relevant across EU member states — may need multiple comparators",
+        "population": "EU-wide population; may need to address country-specific subgroups",
+        "endpoints": [
+          "Patient-relevant clinical outcomes (survival, morbidity, HRQoL)",
+          "Validated instruments for QoL",
+          "Safety assessment"
+        ],
+        "methodological_standards": [
+          "PICO framework mandatory (Population, Intervention, Comparator, Outcomes)",
+          "Pre-submission evidence gap analysis recommended",
+          "Joint scientific consultation available (replaces individual national consultations for JCA scope)",
+          "Compliance with EU methodological guidelines"
+        ]
+      },
+      "impact_on_protocol_design": [
+        "Single comparator may not satisfy all EU member states — multi-arm or NMA strategy needed",
+        "Endpoints must be patient-relevant (surrogates challenged by IQWiG tradition will apply EU-wide)",
+        "QoL measurement mandatory from trial start",
+        "Subgroup analyses by EU-relevant factors (age, severity, prior treatment)",
+        "Evidence must be submitted in EU standardized JCA format"
+      ],
+      "common_gaps_in_protocols": [
+        "Single comparator that doesn't match all EU national standards of care",
+        "Reliance on surrogate endpoints without validated link to patient-relevant outcomes",
+        "No EU-wide QoL data collection strategy",
+        "Missing subgroup analyses relevant to diverse EU treatment landscapes",
+        "No plan for joint scientific consultation during protocol development"
+      ]
+    },
+    "TLV": {
+      "full_name": "Tandvårds- och läkemedelsförmånsverket (Dental and Pharmaceutical Benefits Agency)",
+      "country": "Sweden",
+      "website": "https://www.tlv.se",
+      "decision_framework": "Value-based pricing with three principles: human value, need/solidarity, cost-effectiveness",
+      "evidence_requirements": {
+        "cost_effectiveness": {
+          "threshold": "No formal threshold; ~SEK 500,000-1,000,000/QALY (~€45,000-90,000) typically accepted for severe diseases",
+          "perspective": "Societal perspective (includes productivity losses)",
+          "discount_rate": "3% for costs and outcomes"
+        },
+        "clinical_effectiveness": {
+          "preferred_evidence": "RCT with active comparator",
+          "comparator": "Swedish clinical practice standard of care"
+        }
+      }
+    },
+    "HIRA": {
+      "full_name": "Health Insurance Review and Assessment Service",
+      "country": "South Korea",
+      "website": "https://www.hira.or.kr",
+      "decision_framework": "Cost-effectiveness analysis with budget impact assessment",
+      "evidence_requirements": {
+        "cost_effectiveness": {
+          "threshold": "GDP per capita per QALY (~₩40,000,000, ~$30,000 USD) informally applied",
+          "perspective": "National Health Insurance perspective",
+          "discount_rate": "5% for costs and outcomes"
+        },
+        "special_considerations": [
+          "Risk-sharing agreements available for high-cost therapies",
+          "Korean patient subgroup data from MRCT preferred",
+          "PK/PD bridging data in Korean population may be requested"
+        ]
+      }
+    },
+    "CONITEC": {
+      "full_name": "Comissão Nacional de Incorporação de Tecnologias no SUS",
+      "country": "Brazil",
+      "website": "https://www.gov.br/conitec",
+      "decision_framework": "Cost-effectiveness from SUS (Unified Health System) perspective",
+      "evidence_requirements": {
+        "clinical_effectiveness": {
+          "preferred_evidence": "Systematic review with meta-analysis of RCTs",
+          "comparator": "Technology available in SUS (public health system)"
+        },
+        "cost_effectiveness": {
+          "threshold": "Approximately 3x GDP per capita (~R$150,000/QALY)",
+          "perspective": "SUS (public healthcare system)",
+          "discount_rate": "5% for costs and outcomes"
+        },
+        "special_considerations": [
+          "Brazilian patient data or Latin American population representation valued",
+          "Public consultation process before final recommendation",
+          "Litigation risk: patients may access non-listed drugs via court orders (judicialização)"
+        ]
+      }
+    }
+  },
+  "cross_cutting_requirements": {
+    "quality_of_life_instruments": {
+      "description": "QoL instruments accepted or preferred by each HTA body",
+      "instruments": {
+        "EQ-5D-5L": {
+          "accepted_by": ["NICE", "IQWiG", "CADTH", "PBAC"],
+          "notes": "NICE prefers this; use country-specific value sets"
+        },
+        "EQ-5D-3L": {
+          "accepted_by": ["NICE", "IQWiG", "CADTH", "PBAC"],
+          "notes": "Mapping from 5L to 3L was standard practice; 2024 NICE update prefers 5L directly"
+        },
+        "SF-36_SF-12": {
+          "accepted_by": ["IQWiG", "CADTH"],
+          "notes": "Can be mapped to EQ-5D; direct use for IQWiG"
+        },
+        "AQoL": {
+          "accepted_by": ["PBAC"],
+          "notes": "Australian-specific instrument; preferred alongside EQ-5D"
+        },
+        "disease_specific": {
+          "accepted_by": ["IQWiG", "CADTH", "PBAC"],
+          "notes": "Validated disease-specific PROs (e.g., EORTC QLQ-C30 for oncology) accepted by all bodies"
+        }
+      }
+    },
+    "comparator_alignment": {
+      "description": "Protocol comparator must align with each HTA body's standard of care definition",
+      "recommendations": [
+        "Engage with HTA bodies early (Scientific Advice) to confirm appropriate comparator",
+        "Multi-arm trials that include HTA-relevant comparators where possible",
+        "Document standard of care by jurisdiction in protocol",
+        "Consider payer perspective when selecting control arm"
+      ]
+    },
+    "health_economic_data_collection": {
+      "description": "Data that should be collected during clinical trials to support HTA submissions",
+      "must_collect": [
+        "EQ-5D-5L at baseline and regular intervals",
+        "Healthcare resource utilization (hospitalizations, ER visits, outpatient visits)",
+        "Concomitant medications and supportive care",
+        "Work productivity / caregiver burden (optional but valuable)",
+        "Disease-specific PRO with validated instrument",
+        "Treatment compliance and persistence data"
+      ]
+    }
+  }
+}

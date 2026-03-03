@@ -17,17 +17,21 @@ from app.services import dynamo_service, s3_service, sqs_service
 logger = logging.getLogger(__name__)
 
 
-def get_job_status(job_id: str) -> dict:
-    """Get status of a single job."""
+def get_job_status(job_id: str, user: CurrentUser | None = None) -> dict:
+    """Get status of a single job with ownership check."""
     job = dynamo_service.get_job(job_id)
     if not job:
+        raise JobNotFoundError(job_id)
+    if user and job.get("user_id") and job["user_id"] != user.user_id:
         raise JobNotFoundError(job_id)
     return _format_job(job)
 
 
-def get_batch_status(job_ids: list[str]) -> list[dict]:
-    """Get status of multiple jobs."""
+def get_batch_status(job_ids: list[str], user: CurrentUser | None = None) -> list[dict]:
+    """Get status of multiple jobs (filters by ownership)."""
     jobs = dynamo_service.get_jobs_by_ids(job_ids)
+    if user:
+        jobs = [j for j in jobs if j.get("user_id") == user.user_id]
     return [_format_job(j) for j in jobs]
 
 
@@ -37,10 +41,12 @@ def list_jobs(user: CurrentUser, limit: int = 50) -> list[dict]:
     return [_format_job(j) for j in jobs]
 
 
-def get_job_stats(job_id: str) -> dict:
-    """Get statistics for a completed job."""
+def get_job_stats(job_id: str, user: CurrentUser | None = None) -> dict:
+    """Get statistics for a completed job with ownership check."""
     job = dynamo_service.get_job(job_id)
     if not job:
+        raise JobNotFoundError(job_id)
+    if user and job.get("user_id") and job["user_id"] != user.user_id:
         raise JobNotFoundError(job_id)
 
     result = job.get("result", {}) or {}
@@ -53,26 +59,53 @@ def get_job_stats(job_id: str) -> dict:
     }
 
 
-def cancel_job(job_id: str) -> dict:
-    """Cancel a queued or processing job."""
+def cancel_job(user: CurrentUser, job_id: str) -> dict:
+    """Cancel a queued or processing job.
+
+    Also resets the document status from 'analyzing' back to 'uploaded'
+    so the user can re-trigger analysis.
+    """
     job = dynamo_service.get_job(job_id)
     if not job:
+        raise JobNotFoundError(job_id)
+
+    # Ownership check
+    if job.get("user_id") and job["user_id"] != user.user_id:
         raise JobNotFoundError(job_id)
 
     if job["status"] in ("COMPLETE", "FAILED", "CANCELLED"):
         return {"success": False, "jobId": job_id, "message": f"Job already {job['status']}"}
 
     dynamo_service.update_job(job_id, {"status": "CANCELLED"})
+
+    # Reset document status if this was an analysis job
+    params = job.get("params", {}) or {}
+    doc_id = params.get("document_id")
+    if doc_id and job.get("type") == "ANALYZE_DOCUMENT":
+        doc = dynamo_service.get_document(doc_id)
+        if doc and doc.get("status") == "analyzing":
+            dynamo_service.update_document(doc_id, {"status": "uploaded"})
+            logger.info("Reset doc %s status from 'analyzing' to 'uploaded' after cancel", doc_id)
+
     return {"success": True, "jobId": job_id}
 
 
 def retry_job(user: CurrentUser, job_id: str) -> dict:
-    """Retry a failed job with the same parameters."""
+    """Retry a failed job with the same parameters.
+
+    For ANALYZE_DOCUMENT jobs, creates a fresh analysis record and
+    resets the document status to 'analyzing' — mirroring the flow in
+    analysis_service.trigger_analysis / analysis_service.retry_analysis.
+    """
     old_job = dynamo_service.get_job(job_id)
     if not old_job:
         raise JobNotFoundError(job_id)
 
-    params = old_job.get("params", {})
+    # Ownership check
+    if old_job.get("user_id") and old_job["user_id"] != user.user_id:
+        raise JobNotFoundError(job_id)
+
+    params = old_job.get("params", {}) or {}
     job_type = old_job.get("type", "GENERATE_SYNTHETIC")
 
     new_job = dynamo_service.create_job(
@@ -82,9 +115,20 @@ def retry_job(user: CurrentUser, job_id: str) -> dict:
     )
 
     if job_type == "ANALYZE_DOCUMENT":
+        doc_id = params.get("document_id", "")
+        # Create a fresh analysis record so the worker can write results
+        if doc_id:
+            analysis = dynamo_service.create_analysis(
+                doc_id=doc_id,
+                job_id=new_job["id"],
+            )
+            dynamo_service.update_document(doc_id, {
+                "status": "analyzing",
+                "analysis_id": analysis["id"],
+            })
         sqs_service.send_analysis_task(
             job_id=new_job["id"],
-            doc_id=params.get("document_id", ""),
+            doc_id=doc_id,
             s3_key=params.get("s3_key", ""),
             user_id=user.user_id,
         )
@@ -92,15 +136,18 @@ def retry_job(user: CurrentUser, job_id: str) -> dict:
         sqs_service.send_kb_sync_task(
             job_id=new_job["id"],
             user_id=user.user_id,
+            sync_params=params or None,
         )
 
     return {"newJobId": new_job["id"], "status": "QUEUED"}
 
 
-def download_job_results(job_id: str, fmt: str = "csv") -> dict:
-    """Get download URL for job results."""
+def download_job_results(job_id: str, fmt: str = "csv", user: CurrentUser | None = None) -> dict:
+    """Get download URL for job results with ownership check."""
     job = dynamo_service.get_job(job_id)
     if not job:
+        raise JobNotFoundError(job_id)
+    if user and job.get("user_id") and job["user_id"] != user.user_id:
         raise JobNotFoundError(job_id)
 
     result = job.get("result", {}) or {}

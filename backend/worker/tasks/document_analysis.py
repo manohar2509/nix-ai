@@ -43,6 +43,25 @@ def process_document_analysis(payload: dict) -> None:
 
     start_time = time.time()
 
+    # ── Idempotency guard: skip if job was already completed/failed/cancelled ──
+    existing_job = dynamo_service.get_job(job_id)
+    if existing_job and existing_job.get("status") in ("COMPLETE", "FAILED", "CANCELLED"):
+        logger.info(
+            "Skipping job %s — already in terminal state: %s",
+            job_id, existing_job["status"],
+        )
+        return
+
+    # ── Check document still exists (may have been deleted while queued) ──
+    doc = dynamo_service.get_document(doc_id)
+    if not doc:
+        logger.warning("Document %s no longer exists, marking job %s as CANCELLED", doc_id, job_id)
+        dynamo_service.update_job(job_id, {
+            "status": "CANCELLED",
+            "error": "Document was deleted before analysis started",
+        })
+        return
+
     # Mark job as IN_PROGRESS
     dynamo_service.update_job(job_id, {
         "status": "IN_PROGRESS",
@@ -147,7 +166,17 @@ def process_document_analysis(payload: dict) -> None:
         summary   = str(analysis_result.get("summary", "") or "")
         tables_n  = int(analysis_result.get("tables_detected", 0) or 0)
 
-        # 5b. Find the analysis record and update it
+        # 5a. Enhanced regulatory intelligence fields (REQ-1 through REQ-7)
+        jurisdiction_scores = analysis_result.get("jurisdiction_scores", []) or []
+        global_readiness    = round(float(analysis_result.get("global_readiness_score", 0) or 0), 1)
+        payer_gaps          = analysis_result.get("payer_gaps", []) or []
+        hta_body_scores     = analysis_result.get("hta_body_scores", {}) or {}
+
+        # 5b. Enrich findings with ICH guideline URLs
+        from app.services.regulatory_engine import enrich_guideline_urls
+        findings = enrich_guideline_urls(findings)
+
+        # 5c. Find the analysis record and update it
         analysis = dynamo_service.get_analysis_for_document(doc_id)
         if analysis:
             update_data = {
@@ -157,6 +186,10 @@ def process_document_analysis(payload: dict) -> None:
                 "findings": findings,
                 "summary": summary,
                 "extraction_method": extraction_method,
+                "jurisdiction_scores": jurisdiction_scores,
+                "global_readiness_score": global_readiness,
+                "payer_gaps": payer_gaps,
+                "hta_body_scores": hta_body_scores,
             }
             # Attach Textract data if available
             if textract_data and textract_data.get("tables"):

@@ -115,16 +115,37 @@
   background: #9ca3af;
 }
 
+/* Hide scrollbar while keeping scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* ══════════════════════════════════════════════
    Base Styles
    ══════════════════════════════════════════════ */
 body {
   font-family: 'Inter', system-ui, sans-serif;
   background-color: #f8fafc;
-  color: #0f172a;
+  color: #1e293b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.6;
 }
+
+/* ── Improve minimum text readability globally ── */
+p, span, div, li, td, th, label, button {
+  min-height: 0; /* prevent layout shift */
+}
+
+/* Ensure small text is never below 11px for readability */
+.text-\[8px\] { font-size: 11px !important; }
+.text-\[9px\] { font-size: 11px !important; }
+.text-\[10px\] { font-size: 11px !important; }
 
 ::selection {
   background-color: #c7d2fe;
@@ -155,6 +176,9 @@ html.dark .bg-white { background-color: #1e293b !important; }
 html.dark .bg-slate-50 { background-color: #0f172a !important; }
 html.dark .bg-slate-100 { background-color: #1e293b !important; }
 html.dark .bg-gradient-to-br { --tw-gradient-from: #0f172a !important; }
+/* Document viewer dark mode */
+html.dark .bg-\[\#fefcf9\] { background-color: #1a2332 !important; }
+html.dark .from-slate-200\/60 { --tw-gradient-from: rgba(30, 41, 59, 0.6) !important; }
 
 /* Text colors */
 html.dark .text-slate-900 { color: #f1f5f9 !important; }
@@ -223,4 +247,44 @@ html.dark .shimmer {
   background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════
+   Resizable Panel Styles
+   ══════════════════════════════════════════════ */
+.cursor-col-resize {
+  cursor: col-resize;
+}
+
+/* Prevent text selection while dragging panel divider */
+body.is-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* Smooth panel transitions */
+.panel-transition {
+  transition: width 0.3s ease, flex 0.3s ease, opacity 0.3s ease;
+}
+
+/* ══════════════════════════════════════════════
+   Tab Tooltip Styles
+   ══════════════════════════════════════════════ */
+.tab-tooltip-enter {
+  animation: tooltip-enter 0.15s ease-out;
+}
+
+@keyframes tooltip-enter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════
+   Line Clamp Utility
+   ══════════════════════════════════════════════ */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

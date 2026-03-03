@@ -42,8 +42,8 @@ async def get_job_status(
     job_id: str,
     user: CurrentUser = Depends(get_current_user),
 ):
-    """Get status of a single job."""
-    return job_service.get_job_status(job_id)
+    """Get status of a single job (ownership verified)."""
+    return job_service.get_job_status(job_id, user)
 
 
 @router.post("/jobs/batch-status", response_model=BatchStatusResponse)
@@ -51,8 +51,8 @@ async def batch_status(
     body: BatchStatusRequest,
     user: CurrentUser = Depends(get_current_user),
 ):
-    """Get status of multiple jobs at once."""
-    jobs = job_service.get_batch_status(body.jobIds)
+    """Get status of multiple jobs at once (ownership verified)."""
+    jobs = job_service.get_batch_status(body.jobIds, user)
     return BatchStatusResponse(jobs=jobs)
 
 
@@ -62,8 +62,8 @@ async def download_results(
     format: str = Query("csv", pattern="^(csv|json|parquet)$"),
     user: CurrentUser = Depends(get_current_user),
 ):
-    """Get download URL for job results."""
-    return job_service.download_job_results(job_id, format)
+    """Get download URL for job results (ownership verified)."""
+    return job_service.download_job_results(job_id, fmt=format, user=user)
 
 
 @router.get("/jobs/{job_id}/stats", response_model=JobStatsResponse)
@@ -71,8 +71,8 @@ async def get_job_stats(
     job_id: str,
     user: CurrentUser = Depends(get_current_user),
 ):
-    """Get statistics for a completed job."""
-    return job_service.get_job_stats(job_id)
+    """Get statistics for a completed job (ownership verified)."""
+    return job_service.get_job_stats(job_id, user)
 
 
 @router.post("/jobs/{job_id}/cancel")
@@ -80,8 +80,8 @@ async def cancel_job(
     job_id: str,
     user: CurrentUser = Depends(get_current_user),
 ):
-    """Cancel a queued or in-progress job."""
-    return job_service.cancel_job(job_id)
+    """Cancel a queued or in-progress job (ownership verified)."""
+    return job_service.cancel_job(user, job_id)
 
 
 @router.post("/jobs/{job_id}/retry")

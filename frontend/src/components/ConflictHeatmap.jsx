@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, BadgeDollarSign, Zap } from 'lucide-react';
+import { ShieldCheck, DollarSign, Globe, AlertTriangle, CheckCircle2, Info, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { cn } from '../utils/cn';
 
 /* ── Animated Counter Hook ── */
 function useCountUp(target, duration = 1300) {
@@ -14,7 +15,7 @@ function useCountUp(target, duration = 1300) {
     const step = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
       setCount(Math.round(eased * target));
       if (progress < 1) requestAnimationFrame(step);
     };
@@ -24,137 +25,212 @@ function useCountUp(target, duration = 1300) {
   return count;
 }
 
-export default function ConflictHeatmap({ regulatorScore = 42, payerScore = 88, findings = [] }) {
-  const regScore = useCountUp(Math.round(regulatorScore), 1200);
-  const payScore = useCountUp(Math.round(payerScore), 1200);
-  const [barMounted, setBarMounted] = useState(false);
-
-  // Derive risk label from score
-  const regLabel = regulatorScore >= 70 ? 'Low Risk' : regulatorScore >= 40 ? 'Medium Risk' : 'High Risk';
-  const payLabel = payerScore >= 70 ? 'Viable' : payerScore >= 40 ? 'Moderate' : 'Unlikely';
-
-  // Find conflict sections from findings
-  const conflictSections = findings
-    .filter(f => f.type === 'conflict' || f.severity === 'high' || f.severity === 'critical')
-    .map(f => f.section)
-    .filter(Boolean);
-  const conflictLabel = conflictSections.length > 0
-    ? `Conflict at ${conflictSections[0]}`
-    : 'No conflicts';
+/* ── Score Ring ── */
+function ScoreRing({ score, label, icon: Icon, strokeColor, size = 'normal', tooltip }) {
+  const animatedScore = useCountUp(Math.round(score || 0), 1200);
+  const circumference = 2 * Math.PI * 36;
+  const [mounted, setMounted] = useState(false);
+  const [showTip, setShowTip] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setBarMounted(true), 400);
+    const t = setTimeout(() => setMounted(true), 200);
     return () => clearTimeout(t);
   }, []);
 
+  const riskLabel = score >= 75 ? 'Low Risk' : score >= 50 ? 'Moderate' : score >= 30 ? 'High Risk' : 'Critical';
+  const riskColor = score >= 75 ? 'text-emerald-600' : score >= 50 ? 'text-amber-600' : score >= 30 ? 'text-orange-600' : 'text-red-600';
+  const ringSize = size === 'large' ? 'w-[76px] h-[76px]' : 'w-16 h-16';
+
   return (
-    <div className="bg-white border-b border-slate-100 p-6 space-y-6">
-      {/* Score Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Regulator */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-risk-50 to-rose-50/50 border border-risk-100/80 relative overflow-hidden group transition-shadow hover:shadow-md">
-          <div className="absolute -top-2 -right-2 opacity-[0.06] group-hover:opacity-[0.12] transition-opacity duration-300">
-            <ShieldAlert size={56} className="text-risk-600" />
+    <div
+      className="flex flex-col items-center relative"
+      onMouseEnter={() => setShowTip(true)}
+      onMouseLeave={() => setShowTip(false)}
+    >
+      <div className={cn('relative', ringSize)}>
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="36" fill="none" stroke="#e2e8f0" strokeWidth="5" />
+          <circle cx="40" cy="40" r="36" fill="none" strokeWidth="5"
+            stroke={strokeColor}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={mounted ? circumference * (1 - (score || 0) / 100) : circumference}
+            style={{ transition: 'stroke-dashoffset 1.2s ease-out' }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className={cn('font-black tabular-nums', size === 'large' ? 'text-xl' : 'text-lg')}>
+            {animatedScore}<span className="text-[10px] font-semibold text-slate-400">%</span>
+          </span>
+        </div>
+      </div>
+      <div className="mt-2 text-center">
+        <div className="flex items-center justify-center gap-1">
+          {Icon && <Icon size={12} className="text-slate-500" />}
+          <span className="text-xs font-semibold text-slate-700">{label}</span>
+        </div>
+        <span className={cn('text-[11px] font-semibold', riskColor)}>{riskLabel}</span>
+      </div>
+
+      {/* Hover tooltip explaining the score */}
+      {showTip && tooltip && (
+        <div className="absolute top-full mt-2 z-50 w-56 pointer-events-none animate-fade-in">
+          <div className="bg-slate-900 text-white rounded-lg shadow-xl p-2.5 text-left text-[11px] leading-relaxed">
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45" />
+            {tooltip}
           </div>
-          <div className="relative">
-            <span className="text-[9px] font-bold text-risk-500 uppercase tracking-[0.2em]">Regulator</span>
-            <div className="text-3xl font-black text-risk-900 mt-1 tabular-nums">
-              {regScore}<span className="text-base font-normal text-risk-300">/100</span>
-            </div>
-            {/* Progress bar */}
-            <div className="h-1.5 bg-risk-100 rounded-full mt-2.5 overflow-hidden">
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Severity Distribution Bar ── */
+function SeverityBar({ findings }) {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  (findings || []).forEach(f => {
+    const sev = (f.severity || 'medium').toLowerCase();
+    if (counts[sev] !== undefined) counts[sev]++;
+  });
+  const total = findings?.length || 0;
+
+  const segments = [
+    { key: 'critical', label: 'Critical', count: counts.critical, color: 'bg-red-500', textColor: 'text-red-700' },
+    { key: 'high', label: 'High', count: counts.high, color: 'bg-orange-500', textColor: 'text-orange-700' },
+    { key: 'medium', label: 'Medium', count: counts.medium, color: 'bg-amber-400', textColor: 'text-amber-700' },
+    { key: 'low', label: 'Low', count: counts.low, color: 'bg-emerald-400', textColor: 'text-emerald-700' },
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+          Finding Severity Breakdown
+        </span>
+        <span className="text-xs text-slate-500 font-semibold">
+          {total} finding{total !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {total > 0 ? (
+        <>
+          {/* Stacked bar */}
+          <div className="h-3 bg-slate-100 rounded-full overflow-hidden flex">
+            {segments.map(seg => seg.count > 0 ? (
               <div
-                className="h-full bg-gradient-to-r from-risk-400 to-risk-500 rounded-full transition-all duration-1000 ease-out"
-                style={{ width: barMounted ? `${Math.round(regulatorScore)}%` : '0%' }}
+                key={seg.key}
+                className={cn('h-full transition-all duration-700', seg.color)}
+                style={{ width: `${(seg.count / total) * 100}%` }}
+                title={`${seg.label}: ${seg.count}`}
               />
-            </div>
-            <span className="text-[10px] font-semibold text-risk-600 mt-1.5 block">{regLabel}</span>
+            ) : null)}
+          </div>
+
+          {/* Legend */}
+          <div className="flex gap-3 mt-2 flex-wrap">
+            {segments.map(seg => (
+              <div key={seg.key} className="flex items-center gap-1.5">
+                <div className={cn('w-2 h-2 rounded-full', seg.color)} />
+                <span className={cn('text-[11px] font-medium', seg.count > 0 ? seg.textColor : 'text-slate-300')}>
+                  {seg.count} {seg.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="flex items-center gap-2 py-2">
+          <CheckCircle2 size={14} className="text-emerald-500" />
+          <span className="text-sm text-emerald-700 font-medium">No findings — protocol looks strong</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ConflictHeatmap({ regulatorScore = 0, payerScore = 0, globalReadiness = 0, findings = [], summary = '' }) {
+  // Overall assessment
+  const avgScore = ((regulatorScore || 0) + (payerScore || 0)) / 2;
+  const overallStatus = avgScore >= 75 ? 'strong' : avgScore >= 50 ? 'moderate' : avgScore >= 30 ? 'needs-work' : 'critical';
+  const statusConfig = {
+    strong: { icon: TrendingUp, label: 'Strong Protocol — Minimal Issues', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+    moderate: { icon: Minus, label: 'Moderate — Improvements Recommended', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
+    'needs-work': { icon: TrendingDown, label: 'Needs Significant Work', color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
+    critical: { icon: AlertTriangle, label: 'Critical Issues Found', color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
+  };
+  const status = statusConfig[overallStatus];
+  const StatusIcon = status.icon;
+
+  return (
+    <div className="bg-white border-b border-slate-200/80">
+      {/* Section Header */}
+      <div className="px-6 pt-5 pb-3">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-brand-50 flex items-center justify-center">
+            <Info size={14} className="text-brand-600" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">Executive Summary</h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              AI-generated compliance scores from protocol analysis — hover over each ring for details
+            </p>
           </div>
         </div>
 
-        {/* Payer */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-money-50 to-emerald-50/50 border border-money-100/80 relative overflow-hidden group transition-shadow hover:shadow-md">
-          <div className="absolute -top-2 -right-2 opacity-[0.06] group-hover:opacity-[0.12] transition-opacity duration-300">
-            <BadgeDollarSign size={56} className="text-money-600" />
-          </div>
-          <div className="relative">
-            <span className="text-[9px] font-bold text-money-500 uppercase tracking-[0.2em]">Payer</span>
-            <div className="text-3xl font-black text-money-900 mt-1 tabular-nums">
-              {payScore}<span className="text-base font-normal text-money-300">/100</span>
-            </div>
-            <div className="h-1.5 bg-money-100 rounded-full mt-2.5 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-money-400 to-money-500 rounded-full transition-all duration-1000 ease-out"
-                style={{ width: barMounted ? `${Math.round(payerScore)}%` : '0%' }}
-              />
-            </div>
-            <span className="text-[10px] font-semibold text-money-600 mt-1.5 block">{payLabel}</span>
+        {/* Score interpretation guide */}
+        <div className="mt-3 p-2.5 rounded-lg bg-slate-50 border border-slate-200/60">
+          <div className="text-[11px] font-semibold text-slate-600 mb-1">Score Guide</div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+            <span className="text-[11px] text-slate-500"><strong className="text-emerald-600">75–100%</strong> Low risk — on track</span>
+            <span className="text-[11px] text-slate-500"><strong className="text-amber-600">50–74%</strong> Moderate — review needed</span>
+            <span className="text-[11px] text-slate-500"><strong className="text-orange-600">30–49%</strong> High risk — revisions required</span>
+            <span className="text-[11px] text-slate-500"><strong className="text-red-600">0–29%</strong> Critical — major gaps</span>
           </div>
         </div>
       </div>
 
-      {/* Heatmap Bar */}
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Strategic Friction Heatmap</h3>
-          <span className="flex items-center gap-1.5 text-[10px] font-semibold text-risk-600">
-            <Zap size={10} />
-            {conflictLabel}
-          </span>
-        </div>
-
-        {/* The Bar */}
-        <div className="h-8 bg-slate-50 rounded-lg w-full relative overflow-hidden border border-slate-100">
-          {/* Grid lines */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(90deg, transparent, transparent 19%, #e2e8f0 19%, #e2e8f0 20%)',
-              backgroundSize: '100px 100%',
-            }}
+      {/* Score Rings — Regulator, Payer, Global */}
+      <div className="px-6 pb-4">
+        <div className="flex items-center justify-around py-4 bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200/80 shadow-sm">
+          <ScoreRing
+            score={regulatorScore}
+            label="Regulatory"
+            icon={ShieldCheck}
+            strokeColor="#f43f5e"
+            tooltip="Regulatory Compliance Score — measures how well your protocol aligns with ICH E6(R2)/E8/E9 guidelines, FDA 21 CFR requirements, and EMA scientific guidance. 75%+ = low risk for IND/CTA submission."
           />
-
-          {/* Dynamic zones based on scores */}
-          {regulatorScore >= 60 && (
-            <div className="absolute left-[5%] w-[25%] h-full bg-money-100/40 border-x border-money-200/30" />
-          )}
-          {payerScore >= 60 && (
-            <div className="absolute left-[65%] w-[30%] h-full bg-money-100/40 border-x border-money-200/30" />
-          )}
-
-          {/* Conflict zones derived from findings */}
-          {conflictSections.length > 0 && (
-            <div
-              className="absolute h-full bg-risk-500/15 border-x-2 border-risk-500/40 flex items-center justify-center"
-              style={{
-                left: `${Math.min(30 + conflictSections.length * 5, 70)}%`,
-                width: `${Math.min(10 + conflictSections.length * 4, 25)}%`,
-              }}
-            >
-              <div className="h-0.5 w-full bg-risk-500/60 animate-pulse-slow" />
-            </div>
-          )}
-
-          {/* Section labels from findings */}
-          {(conflictSections.length > 0
-            ? conflictSections.slice(0, 5)
-            : ['—']
-          ).map((label, i) => (
-            <div
-              key={label + i}
-              className="absolute top-0 h-full flex items-end pb-0.5 justify-center"
-              style={{ left: `${10 + i * 18}%`, width: '20px' }}
-            >
-              <span className="text-[7px] font-mono text-slate-400">{label}</span>
-            </div>
-          ))}
+          <ScoreRing
+            score={payerScore}
+            label="Payer"
+            icon={DollarSign}
+            strokeColor="#10b981"
+            tooltip="Payer Readiness Score — evaluates whether your protocol captures evidence required by HTA bodies (NICE, IQWiG, CADTH, PBAC) for reimbursement decisions. 75%+ = strong market access positioning."
+          />
+          <ScoreRing
+            score={globalReadiness}
+            label="Global Ready"
+            icon={Globe}
+            strokeColor="#6366f1"
+            size="large"
+            tooltip="Global Submission Readiness — weighted average of regulatory compliance across all target jurisdictions (FDA, EMA, PMDA, TGA, Health Canada). 85%+ = ready for simultaneous multi-country submissions."
+          />
         </div>
+      </div>
 
-        <div className="flex justify-between text-[9px] text-slate-400 font-mono mt-1.5 px-1">
-          <span>Low Risk</span>
-          <span>High Risk</span>
+      {/* Overall Assessment Banner */}
+      <div className={cn('mx-6 mb-4 px-3.5 py-2.5 rounded-lg border flex items-start gap-2.5', status.bg)}>
+        <StatusIcon size={16} className={cn('shrink-0 mt-0.5', status.color)} />
+        <div className="min-w-0">
+          <div className={cn('text-xs font-semibold', status.color)}>{status.label}</div>
+          {summary && (
+            <p className="text-xs text-slate-600 leading-relaxed mt-1">{summary}</p>
+          )}
         </div>
+      </div>
+
+      {/* Severity Distribution */}
+      <div className="px-6 pb-5">
+        <SeverityBar findings={findings} />
       </div>
     </div>
   );

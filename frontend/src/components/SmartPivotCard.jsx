@@ -28,7 +28,7 @@ export default function SmartPivotCard({ findings = [] }) {
           <div className="bg-gradient-to-r from-brand-600 via-brand-600 to-purple-600 px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 text-white font-semibold text-xs uppercase tracking-wider">
               <Sparkles size={14} />
-              Smart Pivot Recommendation
+              Top Priority — Action Required
             </div>
             {confidenceScore && (
               <span className="text-[10px] bg-white/20 text-white px-2.5 py-0.5 rounded-full font-bold backdrop-blur-sm">
@@ -46,7 +46,7 @@ export default function SmartPivotCard({ findings = [] }) {
                 </div>
               </div>
               <div>
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">The Friction</h4>
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">Issue Identified</h4>
                 <p className="text-sm text-slate-700 leading-relaxed">
                   {frictionText}
                 </p>
@@ -61,7 +61,7 @@ export default function SmartPivotCard({ findings = [] }) {
                 </div>
               </div>
               <div className="flex-1">
-                <h4 className="text-[10px] font-bold text-brand-600 uppercase tracking-[0.15em] mb-1">Recommended Pivot</h4>
+                <h4 className="text-[10px] font-bold text-brand-600 uppercase tracking-[0.15em] mb-1">Recommended Action</h4>
                 <p className="text-sm text-slate-800 font-medium leading-relaxed mb-3">
                   {suggestionText}
                 </p>

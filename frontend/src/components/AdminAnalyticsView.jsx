@@ -116,7 +116,7 @@ export default function AdminAnalyticsView() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-purple-100 text-purple-700">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
               Admin Only
             </span>
             <button onClick={loadAll} className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-500 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
@@ -136,14 +136,14 @@ export default function AdminAnalyticsView() {
         ═══════════════════════════════════════════════════════ */}
         <AdminSectionExplainer
           title="Platform Summary"
-          description="Platform-wide metrics across ALL users. Active Users = users who uploaded or analyzed docs. Reg. Score and Payer Score are averages across the entire platform, giving you a bird's-eye view of protocol quality. Findings counts ALL detected issues platform-wide."
+          description="Platform-wide metrics across ALL users. Active Users = users who uploaded or analyzed protocols. Compliance Score and Payer Readiness are averages across the entire platform, giving you a bird's-eye view of protocol quality. Findings counts ALL detected regulatory issues platform-wide."
         />
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4">
           <MetricCard label="Active Users" value={summary.activeUsers} icon={<Users size={18} />} color="purple" sub="users" onClick={() => openDrawer('users')} />
-          <MetricCard label="Documents" value={summary.totalDocuments} icon={<FileText size={18} />} color="brand" sub="total" onClick={() => openDrawer('platformDocs')} />
+          <MetricCard label="Protocols" value={summary.totalDocuments} icon={<FileText size={18} />} color="brand" sub="total" onClick={() => openDrawer('platformDocs')} />
           <MetricCard label="Analyses" value={summary.totalAnalyses} icon={<BarChart3 size={18} />} color="indigo" sub="completed" onClick={() => openDrawer('platformAnalyses')} />
-          <MetricCard label="Reg. Score" value={summary.avgRegulatorScore} icon={<ShieldAlert size={18} />} color={summary.avgRegulatorScore >= 60 ? 'green' : summary.avgRegulatorScore >= 40 ? 'amber' : 'red'} sub="platform avg" isScore onClick={() => openDrawer('platformRegScore')} />
-          <MetricCard label="Payer Score" value={summary.avgPayerScore} icon={<BadgeDollarSign size={18} />} color={summary.avgPayerScore >= 60 ? 'green' : summary.avgPayerScore >= 40 ? 'amber' : 'red'} sub="platform avg" isScore onClick={() => openDrawer('platformPayScore')} />
+          <MetricCard label="Compliance Score" value={summary.avgRegulatorScore} icon={<ShieldAlert size={18} />} color={summary.avgRegulatorScore >= 60 ? 'green' : summary.avgRegulatorScore >= 40 ? 'amber' : 'red'} sub="platform avg" isScore onClick={() => openDrawer('platformRegScore')} />
+          <MetricCard label="Payer Readiness" value={summary.avgPayerScore} icon={<BadgeDollarSign size={18} />} color={summary.avgPayerScore >= 60 ? 'green' : summary.avgPayerScore >= 40 ? 'amber' : 'red'} sub="platform avg" isScore onClick={() => openDrawer('platformPayScore')} />
           <MetricCard label="Findings" value={summary.totalFindings} icon={<AlertTriangle size={18} />} color="orange" sub="total" onClick={() => openDrawer('platformFindings')} />
           <MetricCard label="Jobs" value={summary.totalJobs} icon={<Activity size={18} />} color="slate" sub="processed" onClick={() => openDrawer('platformJobs')} />
         </div>
@@ -181,10 +181,10 @@ export default function AdminAnalyticsView() {
               )}
               {Object.keys(kbHealth.categories).length > 0 && (
                 <div className="pt-3 border-t border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Categories</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Categories</p>
                   <div className="flex flex-wrap gap-1.5">
                     {Object.entries(kbHealth.categories).map(([cat, count]) => (
-                      <span key={cat} className="text-[10px] font-medium px-2 py-1 rounded-full bg-purple-50 text-purple-700">
+                      <span key={cat} className="text-[11px] font-medium px-2 py-1 rounded-full bg-purple-50 text-purple-700">
                         {cat} ({count})
                       </span>
                     ))}
@@ -233,7 +233,7 @@ export default function AdminAnalyticsView() {
               <StatRow label="Avg Citations / Response" value={chatMetrics.avgCitationsPerResponse} />
               {Object.keys(citationDistribution).length > 0 && (
                 <div className="pt-3 border-t border-slate-100">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Citation Distribution</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Citation Distribution</p>
                   {Object.entries(citationDistribution).map(([bucket, count]) => (
                     <div key={bucket} className="flex items-center gap-2 mb-2">
                       <span className="text-[11px] text-slate-500 w-10 text-right font-mono">{bucket}</span>
@@ -250,7 +250,7 @@ export default function AdminAnalyticsView() {
               )}
               {chatMetrics.avgCitationsPerResponse > 0 && (
                 <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
-                  <p className="text-[10px] text-emerald-700">
+                  <p className="text-[11px] text-emerald-700">
                     {chatMetrics.avgCitationsPerResponse >= 3
                       ? '✅ Strong retrieval — responses are well-grounded in KB content'
                       : chatMetrics.avgCitationsPerResponse >= 1
@@ -285,13 +285,13 @@ export default function AdminAnalyticsView() {
               <div className="bg-green-50 rounded-xl p-4 border border-green-100 text-center">
                 <CheckCircle size={20} className="mx-auto text-green-500 mb-1" />
                 <div className="text-2xl font-bold text-green-700">{jobPipeline.successRate}%</div>
-                <div className="text-[10px] text-green-600 font-medium">Success Rate</div>
+                <div className="text-[11px] text-green-600 font-medium">Success Rate</div>
                 <div className="text-xs text-green-500 mt-0.5">{jobPipeline.successCount} jobs</div>
               </div>
               <div className="bg-red-50 rounded-xl p-4 border border-red-100 text-center">
                 <XCircle size={20} className="mx-auto text-red-500 mb-1" />
                 <div className="text-2xl font-bold text-red-700">{jobPipeline.failureRate}%</div>
-                <div className="text-[10px] text-red-600 font-medium">Failure Rate</div>
+                <div className="text-[11px] text-red-600 font-medium">Failure Rate</div>
                 <div className="text-xs text-red-500 mt-0.5">{jobPipeline.failureCount} jobs</div>
               </div>
             </div>
@@ -307,7 +307,7 @@ export default function AdminAnalyticsView() {
             <h3 className="text-sm font-bold text-slate-800 mb-5">Job Breakdown</h3>
             {Object.keys(jobPipeline.jobsByType).length > 0 && (
               <div className="mb-5">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">By Type</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">By Type</p>
                 {Object.entries(jobPipeline.jobsByType).map(([type, count]) => (
                   <div key={type} className="flex items-center gap-2 mb-2">
                     <span className="text-[11px] text-slate-500 flex-1 truncate">{formatJobType(type)}</span>
@@ -321,11 +321,11 @@ export default function AdminAnalyticsView() {
             )}
             {Object.keys(jobPipeline.jobsByStatus).length > 0 && (
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">By Status</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">By Status</p>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(jobPipeline.jobsByStatus).map(([status, count]) => (
                     <span key={status} className={cn(
-                      'text-[10px] font-bold px-2.5 py-1.5 rounded-lg',
+                      'text-[11px] font-bold px-2.5 py-1.5 rounded-lg',
                       status === 'COMPLETE' ? 'bg-green-100 text-green-700' :
                         status === 'FAILED' ? 'bg-red-100 text-red-700' :
                           status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
@@ -341,16 +341,16 @@ export default function AdminAnalyticsView() {
             {/* Recent Failures */}
             {jobPipeline.recentFailures.length > 0 && (
               <div className="mt-5 pt-4 border-t border-slate-100">
-                <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-2">Recent Failures</p>
+                <p className="text-[11px] font-bold text-red-400 uppercase tracking-wider mb-2">Recent Failures</p>
                 <div className="space-y-2">
                   {jobPipeline.recentFailures.map((f, idx) => (
                     <div key={idx} className="bg-red-50 border border-red-100 rounded-lg p-2.5">
                       <div className="flex items-center gap-2 mb-1">
                         <XCircle size={12} className="text-red-500" />
                         <span className="text-[11px] font-semibold text-red-700">{formatJobType(f.type)}</span>
-                        <span className="text-[9px] text-red-400 ml-auto">{formatDate(f.createdAt)}</span>
+                        <span className="text-[11px] text-red-400 ml-auto">{formatDate(f.createdAt)}</span>
                       </div>
-                      <p className="text-[10px] text-red-600 truncate">{f.error}</p>
+                      <p className="text-[11px] text-red-600 truncate">{f.error}</p>
                     </div>
                   ))}
                 </div>
@@ -362,8 +362,8 @@ export default function AdminAnalyticsView() {
         {/* ═══════════════════════════════════════════════════════
             SECTION 4: DOCUMENT INTELLIGENCE
         ═══════════════════════════════════════════════════════ */}
-        <SectionHeader icon={<Target size={18} />} title="Document Intelligence" subtitle="Platform-wide score distribution, risk landscape, and top findings" color="brand" />
-        <AdminInfoBanner text="Platform-wide analysis insights. Risk Distribution shows the severity breakdown of ALL findings. Score Distribution reveals how protocols cluster by quality. Top Finding Types highlight recurring issues across the platform — useful for identifying training needs. Lowest Scoring Protocols need immediate attention." />
+        <SectionHeader icon={<Target size={18} />} title="Protocol Intelligence" subtitle="Platform-wide score distribution, risk landscape, and top findings" color="brand" />
+        <AdminInfoBanner text="Platform-wide analysis insights. Risk Distribution shows the severity breakdown of ALL findings. Score Distribution reveals how protocols cluster by quality. Top Finding Types highlight recurring regulatory issues across the platform — useful for identifying training needs. Lowest Scoring Protocols need immediate attention." />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Risk Distribution */}
@@ -374,7 +374,7 @@ export default function AdminAnalyticsView() {
 
           {/* Score Distribution */}
           <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-            <h3 className="text-sm font-bold text-slate-800 mb-5">Regulatory Score Distribution</h3>
+            <h3 className="text-sm font-bold text-slate-800 mb-5">Compliance Score Distribution</h3>
             {Object.keys(scoreDistribution).length > 0 ? (
               <div className="space-y-3">
                 {Object.entries(scoreDistribution).map(([bucket, count]) => {
@@ -431,25 +431,25 @@ export default function AdminAnalyticsView() {
               <div className="space-y-3">
                 {worstDocuments.slice(0, 6).map((doc, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-red-200 hover:bg-red-50/30 cursor-pointer transition-colors group" onClick={() => openDrawer('worstDocDetail', doc)}>
-                    <div className="h-7 w-7 bg-red-100 rounded-lg flex items-center justify-center text-red-500 text-[10px] font-bold shrink-0">
+                    <div className="h-7 w-7 bg-red-100 rounded-lg flex items-center justify-center text-red-500 text-[11px] font-bold shrink-0">
                       #{idx + 1}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-semibold text-slate-700 truncate">{doc.documentName}</div>
-                      <div className="text-[10px] text-slate-400">{doc.findingsCount} findings</div>
+                      <div className="text-[11px] text-slate-400">{doc.findingsCount} findings</div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-center">
                         <div className={cn('text-xs font-bold', doc.regulatorScore >= 60 ? 'text-green-600' : doc.regulatorScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
                           {Math.round(doc.regulatorScore)}%
                         </div>
-                        <div className="text-[8px] text-slate-400">REG</div>
+                        <div className="text-[10px] text-slate-400">REG</div>
                       </div>
                       <div className="text-center">
                         <div className={cn('text-xs font-bold', doc.payerScore >= 60 ? 'text-green-600' : doc.payerScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
                           {Math.round(doc.payerScore)}%
                         </div>
-                        <div className="text-[8px] text-slate-400">PAY</div>
+                        <div className="text-[10px] text-slate-400">PAY</div>
                       </div>
                     </div>
                   </div>
@@ -473,11 +473,11 @@ export default function AdminAnalyticsView() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-slate-100">
-                    <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-3 pr-4">#</th>
-                    <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-3 pr-4">User ID</th>
-                    <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-3 pr-4 text-right">Documents</th>
-                    <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-3 pr-4 text-right">Analyses</th>
-                    <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-3 text-right">Activity</th>
+                    <th className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pb-3 pr-4">#</th>
+                    <th className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pb-3 pr-4">User ID</th>
+                    <th className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pb-3 pr-4 text-right">Protocols</th>
+                    <th className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pb-3 pr-4 text-right">Analyses</th>
+                    <th className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pb-3 text-right">Activity</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -512,7 +512,7 @@ export default function AdminAnalyticsView() {
         <div className="bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 rounded-2xl p-6 flex items-center justify-between shadow-lg">
           <div>
             <h3 className="text-white font-bold text-lg">Admin Command Center</h3>
-            <p className="text-purple-200 text-sm mt-1">Manage KB, review protocols, or return to your dashboard</p>
+            <p className="text-purple-200 text-sm mt-1">Manage reference library, review protocols, or return to your dashboard</p>
           </div>
           <div className="flex gap-3">
             <button onClick={() => setActiveView('dashboard')} className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-purple-100 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">
@@ -534,7 +534,7 @@ export default function AdminAnalyticsView() {
         open={drawer.open && drawer.type === 'users'}
         onClose={closeDrawer}
         title="Active Users"
-        subtitle={`${summary.activeUsers} users have uploaded or analyzed documents`}
+        subtitle={`${summary.activeUsers} users have uploaded or analyzed protocols`}
         icon={<Users size={20} />}
         breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Active Users' }]}
       >
@@ -549,7 +549,7 @@ export default function AdminAnalyticsView() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-slate-700 font-mono truncate">{u.userId}</div>
-                    <div className="text-[10px] text-slate-400">{u.documentCount} docs &middot; {u.analysisCount} analyses</div>
+                    <div className="text-[11px] text-slate-400">{u.documentCount} protocols &middot; {u.analysisCount} analyses</div>
                   </div>
                   <ChevronRight size={14} className="text-slate-300" />
                 </div>
@@ -574,7 +574,7 @@ export default function AdminAnalyticsView() {
         {drawer.context && (
           <>
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <DetailStat label="Documents" value={drawer.context.documentCount} color="text-brand-600" />
+              <DetailStat label="Protocols" value={drawer.context.documentCount} color="text-brand-600" />
               <DetailStat label="Analyses" value={drawer.context.analysisCount} color="text-indigo-600" />
             </div>
             <DetailRow label="User ID" value={drawer.context.userId} />
@@ -591,23 +591,23 @@ export default function AdminAnalyticsView() {
       <DetailDrawer
         open={drawer.open && drawer.type === 'platformDocs'}
         onClose={closeDrawer}
-        title="Platform Documents"
-        subtitle={`${summary.totalDocuments} documents uploaded across all users`}
+        title="Platform Protocols"
+        subtitle={`${summary.totalDocuments} protocols uploaded across all users`}
         icon={<FileText size={20} />}
         breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Documents' }]}
       >
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <DetailStat label="Total Documents" value={summary.totalDocuments} color="text-brand-600" large />
+          <DetailStat label="Total Protocols" value={summary.totalDocuments} color="text-brand-600" large />
           <DetailStat label="Active Users" value={summary.activeUsers} color="text-purple-600" large />
         </div>
-        <DetailSection title="Documents per User">
+        <DetailSection title="Protocols per User">
           {userActivity.length > 0 ? (
             <div className="space-y-2">
               {userActivity.map((u, idx) => (
                 <div key={idx} className="flex items-center gap-3 py-2 border-b border-slate-50">
                   <span className="text-xs text-slate-400 w-6">{idx + 1}</span>
                   <span className="text-xs font-mono text-slate-600 flex-1 truncate">{u.userId.substring(0, 24)}...</span>
-                  <span className="text-xs font-bold text-brand-600">{u.documentCount} docs</span>
+                  <span className="text-xs font-bold text-brand-600">{u.documentCount} protocols</span>
                 </div>
               ))}
             </div>
@@ -652,10 +652,10 @@ export default function AdminAnalyticsView() {
       <DetailDrawer
         open={drawer.open && drawer.type === 'platformRegScore'}
         onClose={closeDrawer}
-        title="Platform Regulatory Score"
+        title="Platform Compliance Score"
         subtitle={`Average: ${summary.avgRegulatorScore}% across all users`}
         icon={<ShieldAlert size={20} />}
-        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Regulatory Score' }]}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Compliance Score' }]}
       >
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -715,10 +715,10 @@ export default function AdminAnalyticsView() {
       <DetailDrawer
         open={drawer.open && drawer.type === 'platformPayScore'}
         onClose={closeDrawer}
-        title="Platform Payer Score"
+        title="Platform Payer Readiness"
         subtitle={`Average: ${summary.avgPayerScore}% across all users`}
         icon={<BadgeDollarSign size={20} />}
-        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Payer Score' }]}
+        breadcrumb={[{ label: 'Admin Analytics' }, { label: 'Payer Readiness' }]}
       >
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -828,7 +828,7 @@ export default function AdminAnalyticsView() {
                   <div className="flex items-center gap-2 mb-1">
                     <XCircle size={12} className="text-red-500" />
                     <span className="text-xs font-semibold text-red-700">{formatJobType(f.type)}</span>
-                    <span className="text-[9px] text-red-400 ml-auto">{formatDate(f.createdAt)}</span>
+                    <span className="text-[11px] text-red-400 ml-auto">{formatDate(f.createdAt)}</span>
                   </div>
                   <p className="text-[11px] text-red-600">{f.error}</p>
                 </div>
@@ -924,14 +924,14 @@ function MetricCard({ label, value, icon, color, sub, isScore, onClick }) {
         {onClick ? (
           <ChevronRight size={14} className="text-slate-300 group-hover:text-brand-400 transition-colors" />
         ) : (
-          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">{sub}</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{sub}</span>
         )}
       </div>
       <div className="text-xl font-bold text-slate-900 tabular-nums">
         {isScore ? `${displayValue}%` : displayValue}
       </div>
-      <div className="text-[10px] text-slate-400 mt-0.5 font-medium">{label}</div>
-      {onClick && sub && <div className="text-[8px] font-bold text-slate-300 uppercase tracking-wider mt-1">{sub}</div>}
+      <div className="text-[11px] text-slate-400 mt-0.5 font-medium">{label}</div>
+      {onClick && sub && <div className="text-[10px] font-bold text-slate-300 uppercase tracking-wider mt-1">{sub}</div>}
     </div>
   );
 }
@@ -988,7 +988,7 @@ function RiskBars({ distribution, total }) {
         </div>
       ))}
       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-        <span className="text-[10px] text-slate-400 font-medium">Total Findings</span>
+        <span className="text-[11px] text-slate-400 font-medium">Total Findings</span>
         <span className="text-sm font-bold text-slate-700">{total}</span>
       </div>
     </div>
@@ -1004,7 +1004,7 @@ function MiniBarChart({ data, valueKey, labelKey, color }) {
     <div className="flex items-end gap-1 h-24">
       {data.map((d, idx) => (
         <div key={idx} className="flex-1 flex flex-col items-center group relative">
-          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
             {d[labelKey]}: {d[valueKey]}
           </div>
           <div
@@ -1044,7 +1044,7 @@ function formatDate(iso) {
 }
 
 function formatJobType(type) {
-  const map = { ANALYZE_DOCUMENT: 'Document Analysis', KB_SYNC: 'KB Sync', SYNTHETIC_GENERATION: 'Synthetic Gen' };
+  const map = { ANALYZE_DOCUMENT: 'Protocol Analysis', KB_SYNC: 'Reference Library Sync', SYNTHETIC_GENERATION: 'Synthetic Generation' };
   return map[type] || type;
 }
 
@@ -1060,7 +1060,7 @@ function AdminSectionExplainer({ title, description }) {
       <div className="flex items-center gap-2">
         <Info size={14} className="text-purple-500 shrink-0" />
         <span className="text-xs font-semibold text-purple-700">{title}</span>
-        <span className="text-[10px] text-purple-400 ml-1">— click to {expanded ? 'hide' : 'learn more'}</span>
+        <span className="text-[11px] text-purple-400 ml-1">— click to {expanded ? 'hide' : 'learn more'}</span>
         <ChevronDown size={12} className={cn('text-purple-400 ml-auto transition-transform', expanded && 'rotate-180')} />
       </div>
       {expanded && (
@@ -1074,7 +1074,7 @@ function AdminInfoBanner({ text }) {
   const [show, setShow] = useState(false);
   return (
     <div className="mb-2">
-      <button onClick={() => setShow(!show)} className="flex items-center gap-1.5 text-[10px] text-slate-400 hover:text-slate-600 transition-colors">
+      <button onClick={() => setShow(!show)} className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-slate-600 transition-colors">
         <HelpCircle size={11} />
         <span>{show ? 'Hide explanation' : 'What does this section track?'}</span>
       </button>

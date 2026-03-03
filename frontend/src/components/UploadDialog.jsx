@@ -157,11 +157,11 @@ export function UploadDialog({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">Upload Protocol</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Upload Clinical Trial Protocol</h2>
           <button
             onClick={handleClose}
             className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
@@ -194,11 +194,15 @@ export function UploadDialog({ isOpen, onClose }) {
               />
               <Upload size={32} className="mx-auto text-slate-400 mb-2" />
               <p className="text-sm font-medium text-slate-700">
-                {isDragging ? 'Drop file here' : 'Click or drag to upload'}
+                {isDragging ? 'Drop protocol file here' : 'Click or drag to upload your protocol'}
               </p>
               <p className="text-xs text-slate-500 mt-1">
-                PDF, TXT, CSV, JSON, DOCX — Max 50 MB
+                Supported formats: PDF, TXT, CSV, JSON, DOCX — Max 50 MB
               </p>
+              <p className="text-[11px] text-slate-400 mt-2">
+                Upload your clinical trial protocol, investigator’s brochure, statistical analysis plan, or other trial documents
+              </p>
+
             </label>
           ) : (
             <div className="space-y-3">
@@ -267,7 +271,7 @@ export function UploadDialog({ isOpen, onClose }) {
             ) : (
               <>
                 <Upload size={16} />
-                Upload
+                Upload Protocol
               </>
             )}
           </button>

@@ -1,0 +1,392 @@
+{
+  "metadata": {
+    "title": "FDA Code of Federal Regulations (CFR) — Clinical Trial Regulatory Requirements",
+    "version": "1.0",
+    "last_updated": "2026-03-02",
+    "source": "U.S. Code of Federal Regulations, Title 21",
+    "url": "https://www.ecfr.gov/current/title-21",
+    "description": "Key FDA regulations from 21 CFR that govern clinical trial conduct, electronic records, informed consent, IRB oversight, IND requirements, and NDA/BLA submissions. These are legally binding regulations (not guidance) and form the foundation of US clinical trial compliance."
+  },
+  "21_cfr_part_11": {
+    "title": "Electronic Records; Electronic Signatures",
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-11",
+    "category": "regulatory",
+    "authority_level": "highest",
+    "description": "Requirements for electronic records and electronic signatures to be considered trustworthy, reliable, and equivalent to paper records. Critical for any AI/software system handling clinical trial data.",
+    "subparts": {
+      "subpart_A_general": {
+        "title": "General Provisions",
+        "sections": {
+          "11.1": "Scope: Applies to records required by FDA predicate rules that are maintained or submitted electronically",
+          "11.2": "Implementation: Risk-based approach, narrowed scope per 2003 guidance",
+          "11.3": "Definitions: Electronic record, electronic signature, digital signature, closed system, open system"
+        }
+      },
+      "subpart_B_electronic_records": {
+        "title": "Electronic Records",
+        "sections": {
+          "11.10": {
+            "title": "Controls for Closed Systems",
+            "requirements": [
+              "System validation to ensure accuracy, reliability, consistent intended performance",
+              "Ability to generate accurate and complete copies of records",
+              "Protection of records to enable their accurate and ready retrieval throughout the retention period",
+              "Limiting system access to authorised individuals",
+              "Use of secure, computer-generated, time-stamped audit trails",
+              "Audit trails must record date/time of operator entries and actions, identity of operator, and must not obscure previously recorded information",
+              "Use of operational system checks to enforce permitted sequencing of steps and events",
+              "Use of authority checks to ensure only authorised individuals can use the system, electronically sign, access operation, input/output device, alter a record, or perform operation at hand",
+              "Use of device (terminal) checks to determine validity of data input source",
+              "Determination that persons who develop, maintain, or use electronic record/signature systems have the education, training, and experience to perform their assigned tasks"
+            ]
+          },
+          "11.30": {
+            "title": "Controls for Open Systems",
+            "requirements": [
+              "All controls from 11.10 plus additional measures",
+              "Document encryption and digital signature standards",
+              "Additional security for records transmitted over public networks"
+            ]
+          },
+          "11.50": {
+            "title": "Signature Manifestations",
+            "requirements": [
+              "Signed electronic records must contain: printed name of signer, date and time of signing, meaning of signature (approval, review, responsibility)",
+              "Must be subject to same controls as electronic records, included as part of any human-readable form"
+            ]
+          },
+          "11.70": {
+            "title": "Signature/Record Linking",
+            "requirements": [
+              "Electronic signatures must be linked to their respective electronic records to ensure signatures cannot be excised, copied, or otherwise transferred to falsify another electronic record"
+            ]
+          }
+        }
+      },
+      "subpart_C_electronic_signatures": {
+        "title": "Electronic Signatures",
+        "sections": {
+          "11.100": "Each electronic signature must be unique to one individual and must not be reused by, or reassigned to, anyone else",
+          "11.200": "Electronic signature components: at least two distinct identification components (e.g., user ID + password) for non-biometric; biometric signatures must be designed to ensure they cannot be used by anyone other than their genuine owners",
+          "11.300": "Controls for identification codes/passwords: maintained by system, aged periodically, recalled/revised following loss, electronic record devices checked for unauthorized use"
+        }
+      }
+    },
+    "compliance_for_clinical_trials": [
+      "All EDC (Electronic Data Capture) systems must comply with Part 11",
+      "ePRO (Electronic Patient-Reported Outcomes) systems must comply",
+      "CTMS (Clinical Trial Management Systems) must maintain audit trails",
+      "IRT/IWRS (Interactive Response Technology) systems must comply",
+      "eConsent systems must meet Part 11 requirements",
+      "Any AI/ML system generating clinical trial records must comply",
+      "Data integrity: ALCOA+ principles (Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available)"
+    ]
+  },
+  "21_cfr_part_50": {
+    "title": "Protection of Human Subjects — Informed Consent",
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-50",
+    "category": "regulatory",
+    "authority_level": "highest",
+    "description": "Federal regulations governing informed consent for clinical trial subjects. Defines the basic and additional elements of informed consent.",
+    "key_sections": {
+      "50.20": {
+        "title": "General Requirements for Informed Consent",
+        "requirements": [
+          "No investigator may involve a human being as a subject in research unless obtaining legally effective informed consent",
+          "Consent must be sought only under circumstances providing sufficient opportunity to consider participation",
+          "Consent must be in language understandable to the subject (or legally authorised representative)",
+          "No informed consent may include exculpatory language that waives subject's legal rights or releases investigator/sponsor/institution from liability for negligence"
+        ]
+      },
+      "50.25a": {
+        "title": "8 Basic Elements of Informed Consent",
+        "elements": [
+          "1. Statement that the study involves research, an explanation of the purposes of the research, the expected duration, a description of the procedures, and identification of any experimental procedures",
+          "2. Description of any reasonably foreseeable risks or discomforts to the subject",
+          "3. Description of any benefits to the subject or others which may reasonably be expected from the research",
+          "4. Disclosure of appropriate alternative procedures or courses of treatment that might be advantageous to the subject",
+          "5. Statement describing the extent to which confidentiality of records will be maintained, and that FDA may inspect the records",
+          "6. For research involving more than minimal risk: explanation of whether compensation is available, whether medical treatments are available if injury occurs, what they consist of, and where further information may be obtained",
+          "7. Explanation of whom to contact for answers about the research, research subjects' rights, and in the event of a research-related injury",
+          "8. Statement that participation is voluntary, that refusal to participate will involve no penalty or loss of benefits, and that the subject may discontinue participation at any time without penalty or loss of benefits"
+        ]
+      },
+      "50.25b": {
+        "title": "6 Additional Elements When Appropriate",
+        "elements": [
+          "1. Statement that the treatment or procedure may involve risks to the subject (or embryo/fetus if subject is or may become pregnant) which are currently unforeseeable",
+          "2. Anticipated circumstances under which the subject's participation may be terminated by the investigator without the subject's consent",
+          "3. Any additional costs to the subject that may result from participation",
+          "4. Consequences of a subject's decision to withdraw and procedures for orderly termination of participation",
+          "5. Statement that significant new findings developed during the course of the research which may relate to the subject's willingness to continue participation will be provided to the subject",
+          "6. Approximate number of subjects involved in the study"
+        ]
+      },
+      "50.27": {
+        "title": "Documentation of Informed Consent",
+        "requirements": [
+          "Written consent document: either a copy of what the subject signs OR a short form certifying that the elements were presented orally",
+          "Subject must receive a copy of the consent form",
+          "IRB-approved consent document required"
+        ]
+      }
+    },
+    "special_populations": {
+      "50_subpart_B": {
+        "title": "Informed Consent of Prisoners",
+        "note": "Additional safeguards required for prisoner subjects"
+      },
+      "50_subpart_D": {
+        "title": "Additional Safeguards for Children in Clinical Investigations",
+        "requirements": [
+          "Categories of research risk and prospect of direct benefit",
+          "Permission of parents/guardians AND assent of child when capable",
+          "IRB must determine adequacy of provisions for soliciting assent"
+        ]
+      }
+    }
+  },
+  "21_cfr_part_56": {
+    "title": "Institutional Review Boards",
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-56",
+    "category": "regulatory",
+    "authority_level": "highest",
+    "description": "Federal regulations governing the composition, function, operations, and responsibilities of Institutional Review Boards (IRBs).",
+    "key_sections": {
+      "56.107": {
+        "title": "IRB Membership",
+        "requirements": [
+          "At least 5 members with varying backgrounds",
+          "At least one member whose primary concerns are in scientific areas",
+          "At least one member whose primary concerns are in nonscientific areas",
+          "At least one member who is not otherwise affiliated with the institution and who is not part of the immediate family of a person affiliated with the institution",
+          "Diversity in members including consideration of race, gender, cultural backgrounds, and community attitudes",
+          "No IRB may consist entirely of one profession"
+        ]
+      },
+      "56.108": {
+        "title": "IRB Functions and Operations",
+        "requirements": [
+          "Written procedures for initial and continuing review of research",
+          "Written procedures for reporting to institutional officials and FDA",
+          "Written procedures for determining which projects require review more often than annually",
+          "Minutes of IRB meetings documenting attendance, actions taken, votes, basis for requiring changes, summary of discussion"
+        ]
+      },
+      "56.109": {
+        "title": "IRB Review of Research",
+        "requirements": [
+          "Research must be reviewed at convened meeting with majority of members present (quorum)",
+          "Approval requires majority vote of members present",
+          "Continuing review: at least once per year",
+          "Members with conflicts of interest must not participate in review (except to provide information)"
+        ]
+      },
+      "56.111": {
+        "title": "Criteria for IRB Approval of Research",
+        "criteria": [
+          "Risks to subjects are minimised by using procedures consistent with sound research design",
+          "Risks to subjects are reasonable in relation to anticipated benefits and the importance of the knowledge expected to result",
+          "Selection of subjects is equitable, taking into account the purposes of the research, setting, and vulnerability of populations",
+          "Informed consent will be sought from each prospective subject or legally authorised representative",
+          "Informed consent will be appropriately documented",
+          "Where appropriate, the research plan makes adequate provision for monitoring data to ensure safety of subjects",
+          "Where appropriate, adequate provisions to protect the privacy of subjects and maintain confidentiality of data",
+          "Additional safeguards included for subjects likely to be vulnerable to coercion or undue influence"
+        ]
+      }
+    }
+  },
+  "21_cfr_part_312": {
+    "title": "Investigational New Drug Application (IND)",
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-312",
+    "category": "regulatory",
+    "authority_level": "highest",
+    "description": "Regulations governing the IND process, investigator responsibilities, sponsor responsibilities, and safety reporting during clinical investigation.",
+    "key_sections": {
+      "312.20": {
+        "title": "Requirement for an IND",
+        "requirement": "A sponsor must have an IND in effect before beginning a clinical investigation with a drug"
+      },
+      "312.21": {
+        "title": "Phases of Investigation",
+        "phases": {
+          "Phase_1": "Initial introduction into humans, 20-80 subjects, primarily PK/PD and safety/tolerability",
+          "Phase_2": "Controlled studies, several hundred subjects, evaluate effectiveness and safety, determine dose",
+          "Phase_3": "Expanded controlled and uncontrolled trials, several hundred to several thousand subjects, confirm effectiveness, monitor adverse reactions, establish dose-response"
+        }
+      },
+      "312.23": {
+        "title": "IND Content and Format",
+        "required_sections": [
+          "Form FDA 1571",
+          "Table of contents",
+          "Introductory statement and general investigational plan",
+          "Investigator's Brochure",
+          "Protocol(s) — per 21 CFR 312.23(a)(6)",
+          "Chemistry, manufacturing, and controls information",
+          "Pharmacology and toxicology information",
+          "Previous human experience with the investigational drug",
+          "Additional information: drug dependence/abuse potential, radioactive drugs, pediatric studies"
+        ]
+      },
+      "312.30": {
+        "title": "Protocol Amendments",
+        "types": [
+          "New protocol: requires prior FDA submission (except Phase I with minor modifications)",
+          "Changes to existing protocol: significant changes require submission as protocol amendment",
+          "New investigator: may be submitted as protocol amendment"
+        ]
+      },
+      "312.32": {
+        "title": "IND Safety Reporting",
+        "requirements": {
+          "7_day_alert": "Written notification within 7 calendar days for fatal or life-threatening suspected adverse reactions",
+          "15_day_report": "Written notification within 15 calendar days for serious and unexpected suspected adverse reactions that are both serious and not listed in the Investigator's Brochure",
+          "annual_report": "Brief report within 60 days of anniversary date of IND's effective date",
+          "follow_up": "Follow-up information on previously reported safety events submitted as received",
+          "investigator_notification": "Sponsor must notify all participating investigators of potential serious risks"
+        }
+      },
+      "312.42": {
+        "title": "Clinical Holds",
+        "grounds": [
+          "Human subjects would be exposed to an unreasonable and significant risk of illness or injury",
+          "Clinical investigators are not qualified to conduct the investigation",
+          "Investigator's Brochure is misleading, erroneous, or materially incomplete",
+          "IND does not contain sufficient information to assess the risks to subjects (Phase 1)"
+        ]
+      },
+      "312.50_70": {
+        "title": "Responsibilities",
+        "sponsor_responsibilities_312_50": [
+          "Select qualified investigators",
+          "Provide investigators with the protocol and Investigator's Brochure",
+          "Ensure proper monitoring of the investigation",
+          "Ensure the investigation is conducted in accordance with the plan",
+          "Maintain adequate records and submit required reports",
+          "Ensure IRB review and approval"
+        ],
+        "investigator_responsibilities_312_60": [
+          "Conduct the investigation in accordance with the signed investigator statement, protocol, and applicable regulations",
+          "Protect the rights, safety, and welfare of subjects",
+          "Control investigational drugs",
+          "Maintain adequate and accurate case histories (source documents)",
+          "Report adverse events promptly",
+          "Provide progress reports to sponsor and IRB"
+        ],
+        "monitor_responsibilities_312_70": [
+          "Verify accuracy of clinical trial data against source documents",
+          "Verify informed consent obtained for all subjects",
+          "Verify investigator compliance with protocol",
+          "Report findings to sponsor"
+        ]
+      }
+    }
+  },
+  "21_cfr_part_314": {
+    "title": "Applications for FDA Approval to Market a New Drug (NDA)",
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314",
+    "category": "regulatory",
+    "authority_level": "highest",
+    "key_sections": {
+      "314.50": {
+        "title": "Content and Format of an NDA",
+        "required_elements": [
+          "Full reports of all clinical investigations",
+          "Nonclinical pharmacology and toxicology studies",
+          "Chemistry, manufacturing, and controls data",
+          "Statistical analyses of clinical data",
+          "Patent information",
+          "Proposed labeling"
+        ]
+      },
+      "314.126": {
+        "title": "Adequate and Well-Controlled Studies",
+        "design_elements": [
+          "Clear statement of objectives and methods of analysis",
+          "Summary of proposed or actual methods of analysis",
+          "Design permits valid comparison with a control to provide quantitative assessment of drug effect",
+          "Method of selection of subjects provides adequate assurance that they have the disease/condition",
+          "Method of assigning patients to treatment/control groups minimises bias",
+          "Adequate measures to minimise bias on the part of subjects, observers, analysts",
+          "Well-defined and reliable methods of assessing subjects' response",
+          "Analysis of results adequate to assess effects of the drug"
+        ],
+        "acceptable_controls": [
+          "Placebo concurrent control",
+          "Dose-comparison concurrent control",
+          "No-treatment concurrent control",
+          "Active treatment concurrent control",
+          "Historical control (in rare, well-defined circumstances)"
+        ]
+      }
+    }
+  },
+  "21_cfr_part_600_610": {
+    "title": "Biologics — BLA Requirements",
+    "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-F",
+    "category": "regulatory",
+    "authority_level": "highest",
+    "description": "Regulations governing biological products including vaccines, blood products, gene therapies, and cellular therapies.",
+    "key_points": [
+      "Biologics License Application (BLA) per 21 CFR 601",
+      "Establishment standards: manufacturing facility requirements",
+      "Product standards: identity, strength, quality, purity, potency",
+      "Labeling requirements specific to biologics",
+      "Post-marketing reporting: adverse experience reports within 15 days (serious) or annually",
+      "Biosimilar applications: 351(k) pathway under BPCI Act"
+    ]
+  },
+  "data_standards_requirements": {
+    "cdisc_standards": {
+      "title": "CDISC Data Standards for FDA Submission",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/study-data-technical-conformance-guide-technical-specifications-document",
+      "description": "FDA requires standardised electronic submission data formats for NDA, BLA, and ANDA submissions",
+      "standards": {
+        "SDTM": "Study Data Tabulation Model — standardised format for clinical study data tabulation datasets",
+        "ADaM": "Analysis Data Model — standardised format for analysis-ready datasets",
+        "SEND": "Standard for Exchange of Nonclinical Data — for nonclinical study data",
+        "define_xml": "Define-XML — metadata describing the datasets and variables"
+      },
+      "requirements": [
+        "SDTM datasets required for all NDA/BLA submissions (mandatory since 2017)",
+        "ADaM datasets required for efficacy and safety analyses",
+        "Define-XML 2.0 required as dataset documentation",
+        "Reviewer's Guide for both SDTM and ADaM",
+        "Controlled Terminology from NCI",
+        "FDA Study Data Validator for pre-submission checks"
+      ]
+    }
+  },
+  "accelerated_regulatory_pathways": {
+    "description": "FDA expedited development and review pathways for serious conditions",
+    "pathways": {
+      "fast_track": {
+        "title": "Fast Track Designation",
+        "eligibility": "Serious condition AND nonclinical or clinical data demonstrate potential to address unmet medical need",
+        "benefits": ["Rolling review (submit sections as completed)", "More frequent FDA meetings and communication", "Eligibility for accelerated approval and priority review"]
+      },
+      "breakthrough_therapy": {
+        "title": "Breakthrough Therapy Designation",
+        "eligibility": "Serious condition AND preliminary clinical evidence indicates substantial improvement over available therapy on clinically significant endpoint(s)",
+        "benefits": ["All Fast Track features", "Intensive FDA guidance on efficient drug development", "Organisational commitment involving senior managers", "Eligibility for rolling review"]
+      },
+      "accelerated_approval": {
+        "title": "Accelerated Approval (21 CFR 314.500)",
+        "eligibility": "Serious condition that fills unmet medical need, approval based on surrogate or intermediate clinical endpoint",
+        "requirements": [
+          "Surrogate endpoint reasonably likely to predict clinical benefit",
+          "Post-marketing confirmatory trial required (21 CFR 314.510)",
+          "FDA can require confirmatory study to be underway at time of approval",
+          "FDORA 2022: FDA now has enhanced authority to withdraw accelerated approval if confirmatory trial not completed"
+        ]
+      },
+      "priority_review": {
+        "title": "Priority Review Designation",
+        "eligibility": "Application for drug that treats serious condition AND would provide significant improvement in safety or effectiveness",
+        "benefit": "FDA review within 6 months (vs standard 10 months)"
+      }
+    }
+  }
+}

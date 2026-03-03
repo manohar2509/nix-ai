@@ -122,7 +122,7 @@ export const kbService = {
 
   /**
    * Delete a KB document (removes from DynamoDB + KB S3 bucket).
-   * After deletion, run Sync to remove from Bedrock's index.
+    * Deletion now also queues Bedrock reconciliation automatically.
    */
   deleteDocument: async (kbDocId) => {
     try {
@@ -140,9 +140,12 @@ export const kbService = {
    * Trigger Bedrock KB sync (re-index all documents in KB bucket).
    * Should be called after uploading or deleting KB documents.
    */
-  syncKnowledgeBase: async () => {
+  syncKnowledgeBase: async (options = {}) => {
     try {
-      const res = await apiClient.post('/kb/sync');
+      const params = {};
+      if (options.category) params.category = options.category;
+      if (options.onlyChanged) params.onlyChanged = true;
+      const res = await apiClient.post('/kb/sync', null, { params });
       return res.data; // { jobId, status, createdAt, deduplicated?, inline? }
     } catch (error) {
       throw {
@@ -241,6 +244,86 @@ export const kbService = {
     } catch (error) {
       throw {
         message: 'Failed to bulk delete KB documents',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Update KB metadata fields (name / description / category).
+   */
+  updateDocument: async (kbDocId, updates) => {
+    try {
+      const res = await apiClient.put(`/kb/documents/${kbDocId}`, updates);
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to update KB metadata',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Replace KB document source file after new file was uploaded to S3.
+   */
+  replaceDocument: async (kbDocId, payload) => {
+    try {
+      const res = await apiClient.post(`/kb/documents/${kbDocId}/replace`, payload);
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to replace KB file',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Retrieve immutable audit history for one KB document.
+   */
+  getDocumentHistory: async (kbDocId, limit = 100) => {
+    try {
+      const res = await apiClient.get(`/kb/documents/${kbDocId}/history`, {
+        params: { limit },
+      });
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to fetch KB change history',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * List tracked ingestion jobs for sync observability.
+   */
+  listIngestions: async (syncJobId = null) => {
+    try {
+      const params = {};
+      if (syncJobId) params.syncJobId = syncJobId;
+      const res = await apiClient.get('/kb/ingestions', { params });
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to fetch KB ingestion jobs',
+        details: error.message,
+      };
+    }
+  },
+
+  /**
+   * Reconcile S3 bucket with DynamoDB — import any unregistered files.
+   * Scans the KB bucket for files that exist in S3 but have no metadata record.
+   */
+  reconcileDocuments: async () => {
+    try {
+      const res = await apiClient.post('/kb/reconcile');
+      return res.data;
+    } catch (error) {
+      throw {
+        message: 'Failed to reconcile KB documents',
         details: error.message,
       };
     }

@@ -27,6 +27,24 @@ class RegisterKBDocumentRequest(BaseModel):
     )
 
 
+class UpdateKBDocumentRequest(BaseModel):
+    """Patch editable KB metadata fields."""
+    name: Optional[str] = Field(None, min_length=1, max_length=500)
+    description: Optional[str] = Field(None, max_length=2000)
+    category: Optional[str] = Field(
+        None,
+        pattern="^(regulatory|template|guideline|reference|general)$",
+    )
+
+
+class ReplaceKBDocumentRequest(BaseModel):
+    """Replace an existing KB file after uploading new bytes to S3."""
+    s3_key: str = Field(..., min_length=1)
+    size: int = Field(..., ge=0)
+    name: Optional[str] = Field(None, min_length=1, max_length=500)
+    change_note: str = Field("", max_length=2000)
+
+
 # ── Responses ───────────────────────────────────────────────────
 class KBPresignedUrlResponse(BaseModel):
     """Presigned URL pointing to the KB bucket (NOT the user uploads bucket)."""
@@ -43,8 +61,13 @@ class KBDocumentItem(BaseModel):
     size: int = 0
     description: str = ""
     category: str = "general"
-    status: str = "uploaded"  # uploaded | indexed | error
+    status: str = "sync_pending"  # sync_pending | indexed | unsynced | error | deleted
     uploaded_by: str = ""
+    bedrock_sync_pending: bool = False
+    current_version: int = 1
+    versions: list[dict] = []
+    last_synced_at: Optional[str] = None
+    last_sync_job_id: Optional[str] = None
     created_at: str = ""
     updated_at: str = ""
 
@@ -62,6 +85,8 @@ class KBSyncResponse(BaseModel):
     createdAt: str = ""
     deduplicated: bool = False
     inline: bool = False
+    category: Optional[str] = None
+    onlyChanged: bool = False
     error: Optional[str] = None
 
 
@@ -79,6 +104,9 @@ class KBSanityCheckResponse(BaseModel):
     oversized_files: list[dict] = []
     empty_files: list[dict] = []
     unsupported_types: list[dict] = []
+    missing_in_s3: list[dict] = []
+    size_mismatches: list[dict] = []
+    failed_ingestions: list[dict] = []
     unsynced_documents: list[dict] = []
     synced_documents: list[dict] = []
     issues_count: int = 0
@@ -95,4 +123,26 @@ class KBStatsResponse(BaseModel):
     categories: dict = {}
     synced_count: int = 0
     unsynced_count: int = 0
+    ingestion_failures: int = 0
     uploaded_by_admin: dict = {}
+
+
+class KBDocumentHistoryResponse(BaseModel):
+    """KB document immutable change history."""
+    history: list[dict] = []
+
+
+class KBIngestionListResponse(BaseModel):
+    """Tracked Bedrock ingestion jobs for KB sync operations."""
+    ingestions: list[dict] = []
+
+
+class KBReconcileResponse(BaseModel):
+    """Result of reconciling S3 bucket with DynamoDB metadata."""
+    imported: list[dict] = []
+    skipped: list[dict] = []
+    errors: list[dict] = []
+    imported_count: int = 0
+    skipped_count: int = 0
+    error_count: int = 0
+    total_s3_objects: int = 0
