@@ -26,14 +26,14 @@ fail_on_empty_changeset = false
 [default.local_invoke.parameters]
 env_vars = ".env"
 
-# ── Staging ─────────────────────────────────────────────
-[staging.build.parameters]
+# ── Development (develop / feature branches) ────────────────────
+[development.build.parameters]
 use_container = true
 
-[staging.deploy.parameters]
-stack_name = "nixai-backend"
+[development.deploy.parameters]
+stack_name = "nixai-backend-dev"
 resolve_s3 = true
-s3_prefix = "nixai-backend"
+s3_prefix = "nixai-backend-dev"
 region = "us-east-1"
 confirm_changeset = false
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"

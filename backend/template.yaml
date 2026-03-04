@@ -167,7 +167,9 @@ Resources:
       Handler: worker.handler.lambda_handler
       MemorySize: 1024
       Timeout: 900
-      ReservedConcurrentExecutions: 5
+      # ReservedConcurrentExecutions intentionally omitted — uses account unreserved pool.
+      # Setting this to a fixed number can violate AWS's minimum of 10 unreserved executions
+      # across the account and cause CREATE_FAILED during CloudFormation deployment.
       Events:
         SQSTrigger:
           Type: SQS
