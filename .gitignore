@@ -9,6 +9,7 @@ dist/
 dist-ssr/
 build/
 .aws-sam/
+.vite/
 
 # Environment files
 .env

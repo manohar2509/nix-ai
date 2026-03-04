@@ -64,6 +64,11 @@ class Settings:
     )
     BEDROCK_KB_ID: str = os.getenv("BEDROCK_KB_ID", "")
 
+    # ── Boardroom (Adversarial Council v2) ─────────────────────
+    BOARDROOM_MODEL_ID: str = os.getenv(
+        "BOARDROOM_MODEL_ID", "us.amazon.nova-pro-v1:0"
+    )
+
     # ── Textract (optional — for structured table/form extraction) ──
     TEXTRACT_ENABLED: bool = os.getenv("TEXTRACT_ENABLED", "false").lower() == "true"
 

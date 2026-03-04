@@ -1,0 +1,200 @@
+{
+  "metadata": {
+    "title": "US Payer & Insurer Coverage Requirements",
+    "version": "1.0",
+    "last_updated": "2026-03-01",
+    "sources": [
+      "CMS Medicare Coverage Determination Process",
+      "Published formulary guidelines from major US insurers",
+      "AMCP Format for Formulary Submissions (v4.1)",
+      "Academy of Managed Care Pharmacy (AMCP) Dossier Requirements"
+    ]
+  },
+  "cms_medicare": {
+    "coverage_determination_process": {
+      "national_coverage_determination": {
+        "description": "CMS evaluates whether an item or service is reasonable and necessary for Medicare beneficiaries nationwide",
+        "key_criteria": [
+          "Sufficient clinical evidence of safety and efficacy",
+          "Comparison to existing standard of care",
+          "Patient-relevant health outcomes (not just surrogate endpoints)",
+          "Adequate representation of Medicare-age population in trials",
+          "Cost-effectiveness is NOT a formal criterion but influences decisions"
+        ],
+        "common_denial_reasons": [
+          "Insufficient evidence of clinical benefit vs existing treatments",
+          "Surrogate endpoints without demonstrated correlation to clinical outcomes",
+          "Lack of data in Medicare-eligible population (age ≥65)",
+          "Missing long-term safety data",
+          "No evidence of improved health outcomes vs standard of care"
+        ]
+      },
+      "local_coverage_determination": {
+        "description": "Medicare Administrative Contractors (MACs) make regional coverage decisions",
+        "variability_note": "Coverage can vary significantly by MAC region"
+      }
+    },
+    "coverage_with_evidence_development": {
+      "description": "CMS may cover a treatment conditionally while requiring additional evidence collection",
+      "implications_for_protocol": "Protocols should consider CED-ready endpoints and real-world data collection plans"
+    }
+  },
+  "major_us_insurers": {
+    "UnitedHealthcare": {
+      "covered_lives": "~51 million",
+      "market_share": "~14%",
+      "formulary_approach": "Closed formulary with prior authorization",
+      "key_coverage_criteria": [
+        "FDA-approved indication required",
+        "Step therapy requirements (try cheaper alternatives first)",
+        "Prior authorization for specialty drugs",
+        "Outcomes-based contracts for high-cost therapies",
+        "Real-world evidence requirements for continued coverage"
+      ],
+      "common_denial_triggers": [
+        "No prior authorization obtained",
+        "Step therapy not completed",
+        "Off-label use without compendia listing",
+        "Lack of comparative effectiveness data",
+        "Exceeds quantity limits without justification"
+      ],
+      "preferred_evidence_types": [
+        "Randomized controlled trials with active comparator",
+        "Patient-reported outcomes (PROs)",
+        "Quality of life measures (EQ-5D preferred)",
+        "Total cost of care analysis",
+        "Real-world evidence from claims databases"
+      ]
+    },
+    "Anthem_Elevance": {
+      "covered_lives": "~47 million",
+      "market_share": "~13%",
+      "formulary_approach": "Tiered formulary (4-6 tiers)",
+      "key_coverage_criteria": [
+        "Clinical pathway compliance",
+        "Biosimilar substitution policies",
+        "Site-of-care optimization",
+        "Value-based pricing agreements"
+      ],
+      "common_denial_triggers": [
+        "Not on preferred formulary tier",
+        "Clinical pathway deviation",
+        "Duplicate therapy",
+        "Missing clinical documentation"
+      ]
+    },
+    "CVS_Aetna": {
+      "covered_lives": "~35 million",
+      "market_share": "~10%",
+      "formulary_approach": "Integrated PBM + insurer model",
+      "key_coverage_criteria": [
+        "CVS Caremark formulary placement required",
+        "Zero-dollar copay programs for preferred drugs",
+        "Transform Diabetes Care program compliance",
+        "Specialty pharmacy dispensing through CVS Specialty"
+      ],
+      "common_denial_triggers": [
+        "Not dispensed through CVS Specialty",
+        "Non-preferred brand when generic/biosimilar available",
+        "Missing REMS compliance documentation"
+      ]
+    },
+    "Cigna_Express_Scripts": {
+      "covered_lives": "~18 million (medical) + ~100 million (PBM)",
+      "market_share": "~5% medical, ~28% PBM",
+      "formulary_approach": "Aggressive formulary management via Express Scripts",
+      "key_coverage_criteria": [
+        "Express Scripts National Preferred Formulary",
+        "Utilization management programs",
+        "Accredo specialty pharmacy dispensing",
+        "Value-based contract requirements"
+      ],
+      "common_denial_triggers": [
+        "Excluded from National Preferred Formulary",
+        "Therapeutic substitution available",
+        "Exceeds annual cost threshold without outcomes data"
+      ]
+    },
+    "BlueCross_BlueShield": {
+      "covered_lives": "~115 million (across all plans)",
+      "market_share": "~33% (largest combined)",
+      "formulary_approach": "Varies by state plan — generally conservative",
+      "key_coverage_criteria": [
+        "Evidence-based medicine reviews (Hayes, ECRI)",
+        "Technology evaluation center assessments",
+        "State-specific mandated benefits compliance",
+        "Blue Distinction Centers for specialty care"
+      ],
+      "common_denial_triggers": [
+        "Experimental or investigational determination",
+        "Not medically necessary per clinical policy bulletin",
+        "Lack of peer-reviewed published evidence",
+        "Alternative effective treatment available at lower cost"
+      ]
+    }
+  },
+  "denial_rate_benchmarks_by_therapeutic_area": {
+    "oncology": {
+      "average_initial_denial_rate": "15-25%",
+      "key_drivers": "Companion diagnostic requirements, NCCN compendia listing, prior authorization complexity",
+      "mitigation": "Include NCCN-recognized endpoints, biomarker-driven enrollment, comparative effectiveness vs SOC"
+    },
+    "cardiology": {
+      "average_initial_denial_rate": "20-35%",
+      "key_drivers": "MACE endpoint requirements, CV outcomes trial expectations, step therapy policies",
+      "mitigation": "Include MACE composite endpoint, CV outcomes data, heart failure hospitalization endpoints"
+    },
+    "neurology_alzheimers": {
+      "average_initial_denial_rate": "40-60%",
+      "key_drivers": "Surrogate endpoint debates (amyloid PET), clinical meaningfulness of CDR-SB changes, high drug costs",
+      "mitigation": "Include clinically meaningful cognitive endpoints, caregiver burden measures, functional assessments"
+    },
+    "rare_disease": {
+      "average_initial_denial_rate": "25-40%",
+      "key_drivers": "Small sample sizes, lack of natural history data, ultra-high drug pricing",
+      "mitigation": "Natural history comparator, patient preference data, long-term follow-up commitments"
+    },
+    "immunology": {
+      "average_initial_denial_rate": "20-30%",
+      "key_drivers": "Biosimilar competition, step therapy requirements, head-to-head data expectations",
+      "mitigation": "Head-to-head vs biosimilar, disease activity scores, PRO endpoints (HAQ-DI, DLQI)"
+    },
+    "diabetes_metabolic": {
+      "average_initial_denial_rate": "30-45%",
+      "key_drivers": "Crowded market, CV safety requirements, step therapy with metformin/sulfonylurea",
+      "mitigation": "CV outcomes trial, HbA1c + body weight endpoints, hypoglycemia rates, patient convenience data"
+    }
+  },
+  "amcp_dossier_requirements": {
+    "description": "AMCP Format for Formulary Submissions — standard format for payer evidence dossiers in the US",
+    "required_sections": [
+      "Product Information and Disease Description",
+      "Clinical Evidence (efficacy, safety, special populations)",
+      "Economic Value and Outcomes (cost-effectiveness, budget impact)",
+      "Product Availability and Ordering Information"
+    ],
+    "critical_evidence_elements": [
+      "Head-to-head comparisons with current standard of care",
+      "Patient-reported outcomes using validated instruments",
+      "Quality-adjusted life years (QALYs) or equivalent",
+      "Budget impact model for a typical health plan",
+      "Subgroup analyses for key payer populations",
+      "Real-world evidence plan or existing RWE data"
+    ]
+  },
+  "icer_value_framework": {
+    "description": "Institute for Clinical and Economic Review — influential US health technology assessment body",
+    "thresholds": {
+      "cost_effective": "< $100,000 per QALY gained",
+      "low_value": "$100,000 - $150,000 per QALY gained",
+      "poor_value": "> $150,000 per QALY gained"
+    },
+    "impact": "ICER reviews influence PBM formulary decisions and state Medicaid coverage",
+    "protocol_implications": [
+      "Include quality of life endpoints (EQ-5D-5L preferred)",
+      "Collect resource utilization data for economic modeling",
+      "Plan for long-term follow-up to demonstrate durability of effect",
+      "Include active comparator arm with current standard of care"
+    ]
+  }
+}

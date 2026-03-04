@@ -1,0 +1,220 @@
+{
+  "metadata": {
+    "title": "Clinical Trial Cost Benchmarks",
+    "version": "1.0",
+    "last_updated": "2026-03-01",
+    "sources": [
+      "Tufts Center for the Study of Drug Development (CSDD)",
+      "DiMasi JA et al., Journal of Health Economics (2016)",
+      "IQVIA Institute Clinical Development Report (2024)",
+      "Sertkaya A et al., Clinical Trials (2016) — Cost Drivers",
+      "Moore TJ et al., JAMA Internal Medicine (2020)",
+      "ClinicalTrials.gov aggregate enrollment data"
+    ]
+  },
+  "per_patient_costs_by_phase": {
+    "phase_1": {
+      "median_cost_per_patient_usd": 41117,
+      "range": "15000-70000",
+      "median_patients": 32,
+      "median_total_cost_usd": 4000000,
+      "total_cost_range": "1500000-12000000",
+      "key_cost_drivers": ["PK/PD assessments", "Intensive safety monitoring", "Specialized clinical sites", "Dose-escalation committee meetings"]
+    },
+    "phase_2": {
+      "median_cost_per_patient_usd": 45897,
+      "range": "20000-80000",
+      "median_patients": 171,
+      "median_total_cost_usd": 13000000,
+      "total_cost_range": "7000000-25000000",
+      "key_cost_drivers": ["Efficacy endpoint assessments", "Biomarker testing", "Multiple dose arms", "Longer treatment duration", "Data monitoring committees"]
+    },
+    "phase_3": {
+      "median_cost_per_patient_usd": 47221,
+      "range": "25000-100000",
+      "median_patients": 500,
+      "median_total_cost_usd": 48000000,
+      "total_cost_range": "20000000-150000000",
+      "key_cost_drivers": ["Large sample sizes", "Multi-site operations", "Global regulatory requirements", "Long-term safety follow-up", "Adjudication committees", "CRO management"]
+    },
+    "phase_4": {
+      "median_cost_per_patient_usd": 28948,
+      "range": "10000-50000",
+      "median_patients": 700,
+      "median_total_cost_usd": 16000000,
+      "total_cost_range": "5000000-40000000",
+      "key_cost_drivers": ["Large-scale safety surveillance", "Real-world evidence collection", "Registry maintenance"]
+    }
+  },
+  "per_patient_costs_by_therapeutic_area": {
+    "oncology": {
+      "phase_2_median": 71000,
+      "phase_3_median": 78000,
+      "premium_vs_average": "+65%",
+      "drivers": "Complex dosing, imaging, biomarkers, companion diagnostics, specialized sites"
+    },
+    "cardiovascular": {
+      "phase_2_median": 52000,
+      "phase_3_median": 62000,
+      "premium_vs_average": "+31%",
+      "drivers": "MACE endpoint adjudication, long follow-up, large CV outcomes trials, event-driven design"
+    },
+    "neurology_cns": {
+      "phase_2_median": 55000,
+      "phase_3_median": 68000,
+      "premium_vs_average": "+44%",
+      "drivers": "PET imaging, CSF collection, cognitive testing, specialized sites, long disease trajectory"
+    },
+    "immunology_inflammation": {
+      "phase_2_median": 45000,
+      "phase_3_median": 52000,
+      "premium_vs_average": "+10%",
+      "drivers": "Biologic manufacturing, injection training, immunogenicity testing"
+    },
+    "rare_disease": {
+      "phase_2_median": 65000,
+      "phase_3_median": 85000,
+      "premium_vs_average": "+80%",
+      "drivers": "Difficult recruitment, specialized centers, natural history studies, small N but high per-patient cost"
+    },
+    "metabolic_diabetes": {
+      "phase_2_median": 38000,
+      "phase_3_median": 45000,
+      "premium_vs_average": "-5%",
+      "drivers": "Well-established endpoints, large patient pools, standardized assessments"
+    },
+    "infectious_disease": {
+      "phase_2_median": 32000,
+      "phase_3_median": 36000,
+      "premium_vs_average": "-24%",
+      "drivers": "Shorter treatment durations, established microbiological endpoints"
+    }
+  },
+  "cost_breakdown_percentages": {
+    "clinical_procedures_and_patient_care": {
+      "percentage": "30-35%",
+      "includes": "Lab tests, imaging, procedures, patient visits, treatment administration"
+    },
+    "site_management_and_monitoring": {
+      "percentage": "20-25%",
+      "includes": "Site selection, initiation, monitoring visits (on-site + remote), close-out"
+    },
+    "data_management_and_biostatistics": {
+      "percentage": "10-15%",
+      "includes": "EDC setup, data cleaning, statistical analysis, CDISC compliance, database lock"
+    },
+    "regulatory_and_ethics": {
+      "percentage": "8-12%",
+      "includes": "IND/CTA preparation, IRB/EC submissions, safety reporting, regulatory agency meetings"
+    },
+    "project_management_and_cro": {
+      "percentage": "10-15%",
+      "includes": "CRO fees, project management, vendor management, quality assurance"
+    },
+    "drug_supply_and_logistics": {
+      "percentage": "5-10%",
+      "includes": "Drug manufacturing, packaging, labeling, distribution, cold chain management"
+    },
+    "patient_recruitment_and_retention": {
+      "percentage": "5-8%",
+      "includes": "Advertising, screening, travel reimbursement, retention strategies, patient stipends"
+    },
+    "medical_writing_and_publications": {
+      "percentage": "3-5%",
+      "includes": "Protocol writing, CSR, publications, regulatory documents"
+    }
+  },
+  "amendment_costs": {
+    "average_cost_per_amendment_usd": 500000,
+    "range": "141000-2000000",
+    "average_amendments_per_trial": 2.3,
+    "timeline_impact_months": 3,
+    "cost_breakdown": {
+      "protocol_revision_and_irb_resubmission": "50000-100000",
+      "site_retraining_and_implementation": "100000-300000",
+      "crf_and_database_modifications": "50000-150000",
+      "additional_monitoring_visits": "100000-500000",
+      "patient_reconsenting": "25000-100000",
+      "regulatory_authority_notifications": "25000-75000"
+    },
+    "most_costly_amendment_types": [
+      "Changes to eligibility criteria (enrollment restart risk)",
+      "Addition of new endpoints or assessments",
+      "Sample size increase",
+      "Changes to study duration",
+      "Safety monitoring modifications",
+      "Statistical analysis plan revisions"
+    ]
+  },
+  "site_costs": {
+    "us_site_cost_per_year": {
+      "median": 350000,
+      "range": "150000-600000",
+      "includes": "Site fees, investigator payments, coordinator time, IRB fees, startup costs"
+    },
+    "eu_site_cost_per_year": {
+      "median": 275000,
+      "range": "120000-450000"
+    },
+    "asia_pacific_site_cost_per_year": {
+      "median": 180000,
+      "range": "80000-300000"
+    },
+    "site_startup_time_months": {
+      "us": "4-6",
+      "eu": "5-9",
+      "asia_pacific": "3-8"
+    }
+  },
+  "regulatory_filing_costs": {
+    "fda_ind": {
+      "preparation_cost": "200000-500000",
+      "pdufa_fee_nda_2025": 4228412,
+      "pdufa_fee_bla_2025": 4228412,
+      "pre_ind_meeting": "50000-100000"
+    },
+    "ema_cta": {
+      "preparation_cost": "150000-400000",
+      "scientific_advice_fee": "90000-150000",
+      "centralised_procedure_fee": "300000+"
+    },
+    "pmda_japan": {
+      "preparation_cost": "200000-500000",
+      "consultation_fee": "100000-200000"
+    },
+    "health_canada": {
+      "preparation_cost": "100000-250000",
+      "cta_filing_fee": "25000-50000"
+    }
+  },
+  "enrollment_cost_factors": {
+    "average_screen_failure_rate": "25-35%",
+    "cost_per_screen_failure_usd": "3000-8000",
+    "average_dropout_rate": "15-25%",
+    "cost_of_replacing_dropout": "50000-80000",
+    "recruitment_timeline_per_site_months": "12-18",
+    "enrollment_acceleration_options": {
+      "additional_sites": "+$350K per site per year",
+      "digital_recruitment": "+$50K-200K campaign",
+      "patient_advocacy_partnership": "+$25K-100K",
+      "protocol_simplification": "Reduces screen failure 10-20%, saves $2K-5K per avoided failure"
+    }
+  },
+  "roi_benchmarks": {
+    "cost_of_one_day_delay_to_market": {
+      "blockbuster_drug_1B_annual": 2740000,
+      "specialty_drug_500M_annual": 1370000,
+      "niche_drug_100M_annual": 274000
+    },
+    "value_of_amendment_prevention": {
+      "average_savings_per_prevented_amendment": 500000,
+      "average_time_saved_months": 3,
+      "market_revenue_saved_per_month_delay_avoided": "varies by drug revenue"
+    },
+    "protocol_optimization_impact": {
+      "enrollment_acceleration_from_better_criteria": "15-25% faster",
+      "screen_failure_reduction_from_clearer_criteria": "10-20% reduction",
+      "multi_jurisdiction_simultaneous_filing_value": "6-12 months earlier global access"
+    }
+  }
+}

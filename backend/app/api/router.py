@@ -4,7 +4,7 @@ Top-level API Router — aggregates all sub-routers.
 
 from fastapi import APIRouter
 
-from app.api.routes import analysis, analytics, chat, documents, health, jobs, kb, regulatory
+from app.api.routes import analysis, analytics, chat, documents, health, jobs, kb, regulatory, strategic
 
 api_router = APIRouter()
 
@@ -25,3 +25,6 @@ api_router.include_router(kb.router)
 
 # Regulatory Intelligence: All REQ-1 through REQ-10 endpoints
 api_router.include_router(regulatory.router)
+
+# Strategic Intelligence: Killer features (Council, Friction, Cost, Payer, etc.)
+api_router.include_router(strategic.router)

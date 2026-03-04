@@ -4,8 +4,9 @@ Description: >
   NIX AI - Clinical Trial Intelligence Platform.
   API Lambda (FastAPI) + Worker Lambda (SQS processor).
   Infrastructure (DynamoDB, S3, SQS, Cognito, Bedrock KB) is managed
-  via AWS Console — this template only deploys Lambda functions and API Gateway.
+  separately via infra/template.yaml or AWS Console.
 
+# ── Parameters ──────────────────────────────────────────────────
 Parameters:
   Environment:
     Type: String
@@ -25,16 +26,22 @@ Parameters:
     Type: String
     Default: amazon.nova-lite-v1:0
     Description: Bedrock foundation model ID for Converse API
+  BoardroomModelId:
+    Type: String
+    Default: us.amazon.nova-pro-v1:0
+    Description: Model for multi-agent boardroom debates
   CorsOrigins:
     Type: String
-    Default: "https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
+    Default: "https://nixai.example.com,https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
 
+# ── Globals ─────────────────────────────────────────────────────
 Globals:
   Function:
     Runtime: python3.12
     Architectures: [arm64]
     MemorySize: 512
     Timeout: 30
+    Tracing: Active
     Environment:
       Variables:
         ENV: !Ref Environment
@@ -49,14 +56,34 @@ Globals:
         BEDROCK_MODEL_ID: !Ref BedrockModelId
         BEDROCK_KB_ID: !Ref BedrockKBId
         BEDROCK_KB_MODEL_ARN: !Sub "arn:aws:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}"
+        BOARDROOM_MODEL_ID: !Ref BoardroomModelId
         CORS_ORIGINS: !Ref CorsOrigins
 
+# ── Resources ───────────────────────────────────────────────────
 Resources:
-  # ── REST API (existing ID: 9nffw9vxc5) ─────────────────────
+
+  # ── API Gateway Access Log Group ──────────────────────────────
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/nixai-api-${Environment}"
+      RetentionInDays: 30
+
+  # ── REST API Gateway ──────────────────────────────────────────
   NixAIRestApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: prod
+      TracingEnabled: true
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath","status":"$context.status","responseLength":"$context.responseLength","integrationLatency":"$context.integrationLatency"}'
+      MethodSettings:
+        - HttpMethod: "*"
+          ResourcePath: "/*"
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 50
+          LoggingLevel: ERROR
       Cors:
         AllowOrigins: "'*'"
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
@@ -67,17 +94,30 @@ Resources:
         Authorizers:
           CognitoAuthorizer:
             UserPoolArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}"
+      # Ensure CORS headers on 4xx/5xx from API Gateway itself
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Request-Id'"
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Request-Id'"
 
-  # ── API Lambda (existing: nixai-api) ────────────────────────
+  # ── API Lambda ────────────────────────────────────────────────
   NixAIApiFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: nixai-api
-      Description: NIX AI API - FastAPI Lambda
+      Description: NIX AI API - FastAPI on Lambda via Mangum
       CodeUri: .
       Handler: app.main.handler
       MemorySize: 1024
       Timeout: 29
+      AutoPublishAlias: live
       Events:
         ApiCatchAll:
           Type: Api
@@ -112,13 +152,25 @@ Resources:
                 - bedrock-agent-runtime:RetrieveAndGenerate
                 - bedrock-agent-runtime:Retrieve
               Resource: "*"
+            - Effect: Allow
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: "*"
 
-  # ── Worker Lambda (existing: nixai-worker) ──────────────────
+  # ── API Lambda Log Group (managed retention) ──────────────────
+  NixAIApiFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/nixai-api"
+      RetentionInDays: 30
+
+  # ── Worker Lambda ─────────────────────────────────────────────
   NixAIWorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: nixai-worker
-      Description: NIX AI Worker - background processor
+      Description: NIX AI Worker - SQS background processor
       CodeUri: .
       Handler: worker.handler.lambda_handler
       MemorySize: 1024
@@ -131,6 +183,8 @@ Resources:
             Queue: !Sub "arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:nixai-job-queue"
             BatchSize: 1
             MaximumBatchingWindowInSeconds: 0
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
       Policies:
         - DynamoDBCrudPolicy:
             TableName: nixai-core
@@ -138,6 +192,8 @@ Resources:
             BucketName: nixai-clinical-uploads
         - S3CrudPolicy:
             BucketName: nixai-clinical-kb
+        - SQSSendMessagePolicy:
+            QueueName: nixai-job-queue
         - Statement:
             - Effect: Allow
               Action:
@@ -149,12 +205,34 @@ Resources:
                 - bedrock-agent:StartIngestionJob
                 - bedrock-agent:GetIngestionJob
               Resource: "*"
+            - Effect: Allow
+              Action:
+                - xray:PutTraceSegments
+                - xray:PutTelemetryRecords
+              Resource: "*"
 
+  # ── Worker Lambda Log Group (managed retention) ───────────────
+  NixAIWorkerFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/nixai-worker"
+      RetentionInDays: 30
+
+# ── Outputs ─────────────────────────────────────────────────────
 Outputs:
   ApiEndpoint:
     Description: API Gateway endpoint URL
     Value: !Sub "https://${NixAIRestApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiEndpoint"
+  ApiId:
+    Description: API Gateway REST API ID
+    Value: !Ref NixAIRestApi
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiId"
   ApiFunctionArn:
+    Description: API Lambda function ARN
     Value: !GetAtt NixAIApiFunction.Arn
   WorkerFunctionArn:
+    Description: Worker Lambda function ARN
     Value: !GetAtt NixAIWorkerFunction.Arn

@@ -29,6 +29,7 @@ from worker.tasks.kb_sync import process_kb_sync
 from worker.tasks.synthetic_generation import process_synthetic_generation  # deprecated stub
 from worker.tasks.amendment_simulation import process_amendment_simulation
 from worker.tasks.protocol_comparison import process_protocol_comparison
+from worker.tasks.boardroom_debate import process_boardroom_debate
 
 # Task router
 TASK_HANDLERS = {
@@ -37,6 +38,7 @@ TASK_HANDLERS = {
     "GENERATE_SYNTHETIC": process_synthetic_generation,  # backward compat
     "SIMULATE_AMENDMENT": process_amendment_simulation,
     "COMPARE_PROTOCOLS": process_protocol_comparison,
+    "RUN_BOARDROOM_DEBATE": process_boardroom_debate,
 }
 
 

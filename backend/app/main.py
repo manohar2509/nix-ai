@@ -29,7 +29,7 @@ app = FastAPI(
     title="NIX AI API",
     description="Clinical Trial Intelligence Platform — Backend API",
     version="1.0.0",
-    docs_url="/docs" if settings.is_dev else None,   # Swagger UI only in dev
+    docs_url="/docs",    # Keep Swagger UI available (protected by Cognito at gateway)
     redoc_url="/redoc" if settings.is_dev else None,
 )
 
