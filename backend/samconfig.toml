@@ -20,7 +20,7 @@ parameter_overrides = [
   "CognitoUserPoolId=us-east-1_rjx3Fv6lg",
   "CognitoAppClientId=937sqn4ogsomo8d6stlapvpo9",
   "BedrockKBId=R8HXMHF97R",
-  "CorsOrigins=https://develop.d3hb7807u19psc.amplifyapp.com,https://main.d3hb7807u19psc.amplifyapp.com,https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
+  "CorsOrigins=https://develop.d3hb7807u19psc.amplifyapp.com,https://main.d3hb7807u19psc.amplifyapp.com,https://l9erflitx4.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
 ]
 fail_on_empty_changeset = false
 
