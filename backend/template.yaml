@@ -86,7 +86,7 @@ Resources:
           ThrottlingRateLimit: 50
           LoggingLevel: ERROR
       Cors:
-        AllowOrigins: "'*'"
+        AllowOrigin: "'*'"
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowHeaders: "'Content-Type,Authorization,X-Request-Id'"
         MaxAge: "'600'"
