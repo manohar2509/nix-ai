@@ -25,15 +25,11 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Optional
 
 from app.services import bedrock_service, dynamo_service, s3_service
 from app.services.regulatory_engine import (
     ALL_REFERENCES_PROMPT_BLOCK,
     ICH_GUIDELINES,
-    FDA_GUIDANCE,
-    HTA_BODY_REFS,
-    enrich_guideline_urls,
 )
 
 logger = logging.getLogger(__name__)

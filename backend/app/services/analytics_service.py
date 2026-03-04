@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import logging
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
 
 from app.core.auth import CurrentUser
 from app.services import dynamo_service
@@ -383,7 +382,6 @@ def get_admin_rag(user: CurrentUser) -> dict:
     day_counter: dict[str, int] = defaultdict(int)
     # Per-document message count
     doc_msg_counter: dict[str, int] = defaultdict(int)
-    doc_name_map: dict[str, str] = {}
 
     for m in all_messages:
         doc_id = m.get("doc_id", "")

@@ -28,7 +28,6 @@ def process_protocol_comparison(payload: dict) -> None:
     job_id = payload["job_id"]
     cmp_id = payload["cmp_id"]
     document_ids = payload["document_ids"]
-    user_id = payload.get("user_id", "system")
 
     start_time = time.time()
 

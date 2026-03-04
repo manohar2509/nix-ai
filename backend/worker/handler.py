@@ -15,6 +15,13 @@ import logging
 import sys
 import traceback
 
+from worker.tasks.document_analysis import process_document_analysis
+from worker.tasks.kb_sync import process_kb_sync
+from worker.tasks.synthetic_generation import process_synthetic_generation  # deprecated stub
+from worker.tasks.amendment_simulation import process_amendment_simulation
+from worker.tasks.protocol_comparison import process_protocol_comparison
+from worker.tasks.boardroom_debate import process_boardroom_debate
+
 # Setup logging before anything else
 logging.basicConfig(
     level=logging.INFO,
@@ -22,14 +29,6 @@ logging.basicConfig(
     stream=sys.stdout,
 )
 logger = logging.getLogger("nixai.worker")
-
-# Task processors
-from worker.tasks.document_analysis import process_document_analysis
-from worker.tasks.kb_sync import process_kb_sync
-from worker.tasks.synthetic_generation import process_synthetic_generation  # deprecated stub
-from worker.tasks.amendment_simulation import process_amendment_simulation
-from worker.tasks.protocol_comparison import process_protocol_comparison
-from worker.tasks.boardroom_debate import process_boardroom_debate
 
 # Task router
 TASK_HANDLERS = {

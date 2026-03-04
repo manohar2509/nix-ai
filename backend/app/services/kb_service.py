@@ -21,7 +21,7 @@ from typing import Optional
 
 from app.core.auth import CurrentUser
 from app.core.exceptions import NixAIException, StorageError
-from app.services import dynamo_service, s3_service, sqs_service
+from app.services import dynamo_service, sqs_service
 
 logger = logging.getLogger(__name__)
 

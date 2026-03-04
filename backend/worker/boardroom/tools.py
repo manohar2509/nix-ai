@@ -16,7 +16,6 @@ This is what makes the system trustworthy for VCs — full auditability.
 
 from __future__ import annotations
 
-import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -400,7 +399,6 @@ def check_diversity_equity(
     strengths = []
 
     criteria_lower = (inclusion_criteria or "").lower()
-    pop_lower = (target_population or "").lower()
 
     # Check age diversity
     if "65" in criteria_lower or "geriatric" in criteria_lower or "elderly" in criteria_lower:
@@ -445,10 +443,10 @@ def check_diversity_equity(
         f"\n"
         f"  STRENGTHS:\n"
         + ("\n".join(f"    ✓ {s}" for s in strengths) if strengths else "    (none identified)")
-        + f"\n\n  ISSUES:\n"
+        + "\n\n  ISSUES:\n"
         + ("\n".join(f"    ✗ {i}" for i in issues) if issues else "    (none — excellent DEI posture)")
-        + f"\n\n  FDA Diversity Action Plan (2024): Sponsors must submit DAP with IND/IDE. "
-        f"Failure to address diversity gaps is increasingly a Complete Response Letter trigger."
+        + "\n\n  FDA Diversity Action Plan (2024): Sponsors must submit DAP with IND/IDE. "
+        "Failure to address diversity gaps is increasingly a Complete Response Letter trigger."
     )
 
 

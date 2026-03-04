@@ -38,7 +38,6 @@ def process_document_analysis(payload: dict) -> None:
     job_id = payload["job_id"]
     doc_id = payload["doc_id"]
     s3_key = payload["s3_key"]
-    user_id = payload.get("user_id", "system")
     preferences = payload.get("preferences")  # User analysis preferences from ConfigurationView
 
     start_time = time.time()
