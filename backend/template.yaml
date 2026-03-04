@@ -32,7 +32,7 @@ Parameters:
     Description: Model for multi-agent boardroom debates
   CorsOrigins:
     Type: String
-    Default: "https://nixai.example.com,https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
+    Default: "https://nixai.example.com,https://l9erflitx4.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
 
 # ── Globals ─────────────────────────────────────────────────────
 Globals:
@@ -92,6 +92,7 @@ Resources:
         MaxAge: "'600'"
       Auth:
         DefaultAuthorizer: CognitoAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
         Authorizers:
           CognitoAuthorizer:
             UserPoolArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}"
@@ -130,6 +131,30 @@ Resources:
           Properties:
             RestApiId: !Ref NixAIRestApi
             Path: /
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        ApiHealth:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NixAIRestApi
+            Path: /health
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        ApiDocs:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NixAIRestApi
+            Path: /docs
+            Method: GET
+            Auth:
+              Authorizer: NONE
+        ApiOpenapi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NixAIRestApi
+            Path: /openapi.json
             Method: GET
             Auth:
               Authorizer: NONE

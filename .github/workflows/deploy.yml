@@ -68,6 +68,8 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: development
+    outputs:
+      api_url: ${{ steps.save_endpoint.outputs.api_url }}
     defaults:
       run:
         working-directory: ${{ env.BACKEND_DIR }}
@@ -133,6 +135,7 @@ jobs:
             --no-fail-on-empty-changeset
 
       - name: Save API Endpoint
+        id: save_endpoint
         run: |
           STACK_NAME="${{ steps.config_env.outputs.stack_name }}"
 
@@ -143,6 +146,7 @@ jobs:
             --output text)
 
           echo "API_URL=$ENDPOINT" >> $GITHUB_ENV
+          echo "api_url=$ENDPOINT" >> $GITHUB_OUTPUT
           echo "✅ Deployed Backend ($STACK_NAME) to: $ENDPOINT"
 
   # ─────────────────────────────────────────────────────────────
@@ -155,14 +159,16 @@ jobs:
     steps:
       - name: Check API Health
         run: |
-          # Use the API URL from the deployed environment variable or Repository Variable
-          # Note: In a real run, we might need to fetch it dynamically or use the fixed var.
-          # For Hackathon, we use the VITE_API_URL var which should match the deployed API.
-          
-          TARGET_URL="${{ vars.VITE_API_URL }}"
+          # Use the dynamically deployed URL from the deploy-backend job output
+          TARGET_URL="${{ needs.deploy-backend.outputs.api_url }}"
           
           if [ -z "$TARGET_URL" ]; then
-             echo "⚠️ VITE_API_URL variable not set. Skipping smoke test."
+             echo "⚠️ API URL not available from deploy step. Falling back to repo variable."
+             TARGET_URL="${{ vars.VITE_API_URL }}"
+          fi
+          
+          if [ -z "$TARGET_URL" ]; then
+             echo "⚠️ No API URL available. Skipping smoke test."
              exit 0
           fi
 
@@ -173,8 +179,20 @@ jobs:
           
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL/health")
           
-          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 404 ]; then
-            echo "✅ Success: API responded with $HTTP_CODE"
+          echo "Health endpoint responded with: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Success: API is healthy"
+          elif [ "$HTTP_CODE" -eq 502 ]; then
+            echo "⚠️ Warning: Lambda cold start may have timed out (502). Retrying..."
+            sleep 5
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL/health")
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              echo "✅ Success on retry: API is healthy"
+            else
+              echo "❌ Failure after retry: API responded with $HTTP_CODE"
+              exit 1
+            fi
           else
             echo "❌ Failure: API responded with $HTTP_CODE"
             exit 1

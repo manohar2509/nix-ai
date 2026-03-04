@@ -10,11 +10,21 @@ from app.core.config import Settings, get_settings
 router = APIRouter(tags=["health"])
 
 
-@router.get("/", response_model=HealthResponse)
-def health_check(settings: Settings = Depends(get_settings)):
+def _health_response(settings: Settings) -> HealthResponse:
     return HealthResponse(
         status="NIX AI System Online",
         version="1.0.0",
         environment=settings.ENV,
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
+
+
+@router.get("/", response_model=HealthResponse)
+def health_check(settings: Settings = Depends(get_settings)):
+    return _health_response(settings)
+
+
+@router.get("/health", response_model=HealthResponse)
+def health_check_alias(settings: Settings = Depends(get_settings)):
+    """Health check at /health path — used by monitoring & smoke tests."""
+    return _health_response(settings)
