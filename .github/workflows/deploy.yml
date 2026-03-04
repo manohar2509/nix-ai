@@ -8,8 +8,8 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  
-  # ✅ ENABLE MANUAL BUTTON (Runs both Frontend Check & Backend Deploy)
+
+  # Manual trigger — always deploys both
   workflow_dispatch:
 
 concurrency:
@@ -26,11 +26,59 @@ env:
 jobs:
 
   # ─────────────────────────────────────────────────────────────
-  # 1. Frontend Check (Runs on Push, PR, and Manual Trigger)
-  #    Note: This validates the code. Deployment is done by Amplify.
+  # 0. Detect which parts of the repo actually changed.
+  #    Every other job reads these outputs so it only runs when
+  #    its own code was touched — saving CI minutes and AWS costs.
+  # ─────────────────────────────────────────────────────────────
+  changes:
+    name: "🔍 Detect Changed Paths"
+    runs-on: ubuntu-latest
+    outputs:
+      backend:  ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # need parent commit to diff against
+
+      - name: Identify changed paths
+        id: filter
+        run: |
+          # workflow_dispatch has no previous commit → deploy everything
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "backend=true"  >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          echo "── Changed files ──────────────────────"
+          echo "$CHANGED"
+          echo "───────────────────────────────────────"
+
+          # backend: anything under backend/ or workflow file itself
+          if echo "$CHANGED" | grep -qE '^backend/|^\.github/workflows/deploy\.yml'; then
+            echo "backend=true"  >> $GITHUB_OUTPUT
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+
+          # frontend: anything under frontend/ or the Amplify build spec
+          if echo "$CHANGED" | grep -qE '^frontend/|^amplify\.yml'; then
+            echo "frontend=true"  >> $GITHUB_OUTPUT
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ─────────────────────────────────────────────────────────────
+  # 1. Frontend Check — only when frontend code changed.
+  #    Note: actual deployment is handled by AWS Amplify auto-build.
   # ─────────────────────────────────────────────────────────────
   frontend-check:
     name: "🔨 Frontend Build Check"
+    needs: changes
+    # Skip entirely when only backend files changed
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -59,13 +107,14 @@ jobs:
           VITE_COGNITO_CLIENT_ID: ${{ vars.VITE_COGNITO_CLIENT_ID }}
 
   # ─────────────────────────────────────────────────────────────
-  # 2. Deploy Backend (Runs on Push OR Manual Trigger)
-  #    Skips on Pull Requests.
+  # 2. Deploy Backend — only when backend code changed AND it's
+  #    a real push (not a PR). Skips entirely on frontend-only pushes.
   # ─────────────────────────────────────────────────────────────
   deploy-backend:
     name: "🚀 Deploy Backend"
-    # ✅ FIX: Run on Push OR Manual Button (workflow_dispatch)
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: changes
+    # Only deploy when backend files changed AND this is not a PR
+    if: needs.changes.outputs.backend == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment: development
     outputs:
@@ -150,11 +199,13 @@ jobs:
           echo "✅ Deployed Backend ($STACK_NAME) to: $ENDPOINT"
 
   # ─────────────────────────────────────────────────────────────
-  # 3. Smoke Test (Runs immediately after Backend Deploy)
+  # 3. Smoke Test — only runs after a successful backend deploy
   # ─────────────────────────────────────────────────────────────
   smoke-test:
     name: "🔍 Smoke Test"
-    needs: [deploy-backend]
+    needs: [changes, deploy-backend]
+    # deploy-backend is skipped when backend didn't change → skip smoke test too
+    if: needs.changes.outputs.backend == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
       - name: Check API Health
