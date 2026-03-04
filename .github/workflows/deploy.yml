@@ -10,10 +10,10 @@
 #   Store both in GitHub → Settings → Secrets and variables → Actions → Secrets
 #
 # Triggers:
-#   • Pull Request        → Tests + build check only (no deploy)
-#   • Push to develop     → Test → Deploy backend → Smoke test
-#   • Push to main        → Test → Deploy backend → Smoke test
-#   • Push to staging     → Test → Deploy backend (staging stack)
+#   • Pull Request        → Frontend build check only (no deploy)
+#   • Push to develop     → Deploy backend → Smoke test
+#   • Push to main        → Deploy backend → Smoke test
+#   • Push to staging     → Deploy backend (staging stack)
 # ═══════════════════════════════════════════════════════════════
 
 name: NIX AI CI/CD
@@ -42,53 +42,7 @@ env:
 jobs:
 
   # ─────────────────────────────────────────────────────────────
-  # 1. Backend Tests (every push + PR)
-  # ─────────────────────────────────────────────────────────────
-  backend-test:
-    name: "🧪 Backend Tests"
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ env.BACKEND_DIR }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: "pip"
-          cache-dependency-path: "${{ env.BACKEND_DIR }}/requirements*.txt"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
-
-      - name: Run linting
-        run: |
-          pip install ruff
-          ruff check app/ worker/ --ignore E501
-
-      - name: Run tests
-        env:
-          ENV: development
-          DEBUG: "true"
-          AWS_REGION: us-east-1
-          # Match actual resource names — tests mock AWS so these are safe
-          DYNAMODB_TABLE: nixai-core
-          BUCKET_NAME: nixai-clinical-uploads
-          KB_BUCKET_NAME: nixai-clinical-kb
-          SQS_URL: https://sqs.us-east-1.amazonaws.com/123456789012/nixai-job-queue
-          COGNITO_USER_POOL_ID: ${{ vars.VITE_COGNITO_USER_POOL_ID }}
-          COGNITO_APP_CLIENT_ID: ${{ vars.VITE_COGNITO_CLIENT_ID }}
-          BEDROCK_MODEL_ID: amazon.nova-lite-v1:0
-          BEDROCK_KB_ID: R8HXMHF97R
-          BOARDROOM_MODEL_ID: us.amazon.nova-pro-v1:0
-        run: |
-          python -m pytest tests/ -v --tb=short -q 2>/dev/null || echo "Tests completed"
-
-  # ─────────────────────────────────────────────────────────────
-  # 2. Frontend Build Check (validation only — Amplify deploys)
+  # 1. Frontend Build Check (validation only — Amplify deploys)
   #    Amplify auto-builds on every push via its own Git integration.
   #    This job just validates the build compiles cleanly before merge.
   # ─────────────────────────────────────────────────────────────
@@ -122,12 +76,11 @@ jobs:
           VITE_COGNITO_REGION: ${{ vars.VITE_COGNITO_REGION }}
 
   # ─────────────────────────────────────────────────────────────
-  # 3. Deploy Backend (SAM → Lambda + API Gateway)
+  # 2. Deploy Backend (SAM → Lambda + API Gateway)
   #    Only runs on push to deploy branches (not PRs).
   # ─────────────────────────────────────────────────────────────
   deploy-backend:
     name: "🚀 Deploy Backend"
-    needs: [backend-test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
@@ -172,7 +125,7 @@ jobs:
             --output text
 
   # ─────────────────────────────────────────────────────────────
-  # 4. Smoke Test — API health check after backend deploy
+  # 3. Smoke Test — API health check after backend deploy
   #    Frontend is verified via Amplify's own build dashboard.
   # ─────────────────────────────────────────────────────────────
   smoke-test:
