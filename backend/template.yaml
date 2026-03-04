@@ -112,7 +112,6 @@ Resources:
   NixAIApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: nixai-api
       Description: NIX AI API - FastAPI on Lambda via Mangum
       CodeUri: .
       Handler: app.main.handler
@@ -163,7 +162,6 @@ Resources:
   NixAIWorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: nixai-worker
       Description: NIX AI Worker - SQS background processor
       CodeUri: .
       Handler: worker.handler.lambda_handler
