@@ -67,7 +67,7 @@ jobs:
     # ✅ FIX: Run on Push OR Manual Button (workflow_dispatch)
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
     defaults:
       run:
         working-directory: ${{ env.BACKEND_DIR }}
@@ -110,8 +110,7 @@ jobs:
           
           sam deploy --config-env $ENV_NAME \
             --no-confirm-changeset \
-            --no-fail-on-empty-changeset \
-            --import-existing-resources
+            --no-fail-on-empty-changeset
 
       - name: Save API Endpoint
         run: |
