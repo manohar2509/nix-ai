@@ -14,6 +14,7 @@ s3_prefix = "nixai-backend"
 region = "us-east-1"
 confirm_changeset = false
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+import_existing_resources = true
 parameter_overrides = [
   "Environment=production",
   "CognitoUserPoolId=us-east-1_rjx3Fv6lg",
@@ -31,17 +32,18 @@ env_vars = ".env"
 use_container = true
 
 [staging.deploy.parameters]
-stack_name = "nixai-backend-staging"
+stack_name = "nixai-backend"
 resolve_s3 = true
-s3_prefix = "nixai-backend-staging"
+s3_prefix = "nixai-backend"
 region = "us-east-1"
 confirm_changeset = false
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
+import_existing_resources = true
 parameter_overrides = [
   "Environment=staging",
   "CognitoUserPoolId=us-east-1_rjx3Fv6lg",
   "CognitoAppClientId=937sqn4ogsomo8d6stlapvpo9",
   "BedrockKBId=R8HXMHF97R",
-  "CorsOrigins=https://staging.d3hb7807u19psc.amplifyapp.com,https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
+  "CorsOrigins=https://staging.d3hb7807u19psc.amplifyapp.com,https://main.d3hb7807u19psc.amplifyapp.com,https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
 ]
 fail_on_empty_changeset = false

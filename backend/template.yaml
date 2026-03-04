@@ -159,13 +159,6 @@ Resources:
                 - xray:PutTelemetryRecords
               Resource: "*"
 
-  # ── API Lambda Log Group (managed retention) ──────────────────
-  NixAIApiFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: "/aws/lambda/nixai-api"
-      RetentionInDays: 30
-
   # ── Worker Lambda ─────────────────────────────────────────────
   NixAIWorkerFunction:
     Type: AWS::Serverless::Function
@@ -211,13 +204,6 @@ Resources:
                 - xray:PutTraceSegments
                 - xray:PutTelemetryRecords
               Resource: "*"
-
-  # ── Worker Lambda Log Group (managed retention) ───────────────
-  NixAIWorkerFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: "/aws/lambda/nixai-worker"
-      RetentionInDays: 30
 
 # ── Outputs ─────────────────────────────────────────────────────
 Outputs:
