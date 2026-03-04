@@ -38,7 +38,8 @@ Parameters:
 Globals:
   Function:
     Runtime: python3.12
-    Architectures: [arm64]
+    # x86_64 matches GitHub Actions ubuntu-latest runner — avoids cross-arch Docker builds
+    Architectures: [x86_64]
     MemorySize: 512
     Timeout: 30
     Tracing: Active

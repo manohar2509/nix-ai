@@ -89,22 +89,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Resolve config environment
+        id: config_env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "env_name=default" >> $GITHUB_OUTPUT
+          else
+            echo "env_name=staging" >> $GITHUB_OUTPUT
+          fi
+
       - name: SAM Build
-        run: sam build --use-container
+        # --use-container is already set in samconfig.toml; listed here explicitly for clarity.
+        # Architecture is x86_64 (matches this ubuntu-latest runner) — no cross-arch Docker needed.
+        run: sam build --use-container --config-env ${{ steps.config_env.outputs.env_name }}
 
       - name: SAM Deploy
         run: |
-          # Logic: Main branch -> 'default' env, Others -> 'staging' env
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            ENV_NAME="default"
-          else
-            ENV_NAME="staging"
-          fi
-          
+          ENV_NAME="${{ steps.config_env.outputs.env_name }}"
           echo "Deploying to environment: $ENV_NAME from branch: ${{ github.ref_name }}"
           
-          # This deploys the stack. 
-          # Make sure your samconfig.toml has [default] and [staging] sections if you use staging.
           sam deploy --config-env $ENV_NAME \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
