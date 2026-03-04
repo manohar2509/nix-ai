@@ -26,16 +26,24 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
     if (confirmDeleteId === docId) {
       try {
         await documentService.deleteDocument(docId);
-        removeDocument(docId);  // Optimistic local removal
-        // Also refresh from backend to ensure consistency
+        // Store auto-selects next doc and clears stale analysis/chat
+        removeDocument(docId);
+        // Refresh from backend to ensure consistency
         try {
-          const docs = await documentService.listDocuments();
-          useAppStore.getState().setDocuments(docs);
+          const freshDocs = await documentService.listDocuments();
+          const store = useAppStore.getState();
+          store.setDocuments(freshDocs);
+          // If store auto-selected a doc, ensure it still exists on backend
+          if (store.currentDocument && !freshDocs.find(d => d.id === store.currentDocument.id)) {
+            store.setCurrentDocument(freshDocs.length > 0 ? freshDocs[0] : null);
+            store.setLastAnalysis(null);
+          }
         } catch { /* optimistic removal already handled */ }
         showToast({ type: 'success', title: 'Protocol removed', message: 'The protocol has been deleted from your workspace.' });
         setConfirmDeleteId(null);
       } catch (err) {
         showToast({ type: 'error', title: 'Delete failed', message: err.message || 'Could not remove the protocol.' });
+        setConfirmDeleteId(null);
       }
     } else {
       setConfirmDeleteId(docId);
@@ -135,13 +143,20 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        {/* ── Workflow Section ── */}
         <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2 hidden lg:block">
-          Workspace
+          Workflow
         </div>
-        <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" active={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')} tooltip="Overview of all your clinical trial protocols, scores, and recent activity" />
-        <NavItem icon={<FileText size={18} />} label="Protocol Review" active={activeView === 'protocol'} onClick={() => setActiveView('protocol')} tooltip="View and analyze your uploaded clinical trial protocol" />
+        <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" badge="Home" active={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')} tooltip="Overview of all your clinical trial protocols, scores, and recent activity" />
+        <NavItem icon={<FileText size={18} />} label="Protocol Review" badge="Core" active={activeView === 'protocol'} onClick={() => setActiveView('protocol')} tooltip="Upload → Analyze → View findings, scores, and AI insights for your protocol" />
         <NavItem icon={<GitCompare size={18} />} label="Compare Protocols" active={activeView === 'comparison'} onClick={() => setActiveView('comparison')} tooltip="Side-by-side comparison of multiple protocol designs" />
+
+        {/* ── Reports Section ── */}
+        <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-3 mt-4 mb-2 hidden lg:block">
+          Reports
+        </div>
         <NavItem icon={<History size={18} />} label="Analysis History" active={activeView === 'history'} onClick={() => { setActiveView('history'); }} tooltip="Browse past regulatory and payer analyses" />
+        <NavItem icon={<Briefcase size={18} />} label="Deal Room" active={activeView === 'dealroom'} onClick={() => setActiveView('dealroom')} tooltip="Investor-ready report with portfolio risk analysis and regulatory scorecard" />
 
         {/* Upload Button */}
         <button
@@ -160,7 +175,10 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
               className="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-200 transition-colors"
             >
               <FolderOpen size={13} />
-              <span className="hidden lg:block">Documents ({documents.length})</span>
+              <span className="hidden lg:block flex-1 text-left">My Protocols ({documents.length})</span>
+              <svg className={cn('w-3 h-3 transition-transform hidden lg:block', showDocList ? 'rotate-180' : '')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
             {showDocList && (
               <div className="space-y-0.5 mt-1 max-h-60 overflow-y-auto pr-0.5">
@@ -179,15 +197,26 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
                   >
                     <FileText size={13} className="shrink-0" />
                     <span className="truncate hidden lg:block flex-1 text-left">{doc.name}</span>
-                    {/* Status indicator */}
+                    {/* Status indicator with label */}
                     {doc.status === 'error' && (
-                      <span className="shrink-0 h-2 w-2 rounded-full bg-red-500" title="Analysis failed" />
+                      <span className="shrink-0 hidden lg:inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400" title="Analysis failed">
+                        Failed
+                      </span>
                     )}
                     {doc.status === 'analyzed' && (
-                      <span className="shrink-0 h-2 w-2 rounded-full bg-green-500" title="Analysis complete" />
+                      <span className="shrink-0 hidden lg:inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400" title="Analysis complete">
+                        Reviewed
+                      </span>
                     )}
                     {doc.status === 'analyzing' && (
-                      <span className="shrink-0 h-2 w-2 rounded-full bg-amber-400 animate-pulse" title="Analysis in progress..." />
+                      <span className="shrink-0 hidden lg:inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 animate-pulse" title="Analysis in progress">
+                        Running
+                      </span>
+                    )}
+                    {(!doc.status || doc.status === 'uploaded') && (
+                      <span className="shrink-0 hidden lg:inline-block text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-700/40 text-slate-500" title="Pending review">
+                        Pending
+                      </span>
                     )}
                     {/* Delete button */}
                     <button
@@ -285,7 +314,7 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
   );
 }
 
-function NavItem({ icon, label, active, adminItem, onClick, tooltip }) {
+function NavItem({ icon, label, active, adminItem, onClick, tooltip, badge }) {
   return (
     <button
       onClick={onClick}
@@ -309,7 +338,15 @@ function NavItem({ icon, label, active, adminItem, onClick, tooltip }) {
       )}>
         {icon}
       </span>
-      <span className="font-medium text-sm hidden lg:block">{label}</span>
+      <span className="font-medium text-sm hidden lg:block flex-1 text-left">{label}</span>
+      {badge && (
+        <span className={cn(
+          'text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden lg:inline-block',
+          active ? 'bg-brand-400/20 text-brand-300' : 'bg-slate-700/50 text-slate-500'
+        )}>
+          {badge}
+        </span>
+      )}
       {active && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-brand-400 rounded-r-full hidden lg:block" />
       )}

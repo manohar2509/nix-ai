@@ -12,6 +12,7 @@ import AdminAnalyticsView from './components/AdminAnalyticsView';
 import ConfigurationView from './components/ConfigurationView';
 import KnowledgeBaseView from './components/KnowledgeBaseView';
 import ComparisonView from './components/ComparisonView';
+import DealRoomView from './components/DealRoomView';
 import { UploadDialog } from './components/UploadDialog';
 import Toast from './components/Toast';
 import { useAppStore, useDocuments, useAnalysis } from './stores/useAppStore';
@@ -207,6 +208,10 @@ function DashboardLayout() {
         ) : activeView === 'comparison' ? (
           <main className="flex-1 overflow-hidden">
             <ComparisonView />
+          </main>
+        ) : activeView === 'dealroom' ? (
+          <main className="flex-1 overflow-hidden">
+            <DealRoomView />
           </main>
         ) : activeView === 'settings' ? (
           <main className="flex-1 overflow-hidden">

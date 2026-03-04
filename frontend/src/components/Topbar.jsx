@@ -40,7 +40,7 @@ export default function Topbar({ isAnalyzing, onAnalyze, onUpload, currentDocume
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
           <FileText size={13} />
-          <span>Clinical Protocols</span>
+          <span>Protocol Review</span>
           <ChevronRight size={11} />
         </div>
         <h1 className="text-sm font-semibold text-slate-800 flex items-center gap-2.5 min-w-0">
@@ -54,12 +54,12 @@ export default function Topbar({ isAnalyzing, onAnalyze, onUpload, currentDocume
                   ? 'bg-red-50 text-red-700 ring-red-200/60'
                   : currentDocument.status === 'analyzing'
                     ? 'bg-amber-50 text-amber-700 ring-amber-200/60 animate-pulse'
-                    : 'bg-slate-50 text-slate-600 ring-slate-200/60'
+                    : 'bg-blue-50 text-blue-700 ring-blue-200/60'
             )}>
-              {currentDocument.status === 'analyzed' ? 'Reviewed'
-                : currentDocument.status === 'analyzing' ? 'Analyzing'
-                : currentDocument.status === 'error' ? 'Failed'
-                : 'Pending Review'}
+              {currentDocument.status === 'analyzed' ? '✓ Reviewed'
+                : currentDocument.status === 'analyzing' ? '⏳ Analyzing'
+                : currentDocument.status === 'error' ? '✕ Failed'
+                : '○ Pending Review'}
             </span>
           )}
         </h1>

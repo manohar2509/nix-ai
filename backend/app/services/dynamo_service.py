@@ -976,3 +976,147 @@ def get_last_kb_sync_job() -> Optional[dict]:
         return None
     kb_jobs.sort(key=lambda j: j.get("created_at", ""), reverse=True)
     return kb_jobs[0]
+
+
+# ════════════════════════════════════════════════════════════════
+# ADVERSARIAL BOARDROOM DEBATES
+#
+#   PK:     USER#{user_id}
+#   SK:     DEBATE#{debate_id}
+#   GSI1PK: DEBATE#{debate_id}
+#   GSI1SK: #META
+#
+# Each debate is a multi-agent discussion about a document.
+# The transcript is stored as a list and updated in real-time
+# (appended turn-by-turn) so the frontend can poll and animate.
+# ════════════════════════════════════════════════════════════════
+
+def create_debate(
+    user_id: str,
+    doc_id: str,
+    job_id: str,
+) -> dict:
+    """Create a new debate record for the Adversarial Boardroom."""
+    table = get_dynamodb_table()
+    debate_id = _uuid()
+    now = _now_iso()
+    item = {
+        "PK": f"USER#{user_id}",
+        "SK": f"DEBATE#{debate_id}",
+        "GSI1PK": f"DEBATE#{debate_id}",
+        "GSI1SK": "#META",
+        "entity": "DEBATE",
+        "id": debate_id,
+        "user_id": user_id,
+        "doc_id": doc_id,
+        "job_id": job_id,
+        "status": "QUEUED",
+        "progress": 0,
+        "protocol_name": "",
+        "scores": {},
+        "current_round": 0,
+        "total_rounds": 0,
+        "current_topic": "",
+        "transcript": [],
+        "final_verdict": None,
+        "total_turns": 0,
+        "rounds_completed": 0,
+        "elapsed_seconds": 0,
+        "error": None,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+    }
+    table.put_item(Item=_prepare_item(item))
+    logger.info("Created debate %s for doc %s", debate_id, doc_id)
+    return _clean_item(item)
+
+
+def get_debate(debate_id: str) -> Optional[dict]:
+    """Get a debate by ID via GSI1."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        IndexName="GSI1",
+        KeyConditionExpression=Key("GSI1PK").eq(f"DEBATE#{debate_id}") & Key("GSI1SK").eq("#META"),
+        Limit=1,
+    )
+    items = resp.get("Items", [])
+    return _clean_item(items[0]) if items else None
+
+
+def get_debates_for_document(doc_id: str, user_id: str) -> list[dict]:
+    """List all debates for a specific document."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("DEBATE#"),
+    )
+    debates = [_clean_item(i) for i in resp.get("Items", [])]
+    return [d for d in debates if d.get("doc_id") == doc_id]
+
+
+def update_debate(debate_id: str, updates: dict) -> Optional[dict]:
+    """Update a debate record."""
+    debate = get_debate(debate_id)
+    if not debate:
+        return None
+    table = get_dynamodb_table()
+    updates["updated_at"] = _now_iso()
+    if updates.get("status") in ("COMPLETED", "FAILED"):
+        updates["completed_at"] = _now_iso()
+    expr_parts = []
+    expr_values = {}
+    expr_names = {}
+    for k, v in updates.items():
+        safe_key = f"#{k}"
+        expr_names[safe_key] = k
+        expr_parts.append(f"{safe_key} = :{k}")
+        expr_values[f":{k}"] = _prepare_value(v)
+    table.update_item(
+        Key={"PK": debate["PK"], "SK": debate["SK"]},
+        UpdateExpression="SET " + ", ".join(expr_parts),
+        ExpressionAttributeValues=expr_values,
+        ExpressionAttributeNames=expr_names,
+    )
+    debate.update(updates)
+    return _clean_item(debate)
+
+
+def append_debate_transcript_turn(debate_id: str, turn_data: dict) -> None:
+    """Atomically append a single debate turn to the transcript array.
+
+    Uses DynamoDB list_append for atomic, concurrent-safe appends.
+    This is the KEY operation for real-time UI updates — each turn is
+    appended immediately so the frontend can poll and animate.
+    """
+    debate = get_debate(debate_id)
+    if not debate:
+        logger.error("Debate %s not found for transcript append", debate_id)
+        return
+    table = get_dynamodb_table()
+    prepared_turn = _prepare_value(turn_data)
+    table.update_item(
+        Key={"PK": debate["PK"], "SK": debate["SK"]},
+        UpdateExpression=(
+            "SET #transcript = list_append(if_not_exists(#transcript, :empty), :turn), "
+            "#updated_at = :now"
+        ),
+        ExpressionAttributeNames={
+            "#transcript": "transcript",
+            "#updated_at": "updated_at",
+        },
+        ExpressionAttributeValues={
+            ":turn": [prepared_turn],
+            ":empty": [],
+            ":now": _now_iso(),
+        },
+    )
+    logger.info("Appended turn from %s to debate %s", turn_data.get("agent", "unknown"), debate_id)
+
+
+def get_latest_debate_for_document(doc_id: str, user_id: str) -> Optional[dict]:
+    """Get the most recent debate for a document."""
+    debates = get_debates_for_document(doc_id, user_id)
+    if not debates:
+        return None
+    debates.sort(key=lambda d: d.get("created_at", ""), reverse=True)
+    return debates[0]

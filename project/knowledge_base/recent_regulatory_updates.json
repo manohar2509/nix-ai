@@ -1,0 +1,199 @@
+{
+  "metadata": {
+    "title": "Recent Regulatory Updates & Guidance Changes",
+    "version": "1.0",
+    "last_updated": "2026-03-04",
+    "purpose": "Tracks recently published or finalized regulatory guidance documents that may affect existing protocol designs. Used by the Compliance Watchdog feature to detect compliance drift."
+  },
+  "updates": [
+    {
+      "id": "UPDATE-001",
+      "guideline_code": "ICH M14",
+      "title": "Use of Real-World Data in Clinical Studies for Regulatory Decision-Making",
+      "status": "Step 2 Draft (public consultation)",
+      "publication_date": "2025-06-13",
+      "effective_date": "2026-Q2 (estimated finalization)",
+      "issuing_body": "ICH",
+      "url": "https://database.ich.org/sites/default/files/ICH_M14_Step2_DraftGuideline_2025_0613.pdf",
+      "summary": "First ICH guideline on Real-World Data (RWD) and Real-World Evidence (RWE). Establishes fitness-for-purpose framework for using RWD in regulatory submissions. Covers external control arms, safety surveillance, and post-marketing studies.",
+      "impact_on_protocols": [
+        "Protocols using external/historical controls must now demonstrate RWD fitness-for-purpose per M14 criteria",
+        "Safety sections should reference M14 for post-marketing RWE commitments",
+        "Protocols with RWE components need data quality assessment plans",
+        "Hybrid designs combining RCT + RWE need explicit justification per M14 framework"
+      ],
+      "affected_sections": ["Study Design", "Statistical Analysis", "Safety Monitoring", "Data Management"],
+      "severity": "high"
+    },
+    {
+      "id": "UPDATE-002",
+      "guideline_code": "ICH E6(R3)",
+      "title": "Good Clinical Practice — Modernized Risk-Based Framework",
+      "status": "Step 4 Finalized",
+      "publication_date": "2025-01-06",
+      "effective_date": "2025-07-01 (enforcement begins)",
+      "issuing_body": "ICH",
+      "url": "https://database.ich.org/sites/default/files/ICH_E6%28R3%29_Step4_FinalGuideline_2025_0106_ErrorCorrections_2025_1024.pdf",
+      "summary": "Complete overhaul of GCP requirements. Introduces proportionate risk-based quality management, technology-neutral approach supporting decentralized trials, enhanced data governance requirements, and expanded sponsor oversight obligations.",
+      "impact_on_protocols": [
+        "All protocols must implement risk-based quality management (RBQM) approach",
+        "Informed consent sections need updating for electronic/remote consent options",
+        "Data integrity section must address source data verification strategies",
+        "Monitoring plan must be risk-proportionate, not one-size-fits-all",
+        "Protocols must document critical-to-quality factors"
+      ],
+      "affected_sections": ["Regulatory and Ethical Considerations", "Data Management", "Safety Monitoring", "Study Design"],
+      "severity": "critical"
+    },
+    {
+      "id": "UPDATE-003",
+      "guideline_code": "ICH E20",
+      "title": "Adaptive Clinical Trials",
+      "status": "Step 3 Draft",
+      "publication_date": "2025-06-27",
+      "effective_date": "2026-Q4 (estimated)",
+      "issuing_body": "ICH",
+      "url": "https://database.ich.org/sites/default/files/ICH_E20EWG_Step3_DraftGuideline_2025_0627.pdf",
+      "summary": "First dedicated ICH guideline on adaptive clinical trial designs. Formalizes requirements for interim analyses, sample size re-estimation, treatment arm dropping, Bayesian designs, and type I error control in adaptive settings.",
+      "impact_on_protocols": [
+        "Protocols using adaptive designs must cite E20 and follow its framework",
+        "Interim analysis plans need explicit type I error control documentation",
+        "Bayesian adaptive designs need prior specification justification per E20",
+        "DMC charter must address information access boundaries for adaptive decisions"
+      ],
+      "affected_sections": ["Study Design", "Statistical Considerations", "Safety Monitoring"],
+      "severity": "high"
+    },
+    {
+      "id": "UPDATE-004",
+      "guideline_code": "ICH E22",
+      "title": "Patient Preference Studies in Clinical Development",
+      "status": "Step 2 Draft",
+      "publication_date": "2025-11-19",
+      "effective_date": "2027-Q1 (estimated)",
+      "issuing_body": "ICH",
+      "url": "https://database.ich.org/sites/default/files/ICH_E22_Step2_draftGuideline_Assembly_Endorsed_FINAL_2025_1119.pdf",
+      "summary": "New guideline on incorporating patient preference information (PPI) into benefit-risk assessments. Describes when and how to conduct patient preference studies and how regulators will consider PPI in decision-making.",
+      "impact_on_protocols": [
+        "Protocols should consider including patient preference endpoints",
+        "Benefit-risk sections should reference patient preference data if available",
+        "PRO endpoint selection should align with patient-identified priorities"
+      ],
+      "affected_sections": ["Study Objectives and Endpoints", "Efficacy Assessments"],
+      "severity": "medium"
+    },
+    {
+      "id": "UPDATE-005",
+      "guideline_code": "ICH M11",
+      "title": "Clinical Electronic Structured Harmonised Protocol (CeSHarP)",
+      "status": "Step 4 Finalized",
+      "publication_date": "2024-11-21",
+      "effective_date": "2025-05-01",
+      "issuing_body": "ICH",
+      "url": "https://database.ich.org/sites/default/files/ICH_M11_Step4_Guideline_2024_1121.pdf",
+      "summary": "Harmonized clinical trial protocol template. Mandates standardized protocol sections, structured data elements, and electronic exchange format. Enables digital protocols and automated regulatory processing.",
+      "impact_on_protocols": [
+        "Protocol structure must follow M11 standardized sections",
+        "All protocols should be prepared in M11-compliant electronic format",
+        "Section numbering and content requirements are now harmonized globally"
+      ],
+      "affected_sections": ["All sections — structural compliance"],
+      "severity": "high"
+    },
+    {
+      "id": "UPDATE-006",
+      "guideline_code": "FDA Diversity Plans",
+      "title": "Diversity Plans to Improve Enrollment of Participants from Underrepresented Populations",
+      "status": "Final Guidance",
+      "publication_date": "2024-06-26",
+      "effective_date": "2024-06-26",
+      "issuing_body": "FDA",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/diversity-plans-improve-enrollment-participants-underrepresented-populations-clinical-studies",
+      "summary": "FDA now requires diversity action plans for Phase 3 and certain pivotal Phase 2 trials. Sponsors must set demographic enrollment targets and describe strategies to improve representation.",
+      "impact_on_protocols": [
+        "Phase 3 protocols MUST include a diversity enrollment plan",
+        "Inclusion/exclusion criteria should be reviewed for unnecessary restrictions on diverse populations",
+        "Site selection should prioritize diverse patient populations",
+        "Decentralized trial elements should be considered to reduce access barriers"
+      ],
+      "affected_sections": ["Study Population", "Study Design", "Regulatory and Ethical Considerations"],
+      "severity": "critical"
+    },
+    {
+      "id": "UPDATE-007",
+      "guideline_code": "FDA DCT",
+      "title": "Decentralized Clinical Trials for Drugs, Biological Products, and Devices",
+      "status": "Final Guidance",
+      "publication_date": "2024-09-12",
+      "effective_date": "2024-09-12",
+      "issuing_body": "FDA",
+      "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/decentralized-clinical-trials-drugs-biological-products-and-devices",
+      "summary": "FDA final guidance on decentralized clinical trials (DCTs). Covers remote visits, eConsent, direct-to-patient drug delivery, telemedicine, and wearable devices in clinical trials.",
+      "impact_on_protocols": [
+        "Protocols with any remote/decentralized elements must comply with DCT guidance",
+        "eConsent procedures must meet FDA electronic records requirements",
+        "Remote monitoring and telehealth visits need clear protocol procedures",
+        "Direct-to-patient drug delivery requires chain-of-custody documentation"
+      ],
+      "affected_sections": ["Study Design", "Treatment Plan", "Data Management", "Regulatory and Ethical Considerations"],
+      "severity": "medium"
+    },
+    {
+      "id": "UPDATE-008",
+      "guideline_code": "EU HTA Regulation",
+      "title": "EU Health Technology Assessment Regulation (2021/2282)",
+      "status": "Regulation in force — Joint Clinical Assessments begin",
+      "publication_date": "2022-01-11",
+      "effective_date": "2025-01-12 (oncology and ATMPs first)",
+      "issuing_body": "European Union",
+      "url": "https://health.ec.europa.eu/health-technology-assessment/regulation-health-technology-assessment_en",
+      "summary": "EU-wide joint clinical assessments replace individual country HTA assessments for oncology drugs and ATMPs starting 2025, with full coverage by 2030. Requires early evidence generation planning aligned with EU HTA requirements.",
+      "impact_on_protocols": [
+        "Oncology and ATMP protocols must plan for EU joint clinical assessment requirements",
+        "Comparator selection must align with EU HTA best available therapy",
+        "Patient-relevant endpoints required (EU HTA prefers clinical outcomes over surrogates)",
+        "Quality of life instruments must include EQ-5D-5L for EU HTA submissions"
+      ],
+      "affected_sections": ["Study Objectives and Endpoints", "Study Design", "Efficacy Assessments"],
+      "severity": "critical"
+    }
+  ],
+  "regulatory_review_timelines": {
+    "FDA": {
+      "standard_review_months": 12,
+      "priority_review_months": 8,
+      "breakthrough_therapy_review_months": 6,
+      "accelerated_approval_months": 6,
+      "pre_ind_to_ind_clearance_days": 30,
+      "ind_review_days": 30
+    },
+    "EMA": {
+      "centralised_procedure_months": 15,
+      "accelerated_assessment_months": 10,
+      "conditional_marketing_auth_months": 8,
+      "prime_designation_benefit": "Enhanced early dialogue, accelerated assessment eligibility",
+      "scientific_advice_timeline_months": 3
+    },
+    "PMDA": {
+      "standard_review_months": 12,
+      "priority_review_months": 9,
+      "sakigake_designation_months": 6,
+      "conditional_early_approval_months": 6
+    },
+    "Health_Canada": {
+      "standard_review_months": 12,
+      "priority_review_months": 6,
+      "noc_c_months": 8
+    },
+    "MHRA": {
+      "standard_review_months": 12,
+      "ilap_designation_months": 8,
+      "reliance_pathway_months": 6
+    },
+    "NMPA": {
+      "standard_review_months": 14,
+      "priority_review_months": 8,
+      "breakthrough_therapy_months": 6
+    }
+  }
+}

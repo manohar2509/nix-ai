@@ -107,3 +107,20 @@ def send_comparison_task(
         "document_ids": document_ids,
         "user_id": user_id,
     })
+
+
+def send_boardroom_debate_task(
+    job_id: str,
+    debate_id: str,
+    doc_id: str,
+    user_id: str,
+    max_rounds: int = 3,
+) -> str:
+    """Convenience: queue a boardroom debate (Adversarial Council v2)."""
+    return send_message("RUN_BOARDROOM_DEBATE", {
+        "job_id": job_id,
+        "debate_id": debate_id,
+        "doc_id": doc_id,
+        "user_id": user_id,
+        "max_rounds": max_rounds,
+    })
