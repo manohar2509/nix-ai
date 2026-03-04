@@ -12,7 +12,6 @@ Note: POST /kb/sync has been moved to app/api/routes/kb.py
 """
 
 from fastapi import APIRouter, Depends, Query
-from fastapi.responses import JSONResponse
 
 from app.api.schemas.jobs import (
     BatchStatusRequest,

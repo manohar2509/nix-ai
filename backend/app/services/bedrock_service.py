@@ -686,7 +686,6 @@ def analyze_document(document_text: str, preferences: dict | None = None) -> dic
     Used as fallback when native DocumentBlock analysis is not available
     (unsupported format, oversized file, or model doesn't support documents).
     """
-    pref_instructions = _build_preference_instructions(preferences)
     from app.services.regulatory_engine import build_enhanced_analysis_prompt
     prompt = build_enhanced_analysis_prompt(preferences) + f"""
 

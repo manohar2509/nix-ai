@@ -32,8 +32,6 @@ def send_message(
       4. Save the AI response to DynamoDB
       5. Return the response with citations
     """
-    from app.services import s3_service
-
     effective_doc_id = doc_id or "global"
 
     # 1. Persist the user's message
@@ -202,8 +200,6 @@ def send_message_stream(
 
     After streaming completes, the full response is persisted to DynamoDB.
     """
-    from app.services import s3_service
-
     effective_doc_id = doc_id or "global"
 
     # 1. Persist the user's message

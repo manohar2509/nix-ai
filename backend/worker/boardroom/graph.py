@@ -22,13 +22,11 @@ The frontend polls the DEBATE record and animates each turn as it appears.
 
 from __future__ import annotations
 
-import json
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Optional
 
-from app.services import dynamo_service, s3_service, bedrock_service
+from app.services import dynamo_service, s3_service
 from app.services.regulatory_engine import ALL_REFERENCES_PROMPT_BLOCK
 from worker.boardroom.agents import (
     invoke_agent,
@@ -111,7 +109,7 @@ def _build_protocol_context(doc_id: str) -> dict:
     context_parts.append(f"PROTOCOL NAME: {doc.get('name', 'Unknown Protocol')}")
     context_parts.append(f"\nPROTOCOL TEXT (excerpt):\n---\n{doc_text[:6000]}\n---")
 
-    context_parts.append(f"\nANALYSIS SCORES:")
+    context_parts.append("\nANALYSIS SCORES:")
     context_parts.append(f"  Regulator Score: {analysis.get('regulator_score', 0)}/100")
     context_parts.append(f"  Payer Score: {analysis.get('payer_score', 0)}/100")
     context_parts.append(f"  Global Readiness: {analysis.get('global_readiness_score', 0)}/100")
@@ -132,7 +130,7 @@ def _build_protocol_context(doc_id: str) -> dict:
             )
 
     if jurisdiction_scores:
-        context_parts.append(f"\nJURISDICTION COMPLIANCE:")
+        context_parts.append("\nJURISDICTION COMPLIANCE:")
         for j in jurisdiction_scores[:5]:
             context_parts.append(
                 f"  - {j.get('jurisdiction', '?')}: {j.get('score', 0)}/100"

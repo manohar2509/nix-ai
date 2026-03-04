@@ -23,7 +23,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Optional
 
 from boto3.dynamodb.conditions import Attr, Key
 

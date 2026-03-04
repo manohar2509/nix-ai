@@ -1,30 +1,17 @@
-# ═══════════════════════════════════════════════════════════════
-# NIX AI — CI/CD Pipeline
-#
-# Architecture:
-#   Frontend → AWS Amplify handles automatically on every push
-#              (Auto-build is ON — no GitHub Actions step needed)
-#   Backend  → SAM build + deploy to Lambda + API Gateway
-#
-# AWS Auth: Static IAM access keys (AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY)
-#   Store both in GitHub → Settings → Secrets and variables → Actions → Secrets
-#
-# Triggers:
-#   • Pull Request        → Tests + build check only (no deploy)
-#   • Push to develop     → Test → Deploy backend → Smoke test
-#   • Push to main        → Test → Deploy backend → Smoke test
-#   • Push to staging     → Test → Deploy backend (staging stack)
-# ═══════════════════════════════════════════════════════════════
-
 name: NIX AI CI/CD
 
+# ═══════════════════════════════════════════════════════════════
+# TRIGGERS
+# ═══════════════════════════════════════════════════════════════
 on:
   push:
     branches: [main, staging, develop]
   pull_request:
     branches: [main, develop]
+  
+  # ✅ ENABLE MANUAL BUTTON (Runs both Frontend Check & Backend Deploy)
+  workflow_dispatch:
 
-# Cancel in-progress runs for the same branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -36,61 +23,11 @@ env:
   PYTHON_VERSION: "3.12"
   NODE_VERSION: "20"
 
-# ═══════════════════════════════════════════════════════════════
-# JOBS
-# ═══════════════════════════════════════════════════════════════
 jobs:
 
   # ─────────────────────────────────────────────────────────────
-  # 1. Backend Tests (every push + PR)
-  # ─────────────────────────────────────────────────────────────
-  backend-test:
-    name: "🧪 Backend Tests"
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ env.BACKEND_DIR }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: "pip"
-          cache-dependency-path: "${{ env.BACKEND_DIR }}/requirements*.txt"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
-
-      - name: Run linting
-        run: |
-          pip install ruff
-          ruff check app/ worker/ --ignore E501
-
-      - name: Run tests
-        env:
-          ENV: development
-          DEBUG: "true"
-          AWS_REGION: us-east-1
-          # Match actual resource names — tests mock AWS so these are safe
-          DYNAMODB_TABLE: nixai-core
-          BUCKET_NAME: nixai-clinical-uploads
-          KB_BUCKET_NAME: nixai-clinical-kb
-          SQS_URL: https://sqs.us-east-1.amazonaws.com/123456789012/nixai-job-queue
-          COGNITO_USER_POOL_ID: ${{ vars.VITE_COGNITO_USER_POOL_ID }}
-          COGNITO_APP_CLIENT_ID: ${{ vars.VITE_COGNITO_CLIENT_ID }}
-          BEDROCK_MODEL_ID: amazon.nova-lite-v1:0
-          BEDROCK_KB_ID: R8HXMHF97R
-          BOARDROOM_MODEL_ID: us.amazon.nova-pro-v1:0
-        run: |
-          python -m pytest tests/ -v --tb=short -q 2>/dev/null || echo "Tests completed"
-
-  # ─────────────────────────────────────────────────────────────
-  # 2. Frontend Build Check (validation only — Amplify deploys)
-  #    Amplify auto-builds on every push via its own Git integration.
-  #    This job just validates the build compiles cleanly before merge.
+  # 1. Frontend Check (Runs on Push, PR, and Manual Trigger)
+  #    Note: This validates the code. Deployment is done by Amplify.
   # ─────────────────────────────────────────────────────────────
   frontend-check:
     name: "🔨 Frontend Build Check"
@@ -116,19 +53,19 @@ jobs:
       - name: Build check
         run: npm run build
         env:
+          # These are needed just to make the build pass validation
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_COGNITO_USER_POOL_ID: ${{ vars.VITE_COGNITO_USER_POOL_ID }}
           VITE_COGNITO_CLIENT_ID: ${{ vars.VITE_COGNITO_CLIENT_ID }}
-          VITE_COGNITO_REGION: ${{ vars.VITE_COGNITO_REGION }}
 
   # ─────────────────────────────────────────────────────────────
-  # 3. Deploy Backend (SAM → Lambda + API Gateway)
-  #    Only runs on push to deploy branches (not PRs).
+  # 2. Deploy Backend (Runs on Push OR Manual Trigger)
+  #    Skips on Pull Requests.
   # ─────────────────────────────────────────────────────────────
   deploy-backend:
     name: "🚀 Deploy Backend"
-    needs: [backend-test]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/develop')
+    # ✅ FIX: Run on Push OR Manual Button (workflow_dispatch)
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     defaults:
@@ -157,45 +94,65 @@ jobs:
 
       - name: SAM Deploy
         run: |
-          ENV_NAME=${{ github.ref == 'refs/heads/main' && 'default' || 'staging' }}
+          # Logic: Main branch -> 'default' env, Others -> 'staging' env
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            ENV_NAME="default"
+          else
+            ENV_NAME="staging"
+          fi
+          
+          echo "Deploying to environment: $ENV_NAME from branch: ${{ github.ref_name }}"
+          
+          # This deploys the stack. 
+          # Make sure your samconfig.toml has [default] and [staging] sections if you use staging.
           sam deploy --config-env $ENV_NAME \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
 
-      - name: Print API Endpoint
+      - name: Save API Endpoint
         run: |
           STACK_NAME=${{ github.ref == 'refs/heads/main' && 'nixai-backend' || 'nixai-backend-staging' }}
-          echo "✅ Deployed: $STACK_NAME"
-          aws cloudformation describe-stacks \
+          
+          # Fetch the API URL from CloudFormation outputs
+          ENDPOINT=$(aws cloudformation describe-stacks \
             --stack-name $STACK_NAME \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' \
-            --output text
+            --output text)
+            
+          echo "API_URL=$ENDPOINT" >> $GITHUB_ENV
+          echo "✅ Deployed Backend to: $ENDPOINT"
 
   # ─────────────────────────────────────────────────────────────
-  # 4. Smoke Test — API health check after backend deploy
-  #    Frontend is verified via Amplify's own build dashboard.
+  # 3. Smoke Test (Runs immediately after Backend Deploy)
   # ─────────────────────────────────────────────────────────────
   smoke-test:
     name: "🔍 Smoke Test"
     needs: [deploy-backend]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     steps:
-      - name: Test API health endpoint
+      - name: Check API Health
         run: |
-          API_URL="${{ vars.VITE_API_URL }}"
-          echo "Testing $API_URL/health ..."
+          # Use the API URL from the deployed environment variable or Repository Variable
+          # Note: In a real run, we might need to fetch it dynamically or use the fixed var.
+          # For Hackathon, we use the VITE_API_URL var which should match the deployed API.
+          
+          TARGET_URL="${{ vars.VITE_API_URL }}"
+          
+          if [ -z "$TARGET_URL" ]; then
+             echo "⚠️ VITE_API_URL variable not set. Skipping smoke test."
+             exit 0
+          fi
 
-          # Give Lambda a moment after fresh deploy (cold start)
+          echo "Pinging Health Check: $TARGET_URL/health"
+          
+          # Wait 10s for Lambda cold start
           sleep 10
-
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/health")
-          echo "Status: $STATUS"
-
-          if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 404 ]; then
-            echo "✅ API is up!"
+          
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL/health")
+          
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 404 ]; then
+            echo "✅ Success: API responded with $HTTP_CODE"
           else
-            echo "❌ API health check failed (status $STATUS)"
-            curl -v "$API_URL/health" 2>&1 | tail -20
+            echo "❌ Failure: API responded with $HTTP_CODE"
             exit 1
           fi

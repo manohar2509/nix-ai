@@ -22,7 +22,6 @@ from app.api.schemas.analysis import (
     ReportRequest,
     SimulateAmendmentRequest,
     SimulationJobResponse,
-    SimulationResultResponse,
 )
 from app.core.auth import CurrentUser, get_current_user
 from app.services import analysis_service

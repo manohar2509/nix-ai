@@ -11,7 +11,7 @@ partial state updates from each agent node automatically.
 from __future__ import annotations
 
 import operator
-from typing import Annotated, Any, Optional, TypedDict
+from typing import Annotated, Optional, TypedDict
 
 
 class AgentMessage(TypedDict, total=False):

@@ -21,16 +21,9 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Optional
 
 from app.core.aws_clients import get_bedrock_runtime_client
 from app.core.config import get_settings
-from worker.boardroom.tools import (
-    ALL_TOOLS,
-    REGULATOR_TOOLS,
-    PAYER_TOOLS,
-    PATIENT_TOOLS,
-)
 
 logger = logging.getLogger(__name__)
 

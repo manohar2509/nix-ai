@@ -31,7 +31,6 @@ def process_amendment_simulation(payload: dict) -> None:
     doc_id = payload["doc_id"]
     sim_id = payload["sim_id"]
     amendment_text = payload["amendment_text"]
-    user_id = payload.get("user_id", "system")
 
     start_time = time.time()
 
