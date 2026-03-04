@@ -5,7 +5,7 @@ name: NIX AI CI/CD
 # ═══════════════════════════════════════════════════════════════
 on:
   push:
-    branches: [main, staging, develop]
+    branches: [main, develop]
   pull_request:
     branches: [main, develop]
   
@@ -67,7 +67,7 @@ jobs:
     # ✅ FIX: Run on Push OR Manual Button (workflow_dispatch)
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    environment: development
     defaults:
       run:
         working-directory: ${{ env.BACKEND_DIR }}
@@ -92,13 +92,8 @@ jobs:
       - name: Resolve config environment
         id: config_env
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "env_name=default"         >> $GITHUB_OUTPUT
-            echo "stack_name=nixai-backend" >> $GITHUB_OUTPUT
-          else
-            echo "env_name=development"         >> $GITHUB_OUTPUT
-            echo "stack_name=nixai-backend-dev" >> $GITHUB_OUTPUT
-          fi
+          echo "env_name=development"    >> $GITHUB_OUTPUT
+          echo "stack_name=nixai-backend" >> $GITHUB_OUTPUT
 
       # ── Guard: a stack stuck in ROLLBACK_COMPLETE or DELETE_FAILED cannot be
       #    updated by CloudFormation — it must be deleted first so the next run

@@ -10,8 +10,8 @@ Description: >
 Parameters:
   Environment:
     Type: String
-    Default: production
-    AllowedValues: [development, staging, production]
+    Default: development
+    AllowedValues: [development]
   CognitoUserPoolId:
     Type: String
     Default: us-east-1_rjx3Fv6lg

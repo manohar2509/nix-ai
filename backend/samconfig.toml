@@ -1,39 +1,17 @@
 # ═══════════════════════════════════════════════════════
 # SAM CLI Configuration — NIX AI Backend
+# Single environment: development (hackathon)
 # ═══════════════════════════════════════════════════════
 version = 0.1
 
-# ── Default (Production) ───────────────────────────────
-[default.build.parameters]
-use_container = true
-
-[default.deploy.parameters]
-stack_name = "nixai-backend"
-resolve_s3 = true
-s3_prefix = "nixai-backend"
-region = "us-east-1"
-confirm_changeset = false
-capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
-parameter_overrides = [
-  "Environment=production",
-  "CognitoUserPoolId=us-east-1_rjx3Fv6lg",
-  "CognitoAppClientId=937sqn4ogsomo8d6stlapvpo9",
-  "BedrockKBId=R8HXMHF97R",
-  "CorsOrigins=https://develop.d3hb7807u19psc.amplifyapp.com,https://main.d3hb7807u19psc.amplifyapp.com,https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
-]
-fail_on_empty_changeset = false
-
-[default.local_invoke.parameters]
-env_vars = ".env"
-
-# ── Development (develop / feature branches) ────────────────────
+# ── Development ────────────────────────────────────────
 [development.build.parameters]
 use_container = true
 
 [development.deploy.parameters]
-stack_name = "nixai-backend-dev"
+stack_name = "nixai-backend"
 resolve_s3 = true
-s3_prefix = "nixai-backend-dev"
+s3_prefix = "nixai-backend"
 region = "us-east-1"
 confirm_changeset = false
 capabilities = "CAPABILITY_IAM CAPABILITY_AUTO_EXPAND"
@@ -42,6 +20,9 @@ parameter_overrides = [
   "CognitoUserPoolId=us-east-1_rjx3Fv6lg",
   "CognitoAppClientId=937sqn4ogsomo8d6stlapvpo9",
   "BedrockKBId=R8HXMHF97R",
-  "CorsOrigins=https://staging.d3hb7807u19psc.amplifyapp.com,https://main.d3hb7807u19psc.amplifyapp.com,https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
+  "CorsOrigins=https://develop.d3hb7807u19psc.amplifyapp.com,https://main.d3hb7807u19psc.amplifyapp.com,https://9nffw9vxc5.execute-api.us-east-1.amazonaws.com,http://localhost:5173,http://localhost:3000"
 ]
 fail_on_empty_changeset = false
+
+[development.local_invoke.parameters]
+env_vars = ".env"
