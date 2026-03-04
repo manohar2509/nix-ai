@@ -5,7 +5,7 @@ name: NIX AI CI/CD
 # ═══════════════════════════════════════════════════════════════
 on:
   push:
-    branches: [main, staging, develop]
+    branches: [main, develop]
   pull_request:
     branches: [main, develop]
   
@@ -67,7 +67,7 @@ jobs:
     # ✅ FIX: Run on Push OR Manual Button (workflow_dispatch)
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    environment: development
     defaults:
       run:
         working-directory: ${{ env.BACKEND_DIR }}
@@ -92,10 +92,30 @@ jobs:
       - name: Resolve config environment
         id: config_env
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "env_name=default" >> $GITHUB_OUTPUT
+          echo "env_name=development"    >> $GITHUB_OUTPUT
+          echo "stack_name=nixai-backend" >> $GITHUB_OUTPUT
+
+      # ── Guard: a stack stuck in ROLLBACK_COMPLETE or DELETE_FAILED cannot be
+      #    updated by CloudFormation — it must be deleted first so the next run
+      #    creates a fresh stack. This step is idempotent: it is a no-op when the
+      #    stack is healthy or does not yet exist.
+      - name: Clear stuck CloudFormation stack (if any)
+        run: |
+          STACK="${{ steps.config_env.outputs.stack_name }}"
+          STATUS=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK" \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+
+          echo "Stack '$STACK' status: $STATUS"
+
+          if [[ "$STATUS" == "ROLLBACK_COMPLETE" || "$STATUS" == "DELETE_FAILED" || "$STATUS" == "ROLLBACK_FAILED" ]]; then
+            echo "Deleting stuck stack '$STACK' before redeployment…"
+            aws cloudformation delete-stack --stack-name "$STACK"
+            aws cloudformation wait stack-delete-complete --stack-name "$STACK"
+            echo "Stack deleted — proceeding with fresh deployment."
           else
-            echo "env_name=staging" >> $GITHUB_OUTPUT
+            echo "Stack is in a valid state ($STATUS) — no cleanup needed."
           fi
 
       - name: SAM Build
@@ -114,16 +134,16 @@ jobs:
 
       - name: Save API Endpoint
         run: |
-          STACK_NAME=nixai-backend
-          
+          STACK_NAME="${{ steps.config_env.outputs.stack_name }}"
+
           # Fetch the API URL from CloudFormation outputs
           ENDPOINT=$(aws cloudformation describe-stacks \
-            --stack-name $STACK_NAME \
+            --stack-name "$STACK_NAME" \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' \
             --output text)
-            
+
           echo "API_URL=$ENDPOINT" >> $GITHUB_ENV
-          echo "✅ Deployed Backend to: $ENDPOINT"
+          echo "✅ Deployed Backend ($STACK_NAME) to: $ENDPOINT"
 
   # ─────────────────────────────────────────────────────────────
   # 3. Smoke Test (Runs immediately after Backend Deploy)
