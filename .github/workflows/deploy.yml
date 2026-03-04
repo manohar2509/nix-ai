@@ -110,11 +110,12 @@ jobs:
           
           sam deploy --config-env $ENV_NAME \
             --no-confirm-changeset \
-            --no-fail-on-empty-changeset
+            --no-fail-on-empty-changeset \
+            --import-existing-resources
 
       - name: Save API Endpoint
         run: |
-          STACK_NAME=${{ github.ref == 'refs/heads/main' && 'nixai-backend' || 'nixai-backend-staging' }}
+          STACK_NAME=nixai-backend
           
           # Fetch the API URL from CloudFormation outputs
           ENDPOINT=$(aws cloudformation describe-stacks \
