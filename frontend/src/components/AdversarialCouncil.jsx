@@ -7,6 +7,7 @@ import {
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
 import { cn } from '../utils/cn';
+import CacheStatusBanner from './CacheStatusBanner';
 
 // ═════════════════════════════════════════════════════════════════
 // AGENT VISUAL CONFIGURATION
@@ -63,7 +64,7 @@ const POLL_INTERVAL = 2500; // 2.5 seconds
 // ═════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═════════════════════════════════════════════════════════════════
-export default function AdversarialCouncil({ docId }) {
+export default function AdversarialCouncil({ docId, generatedAt }) {
   // Store state
   const activeDebateId = useAppStore(s => s.activeDebateId);
   const debateStatus = useAppStore(s => s.debateStatus);
@@ -537,6 +538,16 @@ export default function AdversarialCouncil({ docId }) {
           </div>
           <p className="text-xs text-red-500">{status.error || 'An unexpected error occurred.'}</p>
         </div>
+      )}
+
+      {/* ── Cache Status ── */}
+      {isComplete && (
+        <CacheStatusBanner
+          generatedAt={generatedAt}
+          onRegenerate={() => { clearDebate(); handleStartDebate(); }}
+          isLoading={isActive}
+          label="boardroom debate"
+        />
       )}
 
       {/* ── Action Buttons ── */}

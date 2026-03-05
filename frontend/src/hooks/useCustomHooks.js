@@ -380,3 +380,91 @@ export function usePrevious(value) {
 
   return ref.current;
 }
+
+
+/**
+ * Hook: useStrategicCache
+ *
+ * Loads ALL cached strategic intelligence results for the current document
+ * on mount (and when docId changes).  This means:
+ *   - Page reloads restore previously generated AI panels
+ *   - Switching documents instantly loads their cached results
+ *   - No token waste for results that haven't changed
+ *
+ * The hook populates the Zustand store directly so every component
+ * (CostArchitect, FrictionHeatmap, etc.) sees the data immediately.
+ */
+export function useStrategicCache(docId) {
+  const [loading, setLoading] = useState(false);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
+  const [cacheTimestamps, setCacheTimestamps] = useState({});
+  const store = useAppStore();
+  const prevDocIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!docId) return;
+    // Don't re-fetch if same doc
+    if (docId === prevDocIdRef.current && cacheLoaded) return;
+    prevDocIdRef.current = docId;
+
+    let cancelled = false;
+
+    const loadCache = async () => {
+      setLoading(true);
+      try {
+        const { getCachedResults } = await import('../services/strategicService');
+        const data = await getCachedResults(docId);
+        if (cancelled) return;
+
+        const cached = data?.cached || {};
+        const timestamps = {};
+
+        // Map cached results → Zustand store
+        if (cached.friction_map) {
+          store.setFrictionMap(cached.friction_map.result);
+          timestamps.friction_map = cached.friction_map.generated_at;
+        }
+        if (cached.cost_analysis) {
+          store.setCostAnalysis(cached.cost_analysis.result);
+          timestamps.cost_analysis = cached.cost_analysis.generated_at;
+        }
+        if (cached.payer_simulation) {
+          store.setPayerSimulation(cached.payer_simulation.result);
+          timestamps.payer_simulation = cached.payer_simulation.generated_at;
+        }
+        if (cached.submission_strategy) {
+          store.setSubmissionStrategy(cached.submission_strategy.result);
+          timestamps.submission_strategy = cached.submission_strategy.generated_at;
+        }
+        if (cached.optimization) {
+          store.setOptimization(cached.optimization.result);
+          timestamps.optimization = cached.optimization.generated_at;
+        }
+        if (cached.watchdog) {
+          store.setWatchdogAlerts(cached.watchdog.result);
+          timestamps.watchdog = cached.watchdog.generated_at;
+        }
+        if (cached.investor_report) {
+          store.setInvestorReport(cached.investor_report.result);
+          timestamps.investor_report = cached.investor_report.generated_at;
+        }
+        if (cached.council) {
+          store.setCouncilSession(cached.council.result);
+          timestamps.council = cached.council.generated_at;
+        }
+
+        setCacheTimestamps(timestamps);
+        setCacheLoaded(true);
+      } catch (err) {
+        console.error('Failed to load strategic cache:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadCache();
+    return () => { cancelled = true; };
+  }, [docId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { loading, cacheLoaded, cacheTimestamps };
+}

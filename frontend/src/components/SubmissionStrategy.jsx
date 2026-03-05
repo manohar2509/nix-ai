@@ -2,16 +2,18 @@ import React, { useState } from 'react';
 import { Route, Loader2, Globe, ArrowRight, CheckCircle, AlertTriangle, Clock, Zap } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 const flagMap = { FDA: '🇺🇸', EMA: '🇪🇺', PMDA: '🇯🇵', 'Health Canada': '🇨🇦', MHRA: '🇬🇧', NMPA: '🇨🇳', TGA: '🇦🇺' };
 
-export default function SubmissionStrategy({ docId }) {
+export default function SubmissionStrategy({ docId, generatedAt }) {
   const strategy = useAppStore(s => s.submissionStrategy);
   const isLoading = useAppStore(s => s.isStrategyLoading);
   const setStrategy = useAppStore(s => s.setSubmissionStrategy);
   const setLoading = useAppStore(s => s.setIsStrategyLoading);
   const [tab, setTab] = useState('order');
+  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const generate = async () => {
     if (!docId) return;
@@ -19,6 +21,7 @@ export default function SubmissionStrategy({ docId }) {
     try {
       const result = await strategicService.getSubmissionStrategy(docId);
       setStrategy(result);
+      setLocalGeneratedAt(new Date().toISOString());
     } catch (err) {
       console.error('Strategy failed:', err);
     } finally {
@@ -255,9 +258,12 @@ export default function SubmissionStrategy({ docId }) {
         <p className="text-xs text-slate-500 italic border-t border-slate-100 pt-3">{strategy.executive_summary}</p>
       )}
 
-      <button onClick={generate} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Regenerate Strategy
-      </button>
+      <CacheStatusBanner
+        generatedAt={localGeneratedAt || generatedAt}
+        onRegenerate={generate}
+        isLoading={isLoading}
+        label="submission strategy"
+      />
     </div>
   );
 }

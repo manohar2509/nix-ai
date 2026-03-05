@@ -63,8 +63,18 @@ def rag_chat(
     settings = get_settings()
 
     if not settings.BEDROCK_KB_ID:
-        logger.warning("BEDROCK_KB_ID not configured — returning mock response")
-        return _mock_rag_response(query, user_name, user_org)
+        logger.warning("BEDROCK_KB_ID not configured — KB is required for grounded responses")
+        return {
+            "text": (
+                "I cannot answer this question without access to the regulatory knowledge base. "
+                "The knowledge base is not currently configured. Please contact your administrator "
+                "to enable KB-grounded responses, or upload reference documents to the Knowledge Base panel."
+            ),
+            "citations": [],
+            "session_id": None,
+            "is_refusal": True,
+            "error": "KB_NOT_CONFIGURED",
+        }
 
     client = get_bedrock_agent_client()
 
@@ -134,6 +144,8 @@ def rag_chat(
             "citations": citations,
             "session_id": new_session_id,
             "is_refusal": False,
+            "grounding_source": "document_library",  # From the team's uploaded Document Library
+            "kb_grounded": True,
         }
     except Exception as exc:
         logger.error("Bedrock RAG failed: %s", exc)
@@ -170,6 +182,11 @@ def direct_chat(
     Fallback chat using the Converse API directly with document text
     as context. Used when the Knowledge Base RAG returns a refusal
     (e.g. KB has no indexed documents).
+
+    ⚠️ WARNING: This is NOT grounded on the Knowledge Base. Responses
+    are based on the model's training data and may not reflect the latest
+    regulatory guidelines. Citations are inferred from guideline mentions
+    in the AI response and point to public URLs, not KB documents.
 
     Generates inline citations from guideline references in the response.
     """
@@ -229,11 +246,21 @@ def direct_chat(
             response_text, ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
         )
 
+        # Add source transparency note
+        disclaimer = (
+            "\n\n*Sources: Citations above reference publicly published regulatory guidelines "
+            "(ICH, FDA, EMA, HTA bodies). Click any citation to open the official document. "
+            "For answers grounded on your own uploaded protocols and documents, populate your "
+            "Document Library via the References tab.*"
+        )
+        
         return {
-            "text": response_text,
+            "text": response_text + disclaimer,
             "citations": citations,
             "session_id": None,
             "is_refusal": False,
+            "grounding_source": "regulatory_authority",  # Public official sources
+            "kb_grounded": False,
         }
     except Exception as exc:
         logger.error("Direct chat fallback failed: %s", exc)
@@ -390,37 +417,71 @@ def direct_chat_stream(
 def _extract_citations(response: dict) -> list[dict]:
     """
     Parse citations from Bedrock RetrieveAndGenerate response.
-    Enriches S3-based citations with source type and friendly names.
+    Enriches S3-based citations with source type, friendly names, and
+    official guideline URLs where the KB document is a known guideline.
     """
     citations = []
+    _ensure_ich_urls_loaded()
     for citation_group in response.get("citations", []):
         for ref in citation_group.get("retrievedReferences", []):
             content = ref.get("content", {}).get("text", "")
             location = ref.get("location", {})
             s3_uri = location.get("s3Location", {}).get("uri", "")
-            source = s3_uri.split("/")[-1] if s3_uri else "Unknown"
+            raw_filename = s3_uri.split("/")[-1] if s3_uri else "Unknown"
+
+            # Build a clean human-readable name (strip extension, replace separators)
+            clean_name = raw_filename
+            for ext in (".pdf", ".json", ".txt", ".md", ".docx", ".doc"):
+                clean_name = clean_name.removesuffix(ext)
+            clean_name = clean_name.replace("_", " ").replace("-", " ").strip()
 
             # Determine source type from file name
-            source_lower = source.lower()
+            name_lower = raw_filename.lower()
             source_type = "knowledge_base"
-            if "ich" in source_lower:
+            url = None
+            if "ich" in name_lower:
                 source_type = "ICH"
-            elif "fda" in source_lower:
+                # Try to match against known ICH guidelines for an official URL
+                for code, info in _ICH_GUIDELINES_URLS.items():
+                    if code.lower().replace("(", "").replace(")", "") in name_lower:
+                        url = info.get("url")
+                        clean_name = info.get("title", clean_name)
+                        break
+            elif "fda" in name_lower:
                 source_type = "FDA"
-            elif "ema" in source_lower:
+            elif "ema" in name_lower or "chmp" in name_lower:
                 source_type = "EMA"
-            elif "nice" in source_lower or "hta" in source_lower or "payer" in source_lower:
+            elif "nice" in name_lower or "hta" in name_lower or "payer" in name_lower or "iqwig" in name_lower or "cadth" in name_lower:
                 source_type = "HTA"
 
             citations.append({
                 "text": content[:500],
-                "source": source,
+                "source": clean_name or raw_filename,
                 "source_type": source_type,
                 "section": ref.get("metadata", {}).get("section", None),
                 "score": ref.get("metadata", {}).get("score", None),
                 "s3_uri": s3_uri if s3_uri else None,
+                "url": url,  # Official URL when the KB file matches a known guideline
             })
     return citations
+
+
+# Lazy reference to ICH guideline URLs (avoids circular import at module load)
+def _get_ich_guidelines_urls() -> dict:
+    try:
+        from app.services.regulatory_engine import ICH_GUIDELINES
+        return ICH_GUIDELINES
+    except Exception:
+        return {}
+
+
+_ICH_GUIDELINES_URLS: dict = {}  # Populated on first use via _extract_citations
+
+
+def _ensure_ich_urls_loaded() -> None:
+    global _ICH_GUIDELINES_URLS
+    if not _ICH_GUIDELINES_URLS:
+        _ICH_GUIDELINES_URLS = _get_ich_guidelines_urls()
 
 
 # ════════════════════════════════════════════════════════════════

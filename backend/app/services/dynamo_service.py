@@ -1120,3 +1120,123 @@ def get_latest_debate_for_document(doc_id: str, user_id: str) -> Optional[dict]:
         return None
     debates.sort(key=lambda d: d.get("created_at", ""), reverse=True)
     return debates[0]
+
+
+# ════════════════════════════════════════════════════════════════
+# STRATEGIC INTELLIGENCE CACHE
+#
+#   PK:     DOC#{doc_id}
+#   SK:     STRATEGIC#{feature_key}  (e.g. friction_map, cost_analysis)
+#
+# Caches expensive AI-generated strategic results per document so
+# they survive page reloads without wasting tokens.  Each record
+# stores the full result JSON, a generated_at timestamp, and a
+# content_hash of the analysis that was used as input.  When the
+# underlying analysis changes (re-run), the hash won't match and
+# the frontend can prompt the user to regenerate.
+# ════════════════════════════════════════════════════════════════
+
+STRATEGIC_FEATURES = {
+    "friction_map",
+    "cost_analysis",
+    "payer_simulation",
+    "submission_strategy",
+    "optimization",
+    "watchdog",
+    "clause_library",
+    "investor_report",
+    "council",  # sync council (legacy)
+}
+
+
+def save_strategic_result(
+    doc_id: str,
+    feature_key: str,
+    result: dict,
+    analysis_hash: str = "",
+) -> dict:
+    """Cache a strategic intelligence result for a document.
+
+    Args:
+        doc_id: The document ID.
+        feature_key: One of STRATEGIC_FEATURES (e.g. "friction_map").
+        result: The full JSON result from the AI.
+        analysis_hash: Hash of the analysis data used as input. When the
+            analysis changes, the hash won't match → stale indicator.
+    """
+    if feature_key not in STRATEGIC_FEATURES:
+        logger.warning("Unknown strategic feature key: %s", feature_key)
+
+    table = get_dynamodb_table()
+    now = _now_iso()
+    item = {
+        "PK": f"DOC#{doc_id}",
+        "SK": f"STRATEGIC#{feature_key}",
+        "entity": "STRATEGIC_CACHE",
+        "doc_id": doc_id,
+        "feature_key": feature_key,
+        "result": result,
+        "analysis_hash": analysis_hash,
+        "generated_at": now,
+        "updated_at": now,
+    }
+    table.put_item(Item=_prepare_item(item))
+    logger.info("Cached strategic result '%s' for doc %s", feature_key, doc_id)
+    return _clean_item(item)
+
+
+def get_strategic_result(doc_id: str, feature_key: str) -> Optional[dict]:
+    """Retrieve a cached strategic intelligence result.
+
+    Returns None if no cache exists for this doc+feature combination.
+    """
+    table = get_dynamodb_table()
+    resp = table.get_item(
+        Key={"PK": f"DOC#{doc_id}", "SK": f"STRATEGIC#{feature_key}"},
+    )
+    item = resp.get("Item")
+    return _clean_item(item) if item else None
+
+
+def get_all_strategic_results(doc_id: str) -> dict:
+    """Retrieve ALL cached strategic results for a document.
+
+    Returns a dict keyed by feature_key → {result, generated_at, analysis_hash}.
+    """
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=(
+            Key("PK").eq(f"DOC#{doc_id}")
+            & Key("SK").begins_with("STRATEGIC#")
+        ),
+    )
+    results = {}
+    for item in resp.get("Items", []):
+        cleaned = _clean_item(item)
+        fk = cleaned.get("feature_key", "")
+        results[fk] = {
+            "result": cleaned.get("result", {}),
+            "generated_at": cleaned.get("generated_at"),
+            "analysis_hash": cleaned.get("analysis_hash", ""),
+        }
+    return results
+
+
+def delete_strategic_results(doc_id: str) -> int:
+    """Delete ALL cached strategic results for a document (e.g. on re-analysis)."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=(
+            Key("PK").eq(f"DOC#{doc_id}")
+            & Key("SK").begins_with("STRATEGIC#")
+        ),
+    )
+    items = resp.get("Items", [])
+    count = 0
+    with table.batch_writer() as batch:
+        for item in items:
+            batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+            count += 1
+    if count:
+        logger.info("Deleted %d strategic cache records for doc %s", count, doc_id)
+    return count

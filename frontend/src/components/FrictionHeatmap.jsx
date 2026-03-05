@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Flame, Loader2, AlertTriangle, Shield, DollarSign, Zap, Info } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import GuidelineRefBadge from './GuidelineRefBadge';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 const riskColors = {
@@ -23,12 +25,13 @@ function RiskBar({ value, color, label }) {
   );
 }
 
-export default function FrictionHeatmap({ docId }) {
+export default function FrictionHeatmap({ docId, generatedAt }) {
   const frictionMap = useAppStore(s => s.frictionMap);
   const isLoading = useAppStore(s => s.isFrictionLoading);
   const setFriction = useAppStore(s => s.setFrictionMap);
   const setLoading = useAppStore(s => s.setIsFrictionLoading);
   const [selectedSection, setSelectedSection] = useState(null);
+  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const generate = async () => {
     if (!docId) return;
@@ -36,6 +39,7 @@ export default function FrictionHeatmap({ docId }) {
     try {
       const result = await strategicService.getFrictionMap(docId);
       setFriction(result);
+      setLocalGeneratedAt(new Date().toISOString());
     } catch (err) {
       console.error('Friction map failed:', err);
     } finally {
@@ -151,11 +155,11 @@ export default function FrictionHeatmap({ docId }) {
                       </div>
                     )}
                     {section.guideline_refs?.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {section.guideline_refs.map((ref, i) => (
-                          <span key={i} className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{ref}</span>
-                        ))}
-                      </div>
+                      <GuidelineRefBadge refs={
+                        section.guideline_refs.map(ref =>
+                          typeof ref === 'string' ? { code: ref } : ref
+                        )
+                      } />
                     )}
                   </div>
                 )}
@@ -165,9 +169,12 @@ export default function FrictionHeatmap({ docId }) {
         })}
       </div>
 
-      <button onClick={generate} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Regenerate Friction Map
-      </button>
+      <CacheStatusBanner
+        generatedAt={localGeneratedAt || generatedAt}
+        onRegenerate={generate}
+        isLoading={isLoading}
+        label="friction map"
+      />
     </div>
   );
 }

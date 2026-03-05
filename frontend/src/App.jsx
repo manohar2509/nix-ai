@@ -19,6 +19,7 @@ import { useAppStore, useDocuments, useAnalysis } from './stores/useAppStore';
 import { analysisService } from './services/analysisService';
 import { documentService } from './services/documentService';
 import { useThemeInit } from './hooks/useTheme';
+import { useStrategicCache } from './hooks/useCustomHooks';
 
 /* ── Main Dashboard Layout (Authenticated) ── */
 function DashboardLayout() {
@@ -34,6 +35,10 @@ function DashboardLayout() {
   const { currentDocument, documents } = useDocuments();
   const { isAnalyzing, lastAnalysis } = useAnalysis();
   const activeView = useAppStore((state) => state.activeView);
+
+  // Load cached strategic intelligence results when document changes
+  // This ensures page reloads don't lose AI-generated content
+  const { cacheTimestamps } = useStrategicCache(currentDocument?.id);
 
   const setIsAnalyzing = useAppStore((state) => state.setIsAnalyzing);
   const setLastAnalysis = useAppStore((state) => state.setLastAnalysis);
@@ -103,6 +108,28 @@ function DashboardLayout() {
       setLastAnalysis(null);
     }
   }, [currentDocument?.id, currentDocument?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clear stale strategic intelligence state when switching documents.
+  // The useStrategicCache hook will then re-populate from the backend cache.
+  const prevDocRef = React.useRef(null);
+  useEffect(() => {
+    if (!currentDocument?.id) return;
+    if (prevDocRef.current && prevDocRef.current !== currentDocument.id) {
+      // Document changed — clear old strategic state
+      const store = useAppStore.getState();
+      store.setFrictionMap(null);
+      store.setCostAnalysis(null);
+      store.setPayerSimulation(null);
+      store.setSubmissionStrategy(null);
+      store.setOptimization(null);
+      store.setWatchdogAlerts(null);
+      store.setInvestorReport(null);
+      store.setCouncilSession(null);
+      store.setClauseLibrary(null);
+      store.clearDebate();
+    }
+    prevDocRef.current = currentDocument.id;
+  }, [currentDocument?.id]);
 
   // Real analysis flow — calls backend → Bedrock → returns results
   // In local dev: analysis runs inline (no SQS), response comes back immediately
@@ -293,6 +320,7 @@ function DashboardLayout() {
                 hasAnalyzed={hasAnalyzed}
                 currentDocument={currentDocument}
                 lastAnalysis={lastAnalysis}
+                cacheTimestamps={cacheTimestamps}
               />
             </div>
           </main>

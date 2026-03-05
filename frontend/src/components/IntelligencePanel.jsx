@@ -196,7 +196,7 @@ const COLORS = {
 /* ════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ════════════════════════════════════════════════════════════════ */
-export default function IntelligencePanel({ activeTab, setActiveTab, isAnalyzing, hasAnalyzed, currentDocument, lastAnalysis }) {
+export default function IntelligencePanel({ activeTab, setActiveTab, isAnalyzing, hasAnalyzed, currentDocument, lastAnalysis, cacheTimestamps }) {
   const { isAdmin } = useAuth();
   const [activeCategory, setActiveCategory] = useState('review');
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -363,19 +363,19 @@ export default function IntelligencePanel({ activeTab, setActiveTab, isAnalyzing
           ) : activeTab === 'payer' ? (
             <div className="p-4"><PayerGapPanel docId={currentDocument?.id} /></div>
           ) : activeTab === 'council' ? (
-            <div className="p-4"><AdversarialCouncil docId={currentDocument?.id} /></div>
+            <div className="p-4"><AdversarialCouncil docId={currentDocument?.id} generatedAt={cacheTimestamps?.council} /></div>
           ) : activeTab === 'friction' ? (
-            <div className="p-4"><FrictionHeatmap docId={currentDocument?.id} /></div>
+            <div className="p-4"><FrictionHeatmap docId={currentDocument?.id} generatedAt={cacheTimestamps?.friction_map} /></div>
           ) : activeTab === 'cost' ? (
-            <div className="p-4"><CostArchitect docId={currentDocument?.id} /></div>
+            <div className="p-4"><CostArchitect docId={currentDocument?.id} generatedAt={cacheTimestamps?.cost_analysis} /></div>
           ) : activeTab === 'payer-sim' ? (
-            <div className="p-4"><PayerSimulator docId={currentDocument?.id} /></div>
+            <div className="p-4"><PayerSimulator docId={currentDocument?.id} generatedAt={cacheTimestamps?.payer_simulation} /></div>
           ) : activeTab === 'strategy' ? (
-            <div className="p-4"><SubmissionStrategy docId={currentDocument?.id} /></div>
+            <div className="p-4"><SubmissionStrategy docId={currentDocument?.id} generatedAt={cacheTimestamps?.submission_strategy} /></div>
           ) : activeTab === 'optimizer' ? (
-            <div className="p-4"><ProtocolOptimizer docId={currentDocument?.id} /></div>
+            <div className="p-4"><ProtocolOptimizer docId={currentDocument?.id} generatedAt={cacheTimestamps?.optimization} /></div>
           ) : activeTab === 'watchdog' ? (
-            <div className="p-4"><ComplianceWatchdog docId={currentDocument?.id} /></div>
+            <div className="p-4"><ComplianceWatchdog docId={currentDocument?.id} generatedAt={cacheTimestamps?.watchdog} /></div>
           ) : activeTab === 'clauses' ? (
             <div className="p-4"><SmartClauseLibrary docId={currentDocument?.id} /></div>
           ) : activeTab === 'timeline' ? (
@@ -427,11 +427,12 @@ function AnalysisContent({ lastAnalysis, currentDocument }) {
         {/* How to read findings */}
         <div className="px-3 py-2 rounded-lg bg-brand-50/50 border border-brand-100/60">
           <p className="text-[11px] text-slate-600 leading-relaxed">
-            <span className="font-semibold text-brand-700">How to read:</span> Each finding shows
+            <span className="font-semibold text-brand-700">✓ KB-Grounded Analysis:</span> All findings are cross-referenced against 
+            <span className="font-semibold"> ICH/FDA/EMA/HTA guidelines</span> in your Knowledge Base. Each finding shows
             a <span className="font-semibold text-red-600">severity</span> (Critical → Low), the
             <span className="font-semibold"> protocol section</span>,
-            <span className="font-semibold"> jurisdictions impacted</span>, and
-            <span className="font-semibold"> ICH/FDA/EMA guideline</span> reference.
+            <span className="font-semibold"> affected jurisdictions</span>, and
+            <span className="font-semibold"> clickable guideline citations</span> with section numbers.
             Click any finding to see the recommended action and suggested protocol language.
           </p>
         </div>

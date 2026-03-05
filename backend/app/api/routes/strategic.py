@@ -48,6 +48,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/strategic", tags=["strategic-intelligence"])
 
 
+# ── Cached results — GET endpoint for all features ──────────────
+@router.get("/documents/{doc_id}/cached")
+async def get_cached_results(
+    doc_id: str,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Return ALL cached strategic results for a document.
+
+    Frontend calls this on mount / page reload to restore previously
+    generated intelligence panels without burning tokens.
+
+    Returns a dict keyed by feature name → {result, generated_at, analysis_hash}.
+    """
+    try:
+        cached = dynamo_service.get_all_strategic_results(doc_id)
+        return {"cached": cached, "doc_id": doc_id}
+    except Exception as exc:
+        logger.error("Failed to fetch cached strategic results for %s: %s", doc_id, exc)
+        return {"cached": {}, "doc_id": doc_id}
+
+
 # ── 1. Adversarial Council (sync — legacy) ──────────────────────
 @router.post("/documents/{doc_id}/council", response_model=CouncilResponse)
 async def run_council(

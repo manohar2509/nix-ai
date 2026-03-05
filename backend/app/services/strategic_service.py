@@ -22,6 +22,7 @@ All features use real data from:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
@@ -34,6 +35,45 @@ from app.services.regulatory_engine import (
 )
 
 logger = logging.getLogger(__name__)
+
+# ── Deterministic temperature for consistent results ───────────
+# Using 0.0 ensures the same protocol + analysis always produces
+# the same strategic output, so users see consistent results.
+STRATEGIC_TEMPERATURE = 0.0
+
+
+def _check_cache(doc_id: str, feature_type: str, analysis: dict | None) -> dict | None:
+    """Return cached result if analysis hasn't changed, else None."""
+    try:
+        cached = dynamo_service.get_strategic_result(doc_id, feature_type)
+        if cached and cached.get("analysis_hash") == _analysis_hash(analysis):
+            return cached.get("result")
+    except Exception:
+        pass
+    return None
+
+
+def _analysis_hash(analysis: dict | None) -> str:
+    """Create a short hash of the analysis data to detect changes.
+
+    When the user re-runs the core regulatory analysis, the hash will
+    change and the cached strategic results become stale.
+    """
+    if not analysis:
+        return "empty"
+    key_data = json.dumps(
+        {
+            "rs": analysis.get("regulator_score", 0),
+            "ps": analysis.get("payer_score", 0),
+            "fc": len(analysis.get("findings", [])),
+            "ids": sorted(
+                f.get("id", f.get("finding_id", ""))
+                for f in analysis.get("findings", [])[:10]
+            ),
+        },
+        sort_keys=True,
+    )
+    return hashlib.md5(key_data.encode()).hexdigest()[:12]
 
 
 # ════════════════════════════════════════════════════════════════
@@ -231,12 +271,19 @@ Return JSON with this EXACT structure:
   }}
 }}
 
+⚠️ PLATFORM TRUST POLICY: This platform is built on CORRECTNESS. You MUST:
+  1. Base ALL debate arguments on REAL findings from the analysis provided above
+  2. ONLY cite guidelines that are explicitly listed in the REGULATORY REFERENCES section
+  3. NEVER invent findings or issues not present in the actual analysis data
+  4. Calculate cost impacts using ONLY the benchmark data provided
+  5. Each argument must reference a SPECIFIC finding_id from the analysis
+
 CRITICAL: Base ALL arguments on the REAL findings and data provided. Do not invent issues that aren't in the analysis. Cite real guideline codes. Calculate real cost impacts based on the cost benchmarks.
 
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.4)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
         result = _parse_json_response(raw)
 
         if not result.get("rounds"):
@@ -246,6 +293,10 @@ Respond with ONLY valid JSON."""
                 "rounds": [],
                 "final_verdict": {"current_scores": {"regulatory": reg_score, "payer": pay_score}},
             }
+
+        # Cache the result for persistence across reloads
+        a_hash = _analysis_hash(analysis)
+        dynamo_service.save_strategic_result(doc_id, "council", result, a_hash)
 
         return result
     except Exception as exc:
@@ -318,13 +369,24 @@ Return JSON:
   }}
 }}
 
+⚠️ GROUNDING REQUIREMENT: Every section analysis MUST map to:
+  1. A REAL finding ID from the analysis (use related_finding_ids field)
+  2. REAL protocol section titles extracted from the document text
+  3. Specific guideline codes from the REGULATORY REFERENCES above
+  4. Actual risk vs commercial tension — not hypothetical issues
+
 CRITICAL: Map findings from the analysis to specific protocol sections. Use REAL section titles from the protocol text. The friction score should reflect genuine regulatory vs commercial tension, not just high risk in both.
 
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.3)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
         result = _parse_json_response(raw)
+
+        # Cache the result
+        a_hash = _analysis_hash(ctx["analysis"])
+        dynamo_service.save_strategic_result(doc_id, "friction_map", result, a_hash)
+
         return result
     except Exception as exc:
         logger.error("Friction map generation failed: %s", exc)
@@ -440,13 +502,24 @@ Return JSON:
   }}
 }}
 
+⚠️ GROUNDING REQUIREMENT: 
+  1. Extract protocol parameters ONLY from the actual protocol text provided
+  2. Use ONLY the cost benchmark data provided — no external cost estimates
+  3. EVERY finding_cost_impact must reference a real finding_id from the analysis
+  4. Do NOT invent cost categories not supported by the benchmark data
+
 CRITICAL: Use REAL protocol parameters from the text. Calculate costs using the benchmark data provided. Each finding cost impact must be specifically tied to a real finding from the analysis.
 
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.3)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
         result = _parse_json_response(raw)
+
+        # Cache the result
+        a_hash = _analysis_hash(ctx["analysis"])
+        dynamo_service.save_strategic_result(doc_id, "cost_analysis", result, a_hash)
+
         return result
     except Exception as exc:
         logger.error("Cost analysis failed: %s", exc)
@@ -543,13 +616,24 @@ Return JSON:
   "executive_summary": "2-3 sentence summary of payer landscape risk and key recommendations"
 }}
 
+⚠️ GROUNDING REQUIREMENT:
+  1. Base EVERY insurer prediction on ACTUAL payer gaps from the analysis
+  2. ONLY use HTA body scores that exist in the analysis data
+  3. Denial predictions must reference SPECIFIC gaps (e.g., "Missing EQ-5D-5L" from payer_gaps)
+  4. Use ONLY the payer denial benchmarks provided — no external data
+
 CRITICAL: Base ALL predictions on the REAL payer gaps identified in the analysis. Use real insurer criteria and denial benchmarks. Revenue projections should be order-of-magnitude estimates based on indication prevalence.
 
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.3)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
         result = _parse_json_response(raw)
+
+        # Cache the result
+        a_hash = _analysis_hash(ctx["analysis"])
+        dynamo_service.save_strategic_result(doc_id, "payer_simulation", result, a_hash)
+
         return result
     except Exception as exc:
         logger.error("Payer simulation failed: %s", exc)
@@ -657,8 +741,13 @@ Return JSON:
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.3)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
         result = _parse_json_response(raw)
+
+        # Cache the result
+        a_hash = _analysis_hash(ctx["analysis"])
+        dynamo_service.save_strategic_result(doc_id, "submission_strategy", result, a_hash)
+
         return result
     except Exception as exc:
         logger.error("Submission strategy generation failed: %s", exc)
@@ -734,13 +823,25 @@ Return JSON:
   }}
 }}
 
+⚠️ GROUNDING REQUIREMENT — ZERO TOLERANCE FOR FABRICATION:
+  1. The original_text field MUST be an EXACT QUOTE from the protocol — character-for-character
+  2. EVERY optimization must resolve a REAL finding_id from the analysis
+  3. EVERY guideline citation must appear in the REGULATORY REFERENCES above
+  4. Do NOT create optimizations for issues not in the findings list
+  5. If you cannot find the exact protocol text for a finding, skip that optimization
+
 CRITICAL: The original_text MUST be real text from the protocol (quote it accurately). The optimized_text must be protocol-quality language suitable for a regulatory submission. Cite specific guideline sections in every justification.
 
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.3)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
         result = _parse_json_response(raw)
+
+        # Cache the result
+        a_hash = _analysis_hash(analysis)
+        dynamo_service.save_strategic_result(doc_id, "optimization", result, a_hash)
+
         return result
     except Exception as exc:
         logger.error("Protocol optimization failed: %s", exc)
@@ -861,8 +962,13 @@ Return JSON:
 
 Respond with ONLY valid JSON."""
 
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.3)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
         result = _parse_json_response(raw)
+
+        # Cache the result
+        a_hash = _analysis_hash(analysis)
+        dynamo_service.save_strategic_result(doc_id, "investor_report", result, a_hash)
+
         return result
     except Exception as exc:
         logger.error("Investor report generation failed: %s", exc)
@@ -1011,12 +1117,19 @@ Return JSON:
   ]
 }}
 
+⚠️ GROUNDING REQUIREMENT:
+  1. ONLY flag updates that genuinely affect THIS specific protocol based on its actual text
+  2. Use ONLY the regulatory updates listed above — no external updates
+  3. Each alert must reference SPECIFIC protocol sections from the text
+  4. If an update doesn't apply, set affects_protocol=false and current_compliance="not_applicable"
+  5. Do NOT generate generic alerts — be protocol-specific
+
 CRITICAL: For each update, genuinely assess whether the protocol's design, endpoints, or procedures are affected. Don't flag updates as affecting the protocol unless they genuinely do based on the protocol text.
 
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.3)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
         result = _parse_json_response(raw)
 
         # Enrich with the static update metadata
@@ -1029,6 +1142,10 @@ Respond with ONLY valid JSON."""
                             u["code"].replace("ICH ", ""), {}
                         ).get("url", "")
                         break
+
+        # Cache the result
+        a_hash = _analysis_hash(analysis)
+        dynamo_service.save_strategic_result(doc_id, "watchdog", result, a_hash)
 
         return result
     except Exception as exc:

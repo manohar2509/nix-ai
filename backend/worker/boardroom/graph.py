@@ -35,6 +35,8 @@ from worker.boardroom.agents import (
     REGULATOR_SYSTEM_PROMPT,
     PAYER_SYSTEM_PROMPT,
     PATIENT_SYSTEM_PROMPT,
+)
+from worker.boardroom.tools import (
     REGULATOR_TOOLS,
     PAYER_TOOLS,
     PATIENT_TOOLS,

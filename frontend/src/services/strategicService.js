@@ -7,6 +7,10 @@
 
 import api from './api';
 
+// ── Cached Results (all features for a document) ──────────────
+export const getCachedResults = (docId) =>
+  api.get(`/strategic/documents/${docId}/cached`).then(r => r.data);
+
 // ── 1. Adversarial Council (sync — legacy) ────────────────────
 export const runCouncil = (docId) =>
   api.post(`/strategic/documents/${docId}/council`).then(r => r.data);

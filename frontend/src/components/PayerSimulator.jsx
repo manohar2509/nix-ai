@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CreditCard, Loader2, ShieldAlert, Building2, TrendingDown, DollarSign, ArrowRight, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 function formatUSD(val) {
@@ -20,12 +21,13 @@ const decisionStyle = {
   'Deny': { color: 'text-red-600', bg: 'bg-red-50', icon: XCircle },
 };
 
-export default function PayerSimulator({ docId }) {
+export default function PayerSimulator({ docId, generatedAt }) {
   const sim = useAppStore(s => s.payerSimulation);
   const isLoading = useAppStore(s => s.isPayerSimLoading);
   const setSim = useAppStore(s => s.setPayerSimulation);
   const setLoading = useAppStore(s => s.setIsPayerSimLoading);
   const [tab, setTab] = useState('insurers');
+  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const simulate = async () => {
     if (!docId) return;
@@ -33,6 +35,7 @@ export default function PayerSimulator({ docId }) {
     try {
       const result = await strategicService.simulatePayer(docId);
       setSim(result);
+      setLocalGeneratedAt(new Date().toISOString());
     } catch (err) {
       console.error('Payer simulation failed:', err);
     } finally {
@@ -223,9 +226,12 @@ export default function PayerSimulator({ docId }) {
         </div>
       )}
 
-      <button onClick={simulate} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Re-simulate Coverage
-      </button>
+      <CacheStatusBanner
+        generatedAt={localGeneratedAt || generatedAt}
+        onRegenerate={simulate}
+        isLoading={isLoading}
+        label="payer simulation"
+      />
     </div>
   );
 }

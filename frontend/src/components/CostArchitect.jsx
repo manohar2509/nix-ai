@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calculator, Loader2, TrendingDown, TrendingUp, DollarSign, ArrowRight, PieChart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 function formatUSD(val) {
@@ -13,12 +14,13 @@ function formatUSD(val) {
   return `$${num.toLocaleString()}`;
 }
 
-export default function CostArchitect({ docId }) {
+export default function CostArchitect({ docId, generatedAt }) {
   const costData = useAppStore(s => s.costAnalysis);
   const isLoading = useAppStore(s => s.isCostLoading);
   const setCost = useAppStore(s => s.setCostAnalysis);
   const setLoading = useAppStore(s => s.setIsCostLoading);
   const [tab, setTab] = useState('overview');
+  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const analyze = async () => {
     if (!docId) return;
@@ -26,6 +28,7 @@ export default function CostArchitect({ docId }) {
     try {
       const result = await strategicService.getCostAnalysis(docId);
       setCost(result);
+      setLocalGeneratedAt(new Date().toISOString());
     } catch (err) {
       console.error('Cost analysis failed:', err);
     } finally {
@@ -231,9 +234,12 @@ export default function CostArchitect({ docId }) {
         </div>
       )}
 
-      <button onClick={analyze} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Recalculate Costs
-      </button>
+      <CacheStatusBanner
+        generatedAt={localGeneratedAt || generatedAt}
+        onRegenerate={analyze}
+        isLoading={isLoading}
+        label="cost analysis"
+      />
     </div>
   );
 }

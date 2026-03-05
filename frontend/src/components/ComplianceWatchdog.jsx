@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, Loader2, AlertTriangle, CheckCircle, Clock, Bell, Shield, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 const urgencyStyle = {
@@ -17,12 +18,13 @@ const complianceStyle = {
   not_applicable: { label: 'N/A', color: 'bg-slate-100 text-slate-500' },
 };
 
-export default function ComplianceWatchdog({ docId }) {
+export default function ComplianceWatchdog({ docId, generatedAt }) {
   const watchdog = useAppStore(s => s.watchdogAlerts);
   const isLoading = useAppStore(s => s.isWatchdogLoading);
   const setWatchdog = useAppStore(s => s.setWatchdogAlerts);
   const setLoading = useAppStore(s => s.setIsWatchdogLoading);
   const [expandedId, setExpandedId] = useState(null);
+  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const scan = async () => {
     if (!docId) return;
@@ -30,6 +32,7 @@ export default function ComplianceWatchdog({ docId }) {
     try {
       const result = await strategicService.runWatchdog(docId);
       setWatchdog(result);
+      setLocalGeneratedAt(new Date().toISOString());
     } catch (err) {
       console.error('Watchdog failed:', err);
     } finally {
@@ -216,9 +219,12 @@ export default function ComplianceWatchdog({ docId }) {
         </div>
       )}
 
-      <button onClick={scan} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Re-scan for Compliance Drift
-      </button>
+      <CacheStatusBanner
+        generatedAt={localGeneratedAt || generatedAt}
+        onRegenerate={scan}
+        isLoading={isLoading}
+        label="compliance scan"
+      />
     </div>
   );
 }
