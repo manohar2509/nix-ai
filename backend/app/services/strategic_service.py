@@ -26,6 +26,7 @@ import json
 import logging
 import re
 
+from app.core.exceptions import DocumentNotFoundError
 from app.services import bedrock_service, dynamo_service, s3_service
 from app.services.regulatory_engine import (
     ALL_REFERENCES_PROMPT_BLOCK,
@@ -93,7 +94,7 @@ def _get_doc_context(doc_id: str) -> dict:
     """Fetch document text and analysis — used by all features."""
     doc = dynamo_service.get_document(doc_id)
     if not doc:
-        raise ValueError(f"Document {doc_id} not found")
+        raise DocumentNotFoundError(doc_id)
 
     s3_key = doc.get("s3_key", "")
     document_text = s3_service.extract_text_from_s3_object(s3_key) if s3_key else ""
@@ -761,7 +762,15 @@ def generate_investor_report(doc_id: str) -> dict:
     # Gather all available data
     sims = dynamo_service.get_simulations_for_document(doc_id)
 
-    prompt = f"""You are generating a venture capital / investor due diligence report for a clinical trial program.
+    # Pre-compute jurisdiction data outside the f-string to avoid
+    # {{}} inside f-string expression (which causes TypeError)
+    jurisdiction_data = json.dumps(
+        [{j.get("jurisdiction"): j.get("compliance_score")} for j in analysis.get("jurisdiction_scores", [])],
+        default=str,
+    )
+
+    try:
+        prompt = f"""You are generating a venture capital / investor due diligence report for a clinical trial program.
 
 PROTOCOL SYNOPSIS:
 ---
@@ -776,7 +785,7 @@ REGULATORY ANALYSIS RESULTS:
 - Critical Findings: {sum(1 for f in analysis.get("findings", []) if f.get("severity") == "critical")}
 - High Findings: {sum(1 for f in analysis.get("findings", []) if f.get("severity") == "high")}
 - HTA Body Scores: {json.dumps(analysis.get("hta_body_scores", {}), default=str)}
-- Jurisdiction Scores: {json.dumps([{{j.get("jurisdiction"): j.get("compliance_score")}} for j in analysis.get("jurisdiction_scores", [])], default=str)}
+- Jurisdiction Scores: {jurisdiction_data}
 
 AMENDMENT SIMULATIONS RUN: {len(sims)}
 
@@ -852,7 +861,6 @@ Return JSON:
 
 Respond with ONLY valid JSON."""
 
-    try:
         raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=0.3)
         result = _parse_json_response(raw)
         return result
