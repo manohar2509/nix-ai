@@ -206,7 +206,17 @@ def update_document(doc_id: str, updates: dict) -> Optional[dict]:
     return _clean_item(doc)
 
 
-def delete_document(doc_id: str) -> bool:
+def delete_document(doc_id: str, pk: str | None = None, sk: str | None = None) -> bool:
+    """Delete a document record from DynamoDB.
+
+    If *pk* and *sk* are provided (from an already-fetched doc), skips
+    the redundant GSI lookup.
+    """
+    if pk and sk:
+        table = get_dynamodb_table()
+        _dynamo_op("delete_document", table.delete_item, Key={"PK": pk, "SK": sk})
+        logger.info("Deleted document %s", doc_id)
+        return True
     doc = get_document(doc_id)
     if not doc:
         return False
@@ -317,15 +327,20 @@ def delete_chat_history(doc_id: str) -> int:
 def delete_analyses_for_document(doc_id: str) -> int:
     """Delete all ANALYSIS records for a document (cascade cleanup)."""
     table = get_dynamodb_table()
-    resp = table.query(
-        KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("ANALYSIS#"),
-    )
-    items = resp.get("Items", [])
     count = 0
-    with table.batch_writer() as batch:
-        for item in items:
-            batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
-            count += 1
+    params = {
+        "KeyConditionExpression": Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("ANALYSIS#"),
+    }
+    while True:
+        resp = table.query(**params)
+        items = resp.get("Items", [])
+        with table.batch_writer() as batch:
+            for item in items:
+                batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+                count += 1
+        if "LastEvaluatedKey" not in resp:
+            break
+        params["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
     if count:
         logger.info("Deleted %d analysis records for doc %s", count, doc_id)
     return count
@@ -334,15 +349,20 @@ def delete_analyses_for_document(doc_id: str) -> int:
 def delete_simulations_for_document(doc_id: str) -> int:
     """Delete all SIM records for a document (cascade cleanup)."""
     table = get_dynamodb_table()
-    resp = table.query(
-        KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("SIM#"),
-    )
-    items = resp.get("Items", [])
     count = 0
-    with table.batch_writer() as batch:
-        for item in items:
-            batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
-            count += 1
+    params = {
+        "KeyConditionExpression": Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("SIM#"),
+    }
+    while True:
+        resp = table.query(**params)
+        items = resp.get("Items", [])
+        with table.batch_writer() as batch:
+            for item in items:
+                batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+                count += 1
+        if "LastEvaluatedKey" not in resp:
+            break
+        params["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
     if count:
         logger.info("Deleted %d simulation records for doc %s", count, doc_id)
     return count

@@ -46,9 +46,11 @@ def trigger_analysis(user: CurrentUser, document_id: str, preferences: dict | No
 
     settings = get_settings()
 
-    # Verify document exists
+    # Verify document exists and caller owns it (prevent IDOR)
     doc = dynamo_service.get_document(document_id)
     if not doc:
+        raise DocumentNotFoundError(document_id)
+    if doc.get("user_id") and doc["user_id"] != user.user_id:
         raise DocumentNotFoundError(document_id)
 
     # Reset document if stuck in "analyzing" or "error" — allows re-analysis
@@ -329,10 +331,12 @@ def trigger_comparison(user: CurrentUser, document_ids: list[str]) -> dict:
     from app.core.config import get_settings
     settings = get_settings()
 
-    # Verify all documents exist
+    # Verify all documents exist and belong to the user
     for did in document_ids:
         doc = dynamo_service.get_document(did)
         if not doc:
+            raise DocumentNotFoundError(did)
+        if doc.get("user_id") and doc["user_id"] != user.user_id:
             raise DocumentNotFoundError(did)
 
     job = dynamo_service.create_job(
@@ -456,7 +460,7 @@ def get_timeline(user: CurrentUser, doc_id: str) -> list[dict]:
 # ════════════════════════════════════════════════════════════════
 # REQ-8: SUBMISSION READINESS REPORT
 # ════════════════════════════════════════════════════════════════
-def generate_report(user: CurrentUser, doc_id: str, sections: list[str] | None = None) -> dict:
+def generate_report(user: CurrentUser, doc_id: str, sections: list[str] | None = None, report_format: str = "json") -> dict:
     """
     Generate a comprehensive submission readiness report.
     Aggregates all analysis data into a structured report.
@@ -506,6 +510,7 @@ def generate_report(user: CurrentUser, doc_id: str, sections: list[str] | None =
             for s in sims if s.get("status") == "COMPLETE"
         ],
         "timeline": timeline,
+        "format": report_format,
         "generated_at": dynamo_service._now_iso(),
     }
 

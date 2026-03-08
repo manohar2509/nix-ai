@@ -121,8 +121,8 @@ def delete_document(user: CurrentUser, doc_id: str) -> dict:
     except Exception as exc:
         logger.warning("Job cancellation failed for doc %s: %s", doc_id, exc)
 
-    # 6. Delete document record from DynamoDB
-    dynamo_service.delete_document(doc_id)
+    # 6. Delete document record from DynamoDB (pass keys to avoid re-query)
+    dynamo_service.delete_document(doc_id, pk=doc.get("PK"), sk=doc.get("SK"))
     return {"success": True, "id": doc_id}
 
 

@@ -38,7 +38,7 @@ async def trigger_analysis(
         raise
     except Exception as exc:
         logger.error("Trigger analysis failed for doc %s: %s", body.document_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to trigger analysis: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to start analysis. Please try again.")
 
 
 @router.get("/analyze/{job_id}", response_model=AnalysisStatusResponse)
@@ -53,7 +53,7 @@ async def get_analysis_status(
         raise
     except Exception as exc:
         logger.error("Get analysis status failed for job %s: %s", job_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get analysis status: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to check analysis progress. Please try again.")
 
 
 @router.get("/documents/{doc_id}/analysis", response_model=AnalysisResultResponse)
@@ -68,7 +68,7 @@ async def get_analysis_results(
         raise
     except Exception as exc:
         logger.error("Get analysis results failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get analysis results: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load analysis results. Please try again.")
 
 
 @router.post("/analyze/{job_id}/retry", response_model=AnalysisJobResponse)
@@ -83,4 +83,4 @@ async def retry_analysis(
         raise
     except Exception as exc:
         logger.error("Retry analysis failed for job %s: %s", job_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to retry analysis: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to retry analysis. Please try again.")

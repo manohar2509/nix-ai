@@ -42,7 +42,7 @@ export default function DealRoomView() {
       setPortfolio(result);
     } catch (err) {
       console.error('Portfolio load failed:', err);
-      const msg = 'Unable to load portfolio data. Please try again.';
+      const msg = err.data?.error || err.userMessage || 'Unable to load portfolio data. Please try again.';
       setPortfolioError(msg);
     } finally {
       setPortfolioLoading(false);
@@ -58,7 +58,7 @@ export default function DealRoomView() {
       setReport(result);
     } catch (err) {
       console.error('Report failed:', err);
-      const msg = 'Unable to generate the investor report. Please try again.';
+      const msg = err.data?.error || err.userMessage || 'Unable to generate the investor report. Please try again.';
       setReportError(msg);
     } finally {
       setReportLoading(false);
@@ -143,7 +143,7 @@ export default function DealRoomView() {
                 </button>
               </div>
             ) : (
-              <ReportContent report={investorReport} riskBadge={riskBadge} onRegenerate={generateReport} />
+              <ReportContent report={investorReport} riskBadge={riskBadge} onRegenerate={generateReport} reportError={reportError} />
             )}
           </div>
         )}
@@ -174,7 +174,7 @@ export default function DealRoomView() {
   );
 }
 
-function ReportContent({ report, riskBadge, onRegenerate }) {
+function ReportContent({ report, riskBadge, onRegenerate, reportError }) {
   const exec = report.executive_summary || {};
   const scorecard = report.regulatory_scorecard || {};
   const positioning = report.competitive_positioning || {};
@@ -187,6 +187,14 @@ function ReportContent({ report, riskBadge, onRegenerate }) {
 
   return (
     <div className="space-y-5 animate-fade-in">
+      {/* Regeneration error banner — visible even when old report is displayed */}
+      {reportError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-start gap-2">
+          <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+          <span>Report regeneration failed: {reportError}</span>
+        </div>
+      )}
+
       <div className="text-center mb-4">
         <h2 className="text-xl font-bold text-slate-900">{report.report_title || 'Regulatory Due Diligence Report'}</h2>
         {report.generated_date && <p className="text-xs text-slate-400 mt-1">{report.generated_date}</p>}
@@ -250,6 +258,99 @@ function ReportContent({ report, riskBadge, onRegenerate }) {
         </div>
       )}
 
+      {/* Competitive Positioning */}
+      {(positioning.protocol_quality_percentile || positioning.design_strengths?.length > 0 || positioning.vs_similar_trials) && (
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <ArrowRight size={14} className="text-indigo-600" /> Competitive Positioning
+          </h3>
+          {positioning.protocol_quality_percentile > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm text-slate-500">Quality Percentile:</span>
+                <span className={cn('text-lg font-black',
+                  positioning.protocol_quality_percentile >= 70 ? 'text-emerald-600' : positioning.protocol_quality_percentile >= 50 ? 'text-amber-600' : 'text-red-600'
+                )}>
+                  {positioning.protocol_quality_percentile}th
+                </span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2">
+                <div className="bg-brand-600 h-2 rounded-full transition-all" style={{ width: `${positioning.protocol_quality_percentile}%` }} />
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            {positioning.design_strengths?.length > 0 && (
+              <div>
+                <div className="text-[10px] font-bold text-emerald-600 mb-1 uppercase">Design Strengths</div>
+                <ul className="space-y-1">
+                  {positioning.design_strengths.map((s, i) => (
+                    <li key={i} className="text-xs text-slate-700 flex items-start gap-1">
+                      <CheckCircle size={10} className="text-emerald-500 shrink-0 mt-0.5" /> {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {positioning.design_gaps?.length > 0 && (
+              <div>
+                <div className="text-[10px] font-bold text-red-600 mb-1 uppercase">Design Gaps</div>
+                <ul className="space-y-1">
+                  {positioning.design_gaps.map((g, i) => (
+                    <li key={i} className="text-xs text-slate-700 flex items-start gap-1">
+                      <AlertTriangle size={10} className="text-red-400 shrink-0 mt-0.5" /> {g}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          {positioning.vs_similar_trials && (
+            <p className="text-xs text-slate-500 mt-2 border-t border-slate-100 pt-2">{positioning.vs_similar_trials}</p>
+          )}
+        </div>
+      )}
+
+      {/* Financial Risk Assessment */}
+      {(financial.estimated_trial_cost_range || financial.amendment_risk || financial.timeline_risk) && (
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <DollarSign size={14} className="text-green-600" /> Financial Risk Assessment
+          </h3>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            {financial.estimated_trial_cost_range && (
+              <div className="p-2 bg-slate-50 rounded-lg">
+                <div className="text-[10px] text-slate-400 uppercase">Trial Cost Range</div>
+                <div className="font-bold text-slate-800">{financial.estimated_trial_cost_range}</div>
+              </div>
+            )}
+            {financial.amendment_risk && (
+              <div className="p-2 bg-slate-50 rounded-lg">
+                <div className="text-[10px] text-slate-400 uppercase">Amendment Risk</div>
+                <div className="font-medium text-slate-700 text-xs">{financial.amendment_risk}</div>
+              </div>
+            )}
+            {financial.timeline_risk && (
+              <div className="p-2 bg-slate-50 rounded-lg">
+                <div className="text-[10px] text-slate-400 uppercase">Timeline Risk</div>
+                <div className="font-medium text-slate-700 text-xs">{financial.timeline_risk}</div>
+              </div>
+            )}
+            {financial.market_access_risk && (
+              <div className="p-2 bg-slate-50 rounded-lg">
+                <div className="text-[10px] text-slate-400 uppercase">Market Access Risk</div>
+                <div className="font-medium text-slate-700 text-xs">{financial.market_access_risk}</div>
+              </div>
+            )}
+          </div>
+          {financial.risk_adjusted_npv_impact && (
+            <p className="text-xs text-slate-500 mt-2 border-t border-slate-100 pt-2">
+              <span className="font-medium text-slate-700">NPV Impact:</span> {financial.risk_adjusted_npv_impact}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Red Flags + Strengths */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -296,7 +397,7 @@ function ReportContent({ report, riskBadge, onRegenerate }) {
                   a.priority === 'immediate' ? 'bg-red-100 text-red-700' :
                   a.priority === 'before_series_a' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
                 )}>
-                  {a.priority?.replace('_', ' ')}
+                  {a.priority?.replaceAll('_', ' ')}
                 </span>
                 <div className="flex-1">
                   <span className="text-xs font-medium text-slate-800">{a.action}</span>

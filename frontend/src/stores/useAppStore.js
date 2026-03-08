@@ -154,7 +154,8 @@ export const useAppStore = create(
                 strategicTimestamps: {},
               } : {}),
               // Track recently deleted IDs so background refresh doesn't re-add them
-              _recentlyDeletedIds: [...(state._recentlyDeletedIds || []), docId],
+              // Cap at 20 entries to prevent unbounded growth
+              _recentlyDeletedIds: [...(state._recentlyDeletedIds || []), docId].slice(-20),
             };
           },
           false,
@@ -369,6 +370,7 @@ export const useAppStore = create(
       showNotification: false,
       notification: null, // { type: 'success'|'error'|'info', message }
       isKbSyncing: false, // Knowledge base is updating
+      showUploadDialog: false, // Global trigger for upload dialog (usable from any view)
 
       // ============================================================================
       // REGULATORY INTELLIGENCE STATE (REQ-1 through REQ-10)
@@ -575,6 +577,9 @@ export const useAppStore = create(
       setIsKbSyncing: (bool) =>
         set({ isKbSyncing: bool }, false, 'setIsKbSyncing'),
 
+      setShowUploadDialog: (bool) =>
+        set({ showUploadDialog: bool }, false, 'setShowUploadDialog'),
+
       // ============================================================================
       // SELECTORS (Helpers)
       // ============================================================================
@@ -681,6 +686,7 @@ export const useAppStore = create(
             crossProtocol: null,
             strategicTimestamps: {},
             _recentlyDeletedIds: [],
+            showUploadDialog: false,
           },
           false,
           'reset'

@@ -197,6 +197,30 @@ export default function ReportExport({ docId, docName }) {
                             💡 {g.recommendation}
                           </p>
                         )}
+                        {g.guideline_refs?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {g.guideline_refs.map((r, ri) => {
+                              const hasUrl = r.url && r.url !== '#';
+                              const Tag = hasUrl ? 'a' : 'span';
+                              const linkProps = hasUrl ? { href: r.url, target: '_blank', rel: 'noopener noreferrer' } : {};
+                              return (
+                                <Tag
+                                  key={ri}
+                                  {...linkProps}
+                                  title={[r.title, r.relevance, hasUrl ? '↗ Click to open' : null].filter(Boolean).join('\n')}
+                                  className={cn(
+                                    'text-[11px] px-1.5 py-0.5 rounded border font-medium inline-flex items-center gap-1 transition-colors',
+                                    'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+                                    hasUrl && 'cursor-pointer'
+                                  )}
+                                >
+                                  {r.code}{r.section ? ` §${r.section}` : ''}
+                                  {hasUrl && <span className="text-[9px] opacity-50">↗</span>}
+                                </Tag>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -232,11 +256,29 @@ export default function ReportExport({ docId, docName }) {
                           )}
                           {f.guideline_refs?.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1.5">
-                              {f.guideline_refs.map((r, ri) => (
-                                <span key={ri} className="text-[11px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium">
-                                  {r.code}{r.section ? ` §${r.section}` : ''}
-                                </span>
-                              ))}
+                              {f.guideline_refs.map((r, ri) => {
+                                const hasUrl = r.url && r.url !== '#';
+                                const Tag = hasUrl ? 'a' : 'span';
+                                const linkProps = hasUrl ? { href: r.url, target: '_blank', rel: 'noopener noreferrer' } : {};
+                                return (
+                                  <Tag
+                                    key={ri}
+                                    {...linkProps}
+                                    title={[r.title, r.section ? `Section ${r.section}` : null, r.relevance, hasUrl ? '↗ Click to open' : null].filter(Boolean).join('\n')}
+                                    className={cn(
+                                      'text-[11px] px-1.5 py-0.5 rounded border font-medium inline-flex items-center gap-1 transition-colors',
+                                      r.source_type === 'FDA' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' :
+                                      r.source_type === 'HTA' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' :
+                                      r.source_type === 'EMA' ? 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100' :
+                                      'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+                                      hasUrl && 'cursor-pointer'
+                                    )}
+                                  >
+                                    {r.code}{r.section ? ` §${r.section}` : ''}
+                                    {hasUrl && <span className="text-[9px] opacity-50">↗</span>}
+                                  </Tag>
+                                );
+                              })}
                             </div>
                           )}
                           {f.suggestion && (
@@ -290,12 +332,6 @@ export default function ReportExport({ docId, docName }) {
                   className="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-lg transition-colors"
                 >
                   ⬇️ JSON
-                </button>
-                <button
-                  onClick={downloadAsCsv}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  ⬇️ CSV
                 </button>
                 <button
                   onClick={() => setShowReport(false)}

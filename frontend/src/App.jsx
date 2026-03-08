@@ -37,6 +37,18 @@ function DashboardLayout() {
   const { isAnalyzing, lastAnalysis } = useAnalysis();
   const activeView = useAppStore((state) => state.activeView);
 
+  // Global upload dialog trigger (allows any view like Dashboard to open upload)
+  const showUploadDialog = useAppStore((state) => state.showUploadDialog);
+  const setShowUploadDialog = useAppStore((state) => state.setShowUploadDialog);
+
+  // Sync global trigger → local state, then reset the trigger
+  React.useEffect(() => {
+    if (showUploadDialog) {
+      setShowUpload(true);
+      setShowUploadDialog(false);
+    }
+  }, [showUploadDialog, setShowUploadDialog]);
+
   // Load cached strategic intelligence results when document changes
   // This ensures page reloads don't lose AI-generated content
   useStrategicCache(currentDocument?.id);

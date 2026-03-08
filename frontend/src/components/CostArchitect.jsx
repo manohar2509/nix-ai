@@ -8,9 +8,11 @@ import { cn } from '../utils/cn';
 function formatUSD(val) {
   if (!val && val !== 0) return '—';
   const num = Number(val);
+  if (isNaN(num)) return '—';
   if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`;
   if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`;
   if (num >= 1_000) return `$${(num / 1_000).toFixed(0)}K`;
+  if (num < 0) return `-${formatUSD(Math.abs(num))}`;
   return `$${num.toLocaleString()}`;
 }
 
@@ -20,16 +22,20 @@ export default function CostArchitect({ docId, generatedAt }) {
   const setCost = useAppStore(s => s.setCostAnalysis);
   const setLoading = useAppStore(s => s.setIsCostLoading);
   const [tab, setTab] = useState('overview');
+  const [error, setError] = useState(null);
 
   const analyze = async () => {
     if (!docId) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await strategicService.getCostAnalysis(docId);
       setCost(result);
       useAppStore.getState().updateStrategicTimestamp('cost_analysis', new Date().toISOString());
     } catch (err) {
       console.error('Cost analysis failed:', err);
+      const msg = err?.response?.data?.detail || err?.userMessage || 'Failed to analyze costs. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -56,6 +62,12 @@ export default function CostArchitect({ docId, generatedAt }) {
         </div>
         <h3 className="text-slate-700 font-bold mb-1">Trial Cost Forecast</h3>
         <p className="text-slate-400 text-sm max-w-sm mb-4">Estimate total trial costs, see the financial impact of each finding, and compare cost-reduction scenarios — benchmarked against real industry data.</p>
+        {error && (
+          <div className="mb-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 max-w-sm">
+            <div className="flex items-center gap-1.5 font-semibold mb-0.5"><AlertTriangle size={12} /> Analysis Failed</div>
+            {error}
+          </div>
+        )}
         <button onClick={analyze} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Analyze Costs
         </button>
@@ -227,7 +239,7 @@ export default function CostArchitect({ docId, generatedAt }) {
                   ))}
                 </ul>
               )}
-              {i === 1 && <div className="text-[10px] text-brand-600 font-bold mt-1.5">⭐ Recommended by NIX AI</div>}
+              {(s.recommended || (s.scenario && s.scenario.toLowerCase().includes('nix ai'))) && <div className="text-[10px] text-brand-600 font-bold mt-1.5">⭐ Recommended by NIX AI</div>}
             </div>
           ))}
         </div>

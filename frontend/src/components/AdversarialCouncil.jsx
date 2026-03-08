@@ -60,6 +60,7 @@ const AGENT_CONFIG = {
 };
 
 const POLL_INTERVAL = 2500; // 2.5 seconds
+const MAX_POLL_FAILURES = 10; // Stop polling after 10 consecutive transient errors
 
 // ═════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -88,6 +89,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
   const [showToolDetails, setShowToolDetails] = useState(new Set());
   const transcriptRef = useRef(null);
   const pollTimerRef = useRef(null);
+  const pollFailCountRef = useRef(0);
   const prevTurnCountRef = useRef(0);
 
   // ── Start Async Debate ──
@@ -98,6 +100,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
 
     // Reset local state for a fresh debate
     prevTurnCountRef.current = 0;
+    pollFailCountRef.current = 0;
     setAnimatedTurns(new Set());
     setExpandedTurns(new Set());
     setShowToolDetails(new Set());
@@ -143,6 +146,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
 
         const status = await strategicService.getDebateStatus(activeDebateId);
         setDebateStatus(status);
+        pollFailCountRef.current = 0; // Reset on success
 
         // Animate new turns
         const transcript = status.transcript || [];
@@ -187,8 +191,14 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
         } else if (httpStatus === 403) {
           setDebateError('You do not have permission to view this session.');
           setIsDebatePolling(false);
+        } else {
+          // Transient network/500 errors — retry up to MAX_POLL_FAILURES times
+          pollFailCountRef.current += 1;
+          if (pollFailCountRef.current >= MAX_POLL_FAILURES) {
+            setDebateError('Lost connection to the expert panel after multiple retries. Please start a new session.');
+            setIsDebatePolling(false);
+          }
         }
-        // For network/500 errors — keep polling (transient failures)
       }
     };
 

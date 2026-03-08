@@ -27,6 +27,38 @@ import ComplianceWatchdog from './ComplianceWatchdog';
 import SmartClauseLibrary from './SmartClauseLibrary';
 import { cn } from '../utils/cn';
 
+/* ── Error Boundary: prevents child component crashes from white-screening the entire panel ── */
+class IntelligencePanelErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error('IntelligencePanel child crashed:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 text-center">
+          <AlertCircle size={24} className="mx-auto text-red-400 mb-2" />
+          <p className="text-sm font-medium text-slate-700 mb-1">This section encountered an error</p>
+          <p className="text-xs text-slate-400 mb-3">{this.state.error?.message || 'Unexpected error'}</p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="text-xs text-brand-600 hover:text-brand-800 font-semibold"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /* ── Analysis progress steps ── */
 const ANALYSIS_STEPS = [
   { label: 'Extracting protocol sections and endpoints...', duration: 650 },
@@ -352,6 +384,7 @@ export default function IntelligencePanel({ activeTab, setActiveTab, isAnalyzing
 
       {/* ═══════════ Content Area ═══════════ */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 transition-all duration-200">
+        <IntelligencePanelErrorBoundary key={activeTab}>
         <div className={cn(
           'transition-all duration-250',
           isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
@@ -390,6 +423,7 @@ export default function IntelligencePanel({ activeTab, setActiveTab, isAnalyzing
             <KnowledgeBasePanel />
           )}
         </div>
+        </IntelligencePanelErrorBoundary>
       </div>
     </div>
   );
@@ -440,7 +474,7 @@ function AnalysisContent({ lastAnalysis, currentDocument }) {
         {lastAnalysis?.findings?.length > 0 ? (
           lastAnalysis.findings.map((finding, idx) => (
             <FindingCard
-              key={idx}
+              key={finding.id || `${finding.title || finding.category || ''}-${idx}`}
               type={finding.severity === 'high' || finding.severity === 'critical' || finding.type === 'regulatory' ? 'risk' : 'money'}
               title={finding.title || finding.category || 'Finding'}
               text={finding.description || finding.text || finding.summary || ''}

@@ -82,6 +82,7 @@ export function SyntheticFactoryPanel() {
       setKbDocuments(data.documents || []);
     } catch (err) {
       console.error('Failed to load KB documents:', err);
+      showToast({ type: 'error', title: 'Load failed', message: 'Could not load Knowledge Base documents. Please refresh the page.' });
     } finally {
       setIsKbLoading(false);
     }
@@ -133,7 +134,7 @@ export function SyntheticFactoryPanel() {
     if (files.length === 0) return;
 
     setIsUploading(true);
-    const results = { success: 0, failed: 0 };
+    const results = { success: 0, failed: 0, skippedDuplicates: 0 };
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -141,6 +142,21 @@ export function SyntheticFactoryPanel() {
 
       try {
         setUploadProgress((prev) => ({ ...prev, [fileId]: { status: 'uploading', percent: 0 } }));
+
+        // 0. Check for duplicates before uploading
+        try {
+          const dupCheck = await kbService.checkDuplicate(file.name);
+          if (dupCheck.is_duplicate) {
+            setUploadProgress((prev) => ({
+              ...prev,
+              [fileId]: { status: 'failed', percent: 0, error: `Already exists in KB: "${dupCheck.existing_document?.name || file.name}"` },
+            }));
+            results.skippedDuplicates++;
+            continue;
+          }
+        } catch {
+          // Duplicate check failed — proceed with upload (non-critical)
+        }
 
         // 1. Get presigned URL for KB bucket (admin-only endpoint)
         const { url, key } = await kbService.getUploadUrl(file.name, file.type || 'application/pdf');
@@ -164,7 +180,11 @@ export function SyntheticFactoryPanel() {
         results.success++;
       } catch (err) {
         console.error(`KB upload failed for ${file.name}:`, err);
-        setUploadProgress((prev) => ({ ...prev, [fileId]: { status: 'failed', percent: 0, error: 'Upload could not be completed' } }));
+        const errorDetail =
+          err.message?.includes('internet') ? 'Network error — check your connection'
+          : err.message?.includes('presigned') || err.message?.includes('prepare') ? 'Could not get upload URL — try again'
+          : 'Upload could not be completed';
+        setUploadProgress((prev) => ({ ...prev, [fileId]: { status: 'failed', percent: 0, error: errorDetail } }));
         results.failed++;
       }
     }
@@ -172,15 +192,22 @@ export function SyntheticFactoryPanel() {
     setIsUploading(false);
 
     if (results.success > 0) {
+      const extras = [];
+      if (results.failed > 0) extras.push(`${results.failed} failed`);
+      if (results.skippedDuplicates > 0) extras.push(`${results.skippedDuplicates} duplicate(s) skipped`);
       showToast({
         type: 'success',
         title: 'Upload complete',
-        message: `${results.success} reference document(s) added to Knowledge Base${results.failed > 0 ? `, ${results.failed} unsuccessful` : ''}. Remember to Sync.`,
+        message: `${results.success} reference document(s) added to Knowledge Base${extras.length > 0 ? ` (${extras.join(', ')})` : ''}. Remember to Sync.`,
       });
     }
 
-    if (results.failed > 0 && results.success === 0) {
+    if (results.failed > 0 && results.success === 0 && results.skippedDuplicates === 0) {
       showToast({ type: 'error', title: 'Upload unsuccessful', message: 'All uploads could not be completed. Check file formats and try again.' });
+    }
+
+    if (results.skippedDuplicates > 0 && results.success === 0 && results.failed === 0) {
+      showToast({ type: 'warning', title: 'Duplicates skipped', message: 'All selected files already exist in the Knowledge Base.' });
     }
 
     setTimeout(() => {

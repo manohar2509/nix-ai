@@ -40,6 +40,10 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
         try {
           const freshDocs = await documentService.listDocuments();
           const store = useAppStore.getState();
+          // Remove the doc ID from the recently-deleted guard so re-fetch restores it
+          store.setState({
+            _recentlyDeletedIds: (store._recentlyDeletedIds || []).filter((id) => id !== docId),
+          });
           store.setDocuments(freshDocs);
           if (!store.currentDocument && freshDocs.length > 0) {
             store.setCurrentDocument(freshDocs[0]);

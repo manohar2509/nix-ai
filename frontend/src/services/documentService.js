@@ -32,9 +32,13 @@ export const documentService = {
   /**
    * Upload file directly to S3 using presigned URL
    * This bypasses the backend for speed.
-   * Returns { success, key, abort } where abort() cancels the upload.
+   * @param {File} file - The file to upload
+   * @param {string} presignedUrl - The presigned PUT URL
+   * @param {Function} onProgress - Progress callback (0-100)
+   * @param {string} contentType - Content type for the upload (must match presigned URL)
+   * Returns a Promise with an .abort() method.
    */
-  uploadToS3: (file, presignedUrl, onProgress) => {
+  uploadToS3: (file, presignedUrl, onProgress, contentType) => {
     let xhrRef = null;
 
     const promise = new Promise((resolve, reject) => {
@@ -67,7 +71,9 @@ export const documentService = {
       });
 
       xhr.open('PUT', presignedUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
+      // Use the resolved content type to match the presigned URL signature.
+      // Falls back to file.type for backward compatibility.
+      xhr.setRequestHeader('Content-Type', contentType || file.type || 'application/octet-stream');
       xhr.send(file);
     });
 

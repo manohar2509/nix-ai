@@ -39,13 +39,22 @@ export default function PastAnalysisView() {
   };
 
   // Navigate to protocol view with this document selected
-  const handleViewInProtocol = (analysis) => {
-    setCurrentDocument({
-      id: analysis.documentId,
-      name: analysis.documentName,
-      size: analysis.documentSize || 0,
-      status: 'analyzed',
-    });
+  const handleViewInProtocol = async (analysis) => {
+    // Fetch full document to avoid incomplete state in EditorWindow/Sidebar
+    try {
+      const { documentService } = await import('../services/documentService');
+      const fullDoc = await documentService.getDocument(analysis.documentId);
+      setCurrentDocument(fullDoc);
+    } catch {
+      // Fallback: use partial data if fetch fails (EditorWindow will refetch content)
+      setCurrentDocument({
+        id: analysis.documentId,
+        name: analysis.documentName,
+        size: analysis.documentSize || 0,
+        status: 'analyzed',
+        s3_key: '',
+      });
+    }
     setActiveView('protocol');
   };
 

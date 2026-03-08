@@ -167,7 +167,7 @@ export default function ChatInterface({ currentDocument }) {
           }
         },
         onDone: (data) => {
-          // Finalize the message with complete text and citations
+          // Finalize the message with complete text, citations, and grounding metadata
           const currentMessages = useAppStore.getState().chatMessages;
           const msg = currentMessages.find(
             (m) => m.id === placeholderId || m.id === data.messageId || m.isStreaming
@@ -177,6 +177,8 @@ export default function ChatInterface({ currentDocument }) {
               id: data.messageId || msg.id,
               text: data.fullText || msg.text,
               citations: data.citations || [],
+              kb_grounded: data.kb_grounded,
+              grounding_source: data.grounding_source,
               isStreaming: false,
             });
           }
