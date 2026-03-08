@@ -62,7 +62,7 @@ export default function SmartPivotCard({ findings = [] }) {
                 )}
 
                 {/* Guideline citations — so users can verify the top finding */}
-                <GuidelineRefBadge refs={topFinding.guideline_refs} />
+                <GuidelineRefBadge refs={topFinding.guideline_refs?.map(r => typeof r === 'string' ? { code: r } : r)} />
               </div>
             </div>
 

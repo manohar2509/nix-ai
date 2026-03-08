@@ -317,3 +317,109 @@ body.is-resizing {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════
+   Markdown Message Styles (AI Chat Responses)
+   ══════════════════════════════════════════════ */
+.markdown-message {
+  line-height: 1.65;
+}
+
+/* Prevent double-spacing on first/last elements */
+.markdown-message > *:first-child {
+  margin-top: 0 !important;
+}
+.markdown-message > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Nested list spacing */
+.markdown-message ul ul,
+.markdown-message ol ol,
+.markdown-message ul ol,
+.markdown-message ol ul {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* Table cell text wrapping */
+.markdown-message table {
+  word-break: break-word;
+}
+
+/* Blockquote paragraph spacing */
+.markdown-message blockquote p {
+  margin-bottom: 0;
+}
+
+/* Ensure inline code doesn't break across lines awkwardly */
+.markdown-message code {
+  white-space: nowrap;
+}
+
+/* Pre blocks should wrap */
+.markdown-message pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Border-left-3 utility for blockquotes */
+.border-l-3 {
+  border-left-width: 3px;
+}
+
+/* Dark mode overrides for markdown */
+html.dark .markdown-message h3,
+html.dark .markdown-message h4,
+html.dark .markdown-message h5,
+html.dark .markdown-message h6 {
+  color: #e2e8f0;
+}
+
+html.dark .markdown-message p,
+html.dark .markdown-message li {
+  color: #cbd5e1;
+}
+
+html.dark .markdown-message strong {
+  color: #f1f5f9;
+}
+
+html.dark .markdown-message blockquote {
+  background-color: rgba(99, 102, 241, 0.08);
+  border-color: #6366f1;
+}
+
+html.dark .markdown-message code:not(pre code) {
+  background-color: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+html.dark .markdown-message table {
+  border-color: #334155;
+}
+
+html.dark .markdown-message thead {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+html.dark .markdown-message tbody tr {
+  border-color: #1e293b;
+}
+
+html.dark .markdown-message th {
+  color: #cbd5e1;
+}
+
+html.dark .markdown-message td {
+  color: #94a3b8;
+}
