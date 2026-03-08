@@ -94,7 +94,7 @@ export default function KnowledgeBaseView() {
       const data = await kbService.listDocuments();
       setKbDocuments(data.documents || []);
     } catch (err) {
-      showToast({ type: 'error', title: 'Failed to load KB', message: err.message });
+      showToast({ type: 'error', title: 'Unable to load documents', message: 'Could not load the knowledge base. Please try again.' });
     } finally {
       setIsKbLoading(false);
     }
@@ -115,7 +115,7 @@ export default function KnowledgeBaseView() {
       setSanityResults(data);
       setActiveSection('sanity');
     } catch (err) {
-      showToast({ type: 'error', title: 'Sanity check failed', message: err.message });
+      showToast({ type: 'error', title: 'Health check unsuccessful', message: 'Could not complete the health check. Please try again.' });
     } finally {
       setSanityLoading(false);
     }
@@ -129,7 +129,7 @@ export default function KnowledgeBaseView() {
         showToast({
           type: 'success',
           title: 'Reconciliation complete',
-          message: `Imported ${data.imported_count} new document(s) from S3`,
+          message: `Imported ${data.imported_count} new document(s) from cloud storage`,
         });
         await loadKbDocuments();
         await loadStats();
@@ -137,18 +137,18 @@ export default function KnowledgeBaseView() {
         showToast({
           type: 'info',
           title: 'Already in sync',
-          message: `All ${data.total_s3_objects} S3 files are already registered`,
+          message: `All ${data.total_s3_objects} files are already registered`,
         });
       }
       if (data.error_count > 0) {
         showToast({
           type: 'warning',
-          title: 'Some imports failed',
+          title: 'Some imports unsuccessful',
           message: `${data.error_count} file(s) could not be imported`,
         });
       }
     } catch (err) {
-      showToast({ type: 'error', title: 'Reconciliation failed', message: err.message });
+      showToast({ type: 'error', title: 'Reconciliation unsuccessful', message: 'Unable to reconcile documents. Please try again.' });
     } finally {
       setIsReconciling(false);
     }
@@ -209,7 +209,7 @@ export default function KnowledgeBaseView() {
         setUploadProgress((prev) => ({ ...prev, [fileId]: { status: 'complete', percent: 100 } }));
         results.success++;
       } catch (err) {
-        setUploadProgress((prev) => ({ ...prev, [fileId]: { status: 'failed', percent: 0, error: err.message } }));
+        setUploadProgress((prev) => ({ ...prev, [fileId]: { status: 'failed', percent: 0, error: 'Upload could not be completed' } }));
         results.failed++;
       }
     }
@@ -218,8 +218,8 @@ export default function KnowledgeBaseView() {
     if (results.success > 0) {
       showToast({
         type: 'success',
-        title: 'KB Upload complete',
-        message: `${results.success} document(s) added. Remember to Sync to update Bedrock index.`,
+        title: 'Upload complete',
+        message: `${results.success} document(s) added. Remember to sync to make them searchable.`,
       });
       loadStats();
     }
@@ -232,12 +232,10 @@ export default function KnowledgeBaseView() {
       await kbService.deleteDocument(kbDocId);
       removeKbDocument(kbDocId);
       setSelectedDocs((prev) => { const n = new Set(prev); n.delete(kbDocId); return n; });
-      showToast({ type: 'success', title: 'Deleted', message: 'Document removed. Sync to update Bedrock index.' });
+      showToast({ type: 'success', title: 'Deleted', message: 'Document removed. Sync to update the knowledge base.' });
       loadStats();
     } catch (err) {
-      showToast({ type: 'error', title: 'Delete failed', message: err.message });
-    } finally {
-      setDeletingId(null);
+      showToast({ type: 'error', title: 'Unable to delete', message: 'Could not remove the document. Please try again.' });
     }
   };
 
@@ -251,11 +249,11 @@ export default function KnowledgeBaseView() {
       showToast({
         type: 'success',
         title: 'Bulk delete complete',
-        message: `${result.deleted_count} deleted${result.failed_count > 0 ? `, ${result.failed_count} failed` : ''}. Sync to update.`,
+        message: `${result.deleted_count} removed${result.failed_count > 0 ? `, ${result.failed_count} could not be removed` : ''}. Sync to update.`,
       });
       loadStats();
     } catch (err) {
-      showToast({ type: 'error', title: 'Bulk delete failed', message: err.message });
+      showToast({ type: 'error', title: 'Unable to delete', message: 'Could not remove the selected documents. Please try again.' });
     } finally {
       setBulkDeleting(false);
     }
@@ -266,9 +264,9 @@ export default function KnowledgeBaseView() {
       await kbService.unsyncDocument(kbDocId);
       const updatedDocs = kbDocuments.map((d) => d.id === kbDocId ? { ...d, status: 'unsynced' } : d);
       setKbDocuments(updatedDocs);
-      showToast({ type: 'info', title: 'Unsynced', message: 'Document will be excluded from next Bedrock sync.' });
+      showToast({ type: 'info', title: 'Unsynced', message: 'Document will be excluded from the next sync.' });
     } catch (err) {
-      showToast({ type: 'error', title: 'Unsync failed', message: err.message });
+      showToast({ type: 'error', title: 'Unable to unsync', message: 'Could not update the document status. Please try again.' });
     }
   };
 
@@ -277,9 +275,9 @@ export default function KnowledgeBaseView() {
       await kbService.resyncDocument(kbDocId);
       const updatedDocs = kbDocuments.map((d) => d.id === kbDocId ? { ...d, status: 'sync_pending' } : d);
       setKbDocuments(updatedDocs);
-      showToast({ type: 'success', title: 'Re-synced', message: 'Document will be included in next Bedrock sync.' });
+      showToast({ type: 'success', title: 'Re-synced', message: 'Document will be included in the next sync.' });
     } catch (err) {
-      showToast({ type: 'error', title: 'Resync failed', message: err.message });
+      showToast({ type: 'error', title: 'Unable to re-sync', message: 'Could not update the document status. Please try again.' });
     }
   };
 
@@ -304,11 +302,11 @@ export default function KnowledgeBaseView() {
         category: editForm.category,
       });
       setKbDocuments(kbDocuments.map((d) => (d.id === doc.id ? updated : d)));
-      showToast({ type: 'success', title: 'Updated', message: 'KB metadata updated.' });
+      showToast({ type: 'success', title: 'Updated', message: 'Document details updated.' });
       setEditModal({ open: false, doc: null });
       loadStats();
     } catch (err) {
-      showToast({ type: 'error', title: 'Update failed', message: err.message });
+      showToast({ type: 'error', title: 'Unable to update', message: 'Could not update document details. Please try again.' });
     } finally {
       setEditSaving(false);
     }
@@ -348,11 +346,11 @@ export default function KnowledgeBaseView() {
       showToast({
         type: 'success',
         title: 'File replaced',
-        message: 'Document updated. Run sync if not already queued.',
+        message: 'Document updated. Remember to sync to apply changes.',
       });
       loadStats();
     } catch (err) {
-      showToast({ type: 'error', title: 'Replace failed', message: err.message });
+      showToast({ type: 'error', title: 'Unable to replace', message: 'Could not replace the document. Please try again.' });
     } finally {
       setReplacingId(null);
       setReplaceProgress(0);
@@ -366,14 +364,14 @@ export default function KnowledgeBaseView() {
     try {
       const response = await kbService.syncKnowledgeBase();
       if (response.deduplicated) {
-        showToast({ type: 'info', title: 'Sync already running', message: `Job ${response.jobId} in progress` });
+        showToast({ type: 'info', title: 'Sync already running', message: 'A sync is already in progress. Please wait for it to complete.' });
         return;
       }
       if (response.inline) {
-        showToast({ type: response.status === 'COMPLETE' ? 'success' : 'error', title: `KB Sync ${response.status === 'COMPLETE' ? 'complete' : 'failed'}`, message: response.error || 'Bedrock re-indexed.' });
+        showToast({ type: response.status === 'COMPLETE' ? 'success' : 'error', title: `Sync ${response.status === 'COMPLETE' ? 'complete' : 'unsuccessful'}`, message: response.status === 'COMPLETE' ? 'Knowledge base updated successfully.' : 'The sync could not be completed. Please try again.' });
         loadKbDocuments(); loadStats(); return;
       }
-      showToast({ type: 'success', title: 'Sync started', message: `Job ${response.jobId} queued` });
+      showToast({ type: 'success', title: 'Sync started', message: 'Knowledge base sync is being processed...' });
       const delays = [2000, 3000, 5000, 5000, 8000, 8000, 10000, 10000];
       let status = response.status || 'QUEUED';
       for (const delay of delays) {
@@ -382,10 +380,10 @@ export default function KnowledgeBaseView() {
         status = result.status;
         if (status !== 'QUEUED' && status !== 'IN_PROGRESS') break;
       }
-      showToast({ type: status === 'COMPLETE' ? 'success' : status === 'FAILED' ? 'error' : 'info', title: `KB Sync ${status === 'COMPLETE' ? 'complete' : status === 'FAILED' ? 'failed' : 'processing'}`, message: status === 'COMPLETE' ? 'Knowledge Base updated.' : 'Check Job Monitor.' });
+      showToast({ type: status === 'COMPLETE' ? 'success' : status === 'FAILED' ? 'error' : 'info', title: `Sync ${status === 'COMPLETE' ? 'complete' : status === 'FAILED' ? 'unsuccessful' : 'in progress'}`, message: status === 'COMPLETE' ? 'Knowledge base updated successfully.' : 'The sync is still processing. Check the Job Monitor for updates.' });
       loadKbDocuments(); loadStats();
     } catch (err) {
-      showToast({ type: 'error', title: 'Sync failed', message: err.message });
+      showToast({ type: 'error', title: 'Sync unsuccessful', message: 'Something went wrong while syncing. Please try again.' });
     } finally {
       setIsKbSyncing(false);
       syncInFlightRef.current = false;
@@ -456,7 +454,7 @@ export default function KnowledgeBaseView() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Knowledge Base</h1>
               <p className="text-sm text-slate-400 mt-0.5">
-                Manage reference documents for Bedrock RAG &middot; {kbDocuments.length} documents &middot; {syncedCount} synced
+                Manage reference documents &middot; {kbDocuments.length} documents &middot; {syncedCount} synced
               </p>
             </div>
           </div>
@@ -530,7 +528,7 @@ export default function KnowledgeBaseView() {
               )}
             >
               {isReconciling ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              {isReconciling ? 'Importing...' : 'Import from S3'}
+              {isReconciling ? 'Importing...' : 'Import from Cloud Storage'}
             </button>
 
             {/* Sanity Check Button */}
@@ -615,13 +613,13 @@ export default function KnowledgeBaseView() {
               <h3 className="text-white font-bold text-sm mb-2">How Knowledge Base Works</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-purple-100 text-xs leading-relaxed">
                 <div>
-                  <span className="font-bold text-white">1. Upload</span> — Add curated reference docs (FDA guidelines, regulatory templates, protocols). These go to the dedicated KB S3 bucket.
+                  <span className="font-bold text-white">1. Upload</span> — Add curated reference docs (FDA guidelines, regulatory templates, protocols). These are stored securely in the knowledge base.
                 </div>
                 <div>
-                  <span className="font-bold text-white">2. Sync</span> — Trigger Bedrock re-indexing. Synced docs become searchable. Unsynced docs are excluded from the vector store.
+                  <span className="font-bold text-white">2. Sync</span> — Update the search index. Synced docs become searchable. Unsynced docs are excluded from search results.
                 </div>
                 <div>
-                  <span className="font-bold text-white">3. RAG Chat</span> — All users can query these documents via the Consultant Chat. User trial documents remain private and are never in KB.
+                  <span className="font-bold text-white">3. Search & Chat</span> — All users can query these documents via the Consultant Chat. User trial documents remain private and are never in the knowledge base.
                 </div>
               </div>
             </div>
@@ -637,7 +635,7 @@ export default function KnowledgeBaseView() {
       <DetailDrawer
         open={drawer.open && drawer.type === 'totalDocs'}
         onClose={closeDrawer}
-        title="All KB Documents"
+        title="All Knowledge Base Documents"
         subtitle={`${kbDocuments.length} documents in Knowledge Base`}
         icon={<FileText size={20} />}
         breadcrumb={[{ label: 'Knowledge Base' }, { label: 'All Documents' }]}
@@ -685,12 +683,12 @@ export default function KnowledgeBaseView() {
         open={drawer.open && drawer.type === 'synced'}
         onClose={closeDrawer}
         title="Synced Documents"
-        subtitle={`${syncedCount} documents indexed in Bedrock`}
+        subtitle={`${syncedCount} documents indexed and searchable`}
         icon={<CheckCircle size={20} />}
         breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Synced' }]}
       >
         <DetailStat label="Synced Count" value={syncedCount} color="text-green-600" large />
-        <p className="text-xs text-slate-400 mt-2 mb-6">These documents are indexed in Amazon Bedrock and available for RAG-powered chat queries.</p>
+        <p className="text-xs text-slate-400 mt-2 mb-6">These documents are indexed and available for AI-powered chat queries.</p>
         <DetailSection title="Synced Document List">
           <div className="space-y-2 max-h-[50vh] overflow-y-auto">
             {kbDocuments.filter(d => d.status === 'indexed').map((doc, idx) => {
@@ -722,7 +720,7 @@ export default function KnowledgeBaseView() {
         breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Unsynced' }]}
       >
         <DetailStat label="Unsynced Count" value={unsyncedCount} color="text-amber-600" large />
-        <p className="text-xs text-slate-400 mt-2 mb-6">These documents are uploaded but not yet indexed. Click "Sync Knowledge Base" to include them in Bedrock.</p>
+        <p className="text-xs text-slate-400 mt-2 mb-6">These documents are uploaded but not yet searchable. Click "Sync Knowledge Base" to make them available.</p>
         <DetailSection title="Unsynced Document List">
           <div className="space-y-2 max-h-[50vh] overflow-y-auto">
             {kbDocuments.filter(d => ['unsynced', 'error', 'sync_pending'].includes(d.status)).map((doc, idx) => {
@@ -836,7 +834,7 @@ export default function KnowledgeBaseView() {
       <DetailDrawer
         open={drawer.open && drawer.type === 'health'}
         onClose={closeDrawer}
-        title="KB Health Report"
+        title="Health Report"
         subtitle={sanityResults ? `Health Score: ${Math.round(sanityResults.health_score)}%` : 'Run a health check first'}
         icon={<Heart size={20} />}
         breadcrumb={[{ label: 'Knowledge Base' }, { label: 'Health' }]}
@@ -934,7 +932,6 @@ export default function KnowledgeBaseView() {
               } />
               <DetailRow label="Uploaded" value={formatDate(doc.created_at)} />
               {doc.description && <DetailRow label="Description" value={doc.description} />}
-              {doc.s3_key && <DetailRow label="S3 Key" value={<span className="font-mono text-[10px]">{doc.s3_key}</span>} />}
               {doc.id && <DetailRow label="Document ID" value={<span className="font-mono text-[10px]">{doc.id}</span>} />}
               <div className={cn(
                 'mt-4 rounded-xl p-3 border text-xs',
@@ -943,8 +940,8 @@ export default function KnowledgeBaseView() {
                   : 'bg-green-50 border-green-200 text-green-700'
               )}>
                 {isUnsynced
-                  ? '🔶 This document is not yet indexed. Sync the Knowledge Base to make it available for RAG queries.'
-                  : '✅ This document is indexed in Bedrock and available for RAG-powered chat.'}
+                  ? '🔶 This document is not yet indexed. Sync the Knowledge Base to make it searchable.'
+                  : '✅ This document is indexed and available for AI-powered chat.'}
               </div>
             </>
           );
@@ -1333,7 +1330,7 @@ function UploadSection({
       <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 space-y-5">
         <div>
           <h3 className="text-sm font-bold text-slate-800 mb-1">Upload Reference Documents</h3>
-          <p className="text-xs text-slate-400">Add curated materials to the Knowledge Base. These will be indexed by Bedrock for RAG chat.</p>
+          <p className="text-xs text-slate-400">Add curated materials to the Knowledge Base. These will be indexed and become searchable via chat.</p>
         </div>
 
         {/* Category */}
@@ -1438,8 +1435,8 @@ function UploadSection({
           <GuidelineItem icon={<CheckCircle size={14} className="text-green-500" />} title="Supported formats" text="PDF, JSON, TXT, CSV, DOCX, XLSX, HTML, Markdown" />
           <GuidelineItem icon={<HardDrive size={14} className="text-blue-500" />} title="Max file size" text="50MB per file. Larger files may slow indexing." />
           <GuidelineItem icon={<AlertTriangle size={14} className="text-amber-500" />} title="Duplicates" text="System will warn if a filename already exists in the KB." />
-          <GuidelineItem icon={<Shield size={14} className="text-purple-500" />} title="Privacy" text="KB documents are shared via RAG with all users. Never upload private trial data here." />
-          <GuidelineItem icon={<RefreshCw size={14} className="text-indigo-500" />} title="After upload" text="Remember to run Sync so Bedrock indexes the new documents." />
+          <GuidelineItem icon={<Shield size={14} className="text-purple-500" />} title="Privacy" text="Knowledge base documents are shared with all users via AI-powered chat. Never upload private trial data here." />
+          <GuidelineItem icon={<RefreshCw size={14} className="text-indigo-500" />} title="After upload" text="Remember to run Sync so the new documents become searchable." />
         </div>
       </div>
     </div>

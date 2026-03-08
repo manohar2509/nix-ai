@@ -1,0 +1,185 @@
+import React, { useState } from 'react';
+import { Users, ChevronDown, ChevronUp, Shield, DollarSign, Heart, Brain, Loader2, AlertTriangle, Star, ArrowRight } from 'lucide-react';
+import { useAppStore } from '../stores/useAppStore';
+import * as strategicService from '../services/strategicService';
+import { cn } from '../utils/cn';
+
+const AGENT_STYLE = {
+  dr_no: { name: 'Dr. No', role: 'The Regulator', icon: Shield, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-100 text-red-700' },
+  the_accountant: { name: 'The Accountant', role: 'The Payer', icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700' },
+  patient_advocate: { name: 'Patient Advocate', role: 'The Patient', icon: Heart, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', badge: 'bg-emerald-100 text-emerald-700' },
+  mediator: { name: 'NIX AI', role: 'Mediator', icon: Brain, color: 'text-brand-600', bg: 'bg-brand-50', border: 'border-brand-200', badge: 'bg-brand-100 text-brand-700' },
+};
+
+export default function AdversarialCouncil({ docId }) {
+  const council = useAppStore(s => s.councilSession);
+  const isLoading = useAppStore(s => s.isCouncilLoading);
+  const setCouncil = useAppStore(s => s.setCouncilSession);
+  const setLoading = useAppStore(s => s.setIsCouncilLoading);
+  const [expandedRound, setExpandedRound] = useState(0);
+
+  const runCouncil = async () => {
+    if (!docId) return;
+    setLoading(true);
+    try {
+      const result = await strategicService.runCouncil(docId);
+      setCouncil(result);
+    } catch (err) {
+      console.error('Council failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
+        <div className="relative mb-6">
+          <div className="h-16 w-16 rounded-full border-[3px] border-slate-100 border-t-brand-600 animate-spin" />
+          <Users size={20} className="absolute inset-0 m-auto text-brand-600" />
+        </div>
+        <h3 className="text-slate-800 font-bold text-lg mb-1">Convening Adversarial Council</h3>
+        <p className="text-slate-400 text-sm max-w-xs text-center">Three AI agents are debating your protocol from regulatory, commercial, and patient perspectives...</p>
+      </div>
+    );
+  }
+
+  if (!council) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="h-20 w-20 bg-gradient-to-br from-red-50 via-amber-50 to-emerald-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
+          <Users size={28} className="text-slate-400" />
+        </div>
+        <h3 className="text-slate-700 font-bold mb-1">Adversarial Council</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Launch a structured debate between three AI agents: a Regulator, a Payer, and a Patient Advocate — to find optimized protocol solutions.</p>
+        <button onClick={runCouncil} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
+          Convene Council
+        </button>
+      </div>
+    );
+  }
+
+  const verdict = council.final_verdict || {};
+  const rounds = council.rounds || [];
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-4 text-white">
+        <div className="flex items-center gap-2 mb-2">
+          <Users size={18} />
+          <h3 className="font-bold">Adversarial Council Session</h3>
+        </div>
+        <p className="text-slate-300 text-sm">{council.opening_summary}</p>
+        {verdict.executive_summary && (
+          <p className="text-brand-300 text-xs mt-2 font-medium">{verdict.executive_summary}</p>
+        )}
+      </div>
+
+      {/* Score Comparison */}
+      {verdict.current_scores && verdict.optimized_scores && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+            <div className="text-[10px] text-slate-400 uppercase font-bold mb-1">Current Scores</div>
+            <div className="flex gap-4">
+              <div><span className="text-lg font-bold text-slate-800">{verdict.current_scores.regulatory || '—'}</span><span className="text-[10px] text-slate-400 ml-1">Reg</span></div>
+              <div><span className="text-lg font-bold text-slate-800">{verdict.current_scores.payer || '—'}</span><span className="text-[10px] text-slate-400 ml-1">Payer</span></div>
+            </div>
+          </div>
+          <div className="bg-brand-50 rounded-lg p-3 border border-brand-200">
+            <div className="text-[10px] text-brand-600 uppercase font-bold mb-1">Optimized Scores</div>
+            <div className="flex gap-4">
+              <div><span className="text-lg font-bold text-brand-700">{verdict.optimized_scores.regulatory || '—'}</span><span className="text-[10px] text-brand-400 ml-1">Reg</span></div>
+              <div><span className="text-lg font-bold text-brand-700">{verdict.optimized_scores.payer || '—'}</span><span className="text-[10px] text-brand-400 ml-1">Payer</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Debate Rounds */}
+      {rounds.map((round, idx) => (
+        <div key={idx} className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+          <button
+            onClick={() => setExpandedRound(expandedRound === idx ? -1 : idx)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">Round {round.round_number}</span>
+              <span className="text-sm font-semibold text-slate-800">{round.topic}</span>
+              {round.finding_id && <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{round.finding_id}</span>}
+            </div>
+            {expandedRound === idx ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+          </button>
+
+          {expandedRound === idx && (
+            <div className="p-4 space-y-3">
+              {/* Agent Arguments */}
+              {['dr_no', 'the_accountant', 'patient_advocate'].map((agentKey) => {
+                const agent = round[agentKey];
+                const style = AGENT_STYLE[agentKey];
+                if (!agent) return null;
+                return (
+                  <div key={agentKey} className={cn('rounded-lg p-3 border', style.bg, style.border)}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <style.icon size={14} className={style.color} />
+                      <span className="text-xs font-bold text-slate-800">{style.name}</span>
+                      <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', style.badge)}>{style.role}</span>
+                    </div>
+                    <p className="text-xs font-medium text-slate-700 mb-1">{agent.position}</p>
+                    <p className="text-[11px] text-slate-600 leading-relaxed">{agent.argument}</p>
+                    {agent.guideline_refs?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {agent.guideline_refs.map((ref, i) => (
+                          <span key={i} className="text-[9px] bg-white/60 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{ref}</span>
+                        ))}
+                      </div>
+                    )}
+                    {agent.cost_impact && <div className="text-[10px] text-amber-700 mt-1 font-medium">💰 {agent.cost_impact}</div>}
+                    {agent.denial_risk && <div className="text-[10px] text-red-600 mt-0.5 font-medium">⚠️ Denial risk: {agent.denial_risk}</div>}
+                    {agent.enrollment_impact && <div className="text-[10px] text-emerald-600 mt-0.5 font-medium">👥 {agent.enrollment_impact}</div>}
+                  </div>
+                );
+              })}
+
+              {/* Mediator Resolution */}
+              {round.mediator && (
+                <div className="rounded-lg p-3 bg-brand-50 border border-brand-200">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Brain size={14} className="text-brand-600" />
+                    <span className="text-xs font-bold text-brand-700">NIX AI Mediator — Resolution</span>
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed">{round.mediator.resolution}</p>
+                  {round.mediator.implementation && (
+                    <div className="mt-2 p-2 bg-white rounded border border-brand-100">
+                      <div className="text-[10px] text-brand-600 font-bold mb-0.5">📝 Implementation</div>
+                      <p className="text-[11px] text-slate-600">{round.mediator.implementation}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Tradeoffs */}
+      {verdict.key_tradeoffs?.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <div className="text-[10px] font-bold text-amber-700 uppercase mb-1.5">⚖️ Key Tradeoffs</div>
+          <ul className="space-y-1">
+            {verdict.key_tradeoffs.map((t, i) => (
+              <li key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
+                <ArrowRight size={10} className="mt-1 text-amber-500 shrink-0" />
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <button onClick={runCouncil} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
+        Reconvene Council
+      </button>
+    </div>
+  );
+}

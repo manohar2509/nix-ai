@@ -57,7 +57,7 @@ export default function AdminAnalyticsView() {
       setPlatform(p);
       setRag(r);
     } catch (err) {
-      setError(err.message || 'Failed to load admin analytics');
+      setError('Unable to load analytics data. Showing defaults.');
       // Provide empty defaults so the UI still renders
       setPlatform({
         summary: { activeUsers: 0, totalDocuments: 0, totalAnalyses: 0, totalJobs: 0, avgRegulatorScore: 0, avgPayerScore: 0, totalFindings: 0 },
@@ -149,10 +149,10 @@ export default function AdminAnalyticsView() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════
-            SECTION 2: RAG & KNOWLEDGE BASE HEALTH
+            SECTION 2: AI SEARCH & KNOWLEDGE BASE HEALTH
         ═══════════════════════════════════════════════════════ */}
-        <SectionHeader icon={<Database size={18} />} title="RAG & Knowledge Base" subtitle="Content health, retrieval quality, and chat intelligence" color="purple" />
-        <AdminInfoBanner text="This section monitors the health of your Bedrock Knowledge Base. KB Health tracks document count and sync status. Chat Intelligence shows how users interact with the RAG system. Retrieval Quality measures citation grounding — higher citations mean AI responses are better supported by reference documents. Aim for ≥3 avg citations per response." />
+        <SectionHeader icon={<Database size={18} />} title="AI Search & Knowledge Base" subtitle="Content health, retrieval quality, and chat intelligence" color="purple" />
+        <AdminInfoBanner text="This section monitors the health of your Knowledge Base. Document Health tracks document count and sync status. Chat Intelligence shows how users interact with the AI assistant. Retrieval Quality measures citation grounding — higher citations mean AI responses are better supported by reference documents. Aim for ≥3 avg citations per response." />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* KB Health */}
@@ -164,7 +164,7 @@ export default function AdminAnalyticsView() {
               <h3 className="text-sm font-bold text-slate-800">Knowledge Base Health</h3>
             </div>
             <div className="space-y-4">
-              <StatRow label="KB Documents" value={kbHealth.totalKBDocuments} />
+              <StatRow label="Knowledge Base Documents" value={kbHealth.totalKBDocuments} />
               <StatRow label="Total Size" value={formatBytes(kbHealth.totalKBSize)} />
               <StatRow label="Last Sync" value={
                 kbHealth.lastSyncStatus === 'never' ? 'Never synced' :
@@ -252,10 +252,10 @@ export default function AdminAnalyticsView() {
                 <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
                   <p className="text-[11px] text-emerald-700">
                     {chatMetrics.avgCitationsPerResponse >= 3
-                      ? '✅ Strong retrieval — responses are well-grounded in KB content'
+                      ? '✅ Strong retrieval — responses are well-grounded in knowledge base content'
                       : chatMetrics.avgCitationsPerResponse >= 1
-                        ? '⚠️ Moderate retrieval — consider adding more KB documents'
-                        : '🔴 Low retrieval — RAG needs more reference material'}
+                        ? '⚠️ Moderate retrieval — consider adding more knowledge base documents'
+                        : '🔴 Low retrieval — the knowledge base needs more reference material'}
                   </p>
                 </div>
               )}
@@ -275,7 +275,7 @@ export default function AdminAnalyticsView() {
             SECTION 3: SYSTEM PERFORMANCE — JOB PIPELINE
         ═══════════════════════════════════════════════════════ */}
         <SectionHeader icon={<Cpu size={18} />} title="System Performance" subtitle="Job pipeline health, throughput, and failure tracking" color="indigo" />
-        <AdminInfoBanner text="Tracks all background jobs (analyses, KB syncs, synthetic generation). Success/Failure rates help identify system reliability. Recent failures show error details for debugging. High failure rates may indicate backend issues, S3 permission problems, or Bedrock service limits." />
+        <AdminInfoBanner text="Tracks all background jobs (analyses, knowledge base syncs, synthetic generation). Success/Failure rates help identify system reliability. Recent failures show details for investigation. High failure rates may indicate service disruptions or capacity limits." />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Job Success/Failure */}

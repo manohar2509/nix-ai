@@ -1,0 +1,37 @@
+# ═══════════════════════════════════════════════════════
+# SAM Build Ignore — exclude non-production files
+# ═══════════════════════════════════════════════════════
+
+# Tests
+tests/
+test_*.py
+conftest.py
+
+# Dev files
+.env
+.env.*
+.env.example
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.aws-sam/
+.gitignore
+
+# Docker (for local dev only)
+Dockerfile
+
+# Dev requirements
+requirements-dev.txt
+
+# Docs / scripts
+*.md
+run_reconcile.py
+samconfig.toml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

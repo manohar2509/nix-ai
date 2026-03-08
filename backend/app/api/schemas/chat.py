@@ -36,6 +36,8 @@ class ChatMessageResponse(BaseModel):
     id: str
     text: str
     citations: list[Citation] = []
+    kb_grounded: Optional[bool] = None
+    grounding_source: Optional[str] = None
     metadata: dict = {}
 
 
@@ -44,6 +46,8 @@ class ChatHistoryItem(BaseModel):
     role: str  # "user" | "assistant"
     text: str
     citations: list[Citation] = []
+    kb_grounded: Optional[bool] = None
+    grounding_source: Optional[str] = None
     created_at: str = ""
 
 

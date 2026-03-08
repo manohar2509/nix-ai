@@ -14,7 +14,9 @@ Regulatory Intelligence routes — all new REQ-1 through REQ-10 endpoints:
   GET    /documents/{doc_id}/benchmark       → Benchmark against trials (REQ-10)
 """
 
-from fastapi import APIRouter, Depends, Query
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.schemas.analysis import (
     CompareProtocolsRequest,
@@ -22,19 +24,27 @@ from app.api.schemas.analysis import (
     ReportRequest,
     SimulateAmendmentRequest,
     SimulationJobResponse,
-    SimulationResultResponse,
 )
 from app.core.auth import CurrentUser, get_current_user
+from app.core.exceptions import NixAIException
 from app.services import analysis_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/regulatory", tags=["regulatory"])
 
 
 # ── REQ-1: ICH Guideline Database ───────────────────────────────
 @router.get("/guidelines")
-async def get_guidelines():
+async def get_guidelines(user: CurrentUser = Depends(get_current_user)):
     """Return the full ICH guideline reference database."""
-    return {"guidelines": analysis_service.get_ich_guidelines()}
+    try:
+        return {"guidelines": analysis_service.get_ich_guidelines()}
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Get guidelines failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to load guidelines. Please try again.")
 
 
 # ── REQ-2: Jurisdiction Compass ─────────────────────────────────
@@ -44,11 +54,17 @@ async def get_jurisdiction_scores(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Get per-jurisdiction regulatory compliance scores from the latest analysis."""
-    result = analysis_service.get_analysis_results(user, doc_id)
-    return {
-        "jurisdiction_scores": result.get("jurisdiction_scores", []),
-        "global_readiness_score": result.get("global_readiness_score", 0),
-    }
+    try:
+        result = analysis_service.get_analysis_results(user, doc_id)
+        return {
+            "jurisdiction_scores": result.get("jurisdiction_scores", []),
+            "global_readiness_score": result.get("global_readiness_score", 0),
+        }
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Get jurisdiction scores failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to load jurisdiction scores. Please try again.")
 
 
 # ── REQ-3: Amendment Simulation ─────────────────────────────────
@@ -59,7 +75,13 @@ async def trigger_simulation(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Trigger a what-if amendment simulation."""
-    return analysis_service.trigger_simulation(user, doc_id, body.amendment_text)
+    try:
+        return analysis_service.trigger_simulation(user, doc_id, body.amendment_text)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Trigger simulation failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to start simulation. Please try again.")
 
 
 @router.get("/documents/{doc_id}/simulations")
@@ -68,7 +90,13 @@ async def list_simulations(
     user: CurrentUser = Depends(get_current_user),
 ):
     """List all amendment simulations for a document."""
-    return {"simulations": analysis_service.get_simulations(user, doc_id)}
+    try:
+        return {"simulations": analysis_service.get_simulations(user, doc_id)}
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("List simulations failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to load simulations. Please try again.")
 
 
 # ── REQ-4: Risk Timeline ────────────────────────────────────────
@@ -78,7 +106,13 @@ async def get_timeline(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Get the regulatory risk timeline for a document."""
-    return {"events": analysis_service.get_timeline(user, doc_id)}
+    try:
+        return {"events": analysis_service.get_timeline(user, doc_id)}
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Get timeline failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to load timeline. Please try again.")
 
 
 # ── REQ-5: Payer Evidence Gaps ──────────────────────────────────
@@ -88,12 +122,18 @@ async def get_payer_gaps(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Get HTA/payer evidence gaps from the latest analysis."""
-    result = analysis_service.get_analysis_results(user, doc_id)
-    return {
-        "payer_gaps": result.get("payer_gaps", []),
-        "hta_body_scores": result.get("hta_body_scores", {}),
-        "payerScore": result.get("payerScore", 0),
-    }
+    try:
+        result = analysis_service.get_analysis_results(user, doc_id)
+        return {
+            "payer_gaps": result.get("payer_gaps", []),
+            "hta_body_scores": result.get("hta_body_scores", {}),
+            "payerScore": result.get("payerScore", 0),
+        }
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Get payer gaps failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to load payer evidence gaps. Please try again.")
 
 
 # ── REQ-6: Protocol Comparison ──────────────────────────────────
@@ -103,7 +143,13 @@ async def trigger_comparison(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Compare multiple protocols."""
-    return analysis_service.trigger_comparison(user, body.document_ids)
+    try:
+        return analysis_service.trigger_comparison(user, body.document_ids)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Trigger comparison failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to start comparison. Please try again.")
 
 
 @router.get("/comparisons")
@@ -111,7 +157,13 @@ async def list_comparisons(
     user: CurrentUser = Depends(get_current_user),
 ):
     """List all protocol comparisons."""
-    return {"comparisons": analysis_service.get_comparisons(user)}
+    try:
+        return {"comparisons": analysis_service.get_comparisons(user)}
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("List comparisons failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to load comparisons. Please try again.")
 
 
 @router.get("/comparisons/{cmp_id}")
@@ -120,7 +172,13 @@ async def get_comparison(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Get a single comparison result."""
-    return analysis_service.get_comparison_result(user, cmp_id)
+    try:
+        return analysis_service.get_comparison_result(user, cmp_id)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Get comparison failed for %s: %s", cmp_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to load comparison result. Please try again.")
 
 
 # ── REQ-8: Submission Readiness Report ──────────────────────────
@@ -131,7 +189,15 @@ async def generate_report(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Generate a comprehensive submission readiness report."""
-    return analysis_service.generate_report(user, doc_id, sections=body.sections)
+    try:
+        return analysis_service.generate_report(
+            user, doc_id, sections=body.sections, report_format=body.format
+        )
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Generate report failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to generate report. Please try again.")
 
 
 # ── REQ-10: Benchmarking ────────────────────────────────────────
@@ -143,4 +209,10 @@ async def get_benchmark(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Benchmark protocol against ClinicalTrials.gov data."""
-    return analysis_service.get_benchmark(user, doc_id, indication=indication, phase=phase)
+    try:
+        return analysis_service.get_benchmark(user, doc_id, indication=indication, phase=phase)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Get benchmark failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to load benchmark data. Please try again.")

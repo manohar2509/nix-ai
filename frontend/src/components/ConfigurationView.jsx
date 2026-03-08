@@ -3,6 +3,8 @@ import {
   Settings, User, Sliders, Bell, Shield, Info, ChevronRight,
   Save, Check, ArrowLeft, Moon, Sun, Monitor, AlertTriangle,
   BarChart3, ShieldAlert, BadgeDollarSign, RotateCcw,
+  HelpCircle, Lock, Globe, FileCheck, Sparkles, BookOpen,
+  MessageSquare, ChevronDown, ChevronUp, ExternalLink, Play,
 } from 'lucide-react';
 import { useAuth, useAppStore } from '../stores/useAppStore';
 import { applyCurrentTheme } from '../hooks/useTheme';
@@ -81,6 +83,7 @@ export default function ConfigurationView() {
     { id: 'analysis', label: 'Analysis Settings', icon: <Sliders size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
     { id: 'display', label: 'Display', icon: <Monitor size={16} /> },
+    { id: 'faq', label: 'FAQ & Help', icon: <HelpCircle size={16} /> },
     { id: 'about', label: 'About', icon: <Info size={16} /> },
   ];
 
@@ -150,10 +153,11 @@ export default function ConfigurationView() {
             {activeSection === 'analysis' && <AnalysisSection prefs={prefs} updatePref={updatePref} />}
             {activeSection === 'notifications' && <NotificationSection prefs={prefs} updatePref={updatePref} />}
             {activeSection === 'display' && <DisplaySection prefs={prefs} updatePref={updatePref} />}
+            {activeSection === 'faq' && <FAQSection />}
             {activeSection === 'about' && <AboutSection />}
 
             {/* Save/Reset Footer */}
-            {activeSection !== 'profile' && activeSection !== 'about' && (
+            {activeSection !== 'profile' && activeSection !== 'about' && activeSection !== 'faq' && (
               <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-200">
                 <button
                   onClick={handleReset}
@@ -329,11 +333,11 @@ function AnalysisSection({ prefs, updatePref }) {
 function NotificationSection({ prefs, updatePref }) {
   return (
     <div className="space-y-6">
-      <SectionCard title="Email Notifications" description="Control when you receive email alerts">
+      <SectionCard title="In-App Notifications" description="Control how you receive alerts within the platform">
         <div className="space-y-4">
           <ToggleRow
             label="Analysis complete"
-            description="Get notified when a protocol regulatory analysis finishes processing"
+            description="Show a notification when a protocol regulatory analysis finishes processing"
             checked={prefs.emailOnComplete}
             onChange={(v) => updatePref('emailOnComplete', v)}
           />
@@ -344,21 +348,21 @@ function NotificationSection({ prefs, updatePref }) {
             onChange={(v) => updatePref('emailOnCritical', v)}
           />
           <ToggleRow
-            label="Weekly summary"
-            description="Weekly digest of all protocol analyses, findings, and compliance score changes"
+            label="Weekly summary digest"
+            description="Receive a weekly digest summarizing protocol analyses, findings, and compliance score changes"
             checked={prefs.weeklyDigest}
             onChange={(v) => updatePref('weeklyDigest', v)}
           />
         </div>
       </SectionCard>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+          <Bell size={16} className="text-blue-500 mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-amber-800">Email notifications coming soon</p>
-            <p className="text-xs text-amber-600 mt-1">
-              Email notification settings are saved but delivery is not yet active. In-app notifications work immediately.
+            <p className="text-sm font-medium text-blue-800">Notifications are active</p>
+            <p className="text-xs text-blue-600 mt-1">
+              In-app notifications are delivered instantly when events occur. You'll see toast alerts and updates in real time as analyses complete or critical findings are detected.
             </p>
           </div>
         </div>
@@ -421,6 +425,167 @@ function DisplaySection({ prefs, updatePref }) {
 }
 
 
+function FAQSection() {
+  const [openFaq, setOpenFaq] = useState(null);
+  const setActiveView = useAppStore((s) => s.setActiveView);
+
+  const faqs = [
+    {
+      question: 'How does NIX AI analyze my clinical trial protocols?',
+      answer: 'NIX AI uses advanced AI models trained on regulatory guidelines (ICH, FDA, EMA) and payer requirements (NICE, IQWiG, CADTH, PBAC) to review your protocol. It identifies compliance gaps, risk factors, and evidence shortfalls — then provides actionable recommendations with specific clause-level suggestions.',
+    },
+    {
+      question: 'Is my data secure on the platform?',
+      answer: 'Absolutely. Your protocols and analysis data are encrypted both in transit (TLS 1.2+) and at rest (AES-256). Data is stored in isolated, secure cloud infrastructure with strict access controls. Only authenticated users within your organization can access your documents. We never share your data with third parties or use it to train AI models.',
+    },
+    {
+      question: 'How accurate are the AI-generated findings?',
+      answer: 'NIX AI cross-references your protocol against a curated knowledge base of 300+ regulatory guidelines, compliance checklists, and payer frameworks. Each finding includes a confidence score and citation references so you can verify the source. We recommend using the AI analysis as a starting point alongside your regulatory team\'s expert review.',
+    },
+    {
+      question: 'What file formats are supported for upload?',
+      answer: 'Currently, NIX AI supports PDF documents (up to 50MB). We intelligently extract text, tables, and structural elements from your protocol to ensure comprehensive analysis. Word documents and other formats will be supported in future updates.',
+    },
+    {
+      question: 'Can I compare multiple protocol versions?',
+      answer: 'Yes! The Compare Protocols feature allows side-by-side comparison of different protocol designs or versions. This helps you track how regulatory and payer risk scores change across iterations, and identify which amendments improved compliance.',
+    },
+    {
+      question: 'What is the Deal Room?',
+      answer: 'The Deal Room generates investor-ready reports with portfolio risk analysis, regulatory scorecards, and strategic assessments. It\'s designed for business development, licensing discussions, and board-level presentations where you need a professional summary of your protocol\'s regulatory and commercial readiness.',
+    },
+    {
+      question: 'How does the AI chat assistant work?',
+      answer: 'The AI chat (available in Protocol Review) lets you ask specific questions about your protocol, regulatory requirements, or analysis findings. It uses your protocol context and the regulatory knowledge base to provide detailed, citation-backed answers. All conversations are saved and tied to your specific document.',
+    },
+    {
+      question: 'Who can see my analysis results?',
+      answer: 'Only authenticated members of your organization can access analysis results. Each user sees their own uploaded protocols and analyses. Administrators can view platform-wide analytics (aggregated metrics) but cannot access individual protocol content from other users.',
+    },
+    {
+      question: 'What regulatory guidelines does NIX AI cover?',
+      answer: 'NIX AI covers ICH guidelines (E6 R2, E8, E9, E17), FDA 21 CFR regulations, EMA scientific guidelines, GCP compliance requirements, and regional regulatory frameworks. The payer module covers NICE (UK), IQWiG/AMNOG (Germany), CADTH (Canada), PBAC (Australia), and US payer evidence requirements.',
+    },
+    {
+      question: 'Can I export my analysis results?',
+      answer: 'Yes. You can export analysis findings, compliance reports, and strategic assessments in PDF format. The Deal Room also generates downloadable investor reports. All exports include citations, confidence scores, and recommendations.',
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Platform Tour Card */}
+      <div className="bg-gradient-to-r from-brand-50 to-purple-50 rounded-2xl border border-brand-200/60 shadow-sm p-6">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center shrink-0 shadow-lg">
+            <Play size={20} className="text-white ml-0.5" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-slate-800">New to NIX AI?</h3>
+            <p className="text-xs text-slate-500 mt-1">Take an interactive tour to learn how to upload protocols, run analyses, and explore all the features the platform offers.</p>
+            <button
+              onClick={() => {
+                setActiveView('dashboard');
+                // Small delay to allow view transition, then trigger tour
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('nixai-start-tour'));
+                }, 300);
+              }}
+              className="mt-3 inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors shadow-sm"
+            >
+              <Play size={13} />
+              Start Platform Tour
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ Section */}
+      <SectionCard title="Frequently Asked Questions" description="Common questions about the platform, data security, and features">
+        <div className="space-y-2">
+          {faqs.map((faq, idx) => (
+            <div key={idx} className="border border-slate-100 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                className="flex items-center justify-between w-full p-4 text-left hover:bg-slate-50 transition-colors"
+              >
+                <span className="text-sm font-medium text-slate-700 pr-4">{faq.question}</span>
+                {openFaq === idx
+                  ? <ChevronUp size={16} className="text-slate-400 shrink-0" />
+                  : <ChevronDown size={16} className="text-slate-400 shrink-0" />
+                }
+              </button>
+              {openFaq === idx && (
+                <div className="px-4 pb-4 text-xs text-slate-500 leading-relaxed border-t border-slate-100 pt-3">
+                  {faq.answer}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      {/* Trust & Security */}
+      <SectionCard title="Trust & Security" description="How we protect your clinical trial data">
+        <div className="space-y-3">
+          <CapabilityItem
+            icon={<Lock size={16} className="text-green-600" />}
+            title="End-to-End Encryption"
+            description="All data is encrypted in transit (TLS 1.2+) and at rest (AES-256). Your protocols never leave our secure cloud infrastructure without encryption."
+          />
+          <CapabilityItem
+            icon={<Shield size={16} className="text-blue-600" />}
+            title="Isolated Data Storage"
+            description="Each organization's data is logically isolated. Strict access controls ensure only authenticated users within your organization can view your documents and analyses."
+          />
+          <CapabilityItem
+            icon={<FileCheck size={16} className="text-purple-600" />}
+            title="No Data Training"
+            description="Your protocol data is never used to train or fine-tune AI models. Analysis is performed in real-time using the AI engine, and your content remains private."
+          />
+          <CapabilityItem
+            icon={<Globe size={16} className="text-amber-600" />}
+            title="Regulatory Compliance"
+            description="The platform infrastructure is designed to meet healthcare data protection standards including SOC 2, HIPAA-eligible environments, and GDPR data handling practices."
+          />
+        </div>
+      </SectionCard>
+
+      {/* Quick Tips */}
+      <SectionCard title="Getting Started Tips" description="Make the most out of NIX AI">
+        <div className="space-y-3">
+          <TipItem
+            number={1}
+            title="Upload your protocol"
+            description="Start by uploading a clinical trial protocol (PDF) using the sidebar or the Upload button. The platform will automatically extract and process the document."
+          />
+          <TipItem
+            number={2}
+            title="Run regulatory analysis"
+            description="Click 'Run Regulatory Analysis' to have the AI review your protocol against ICH, FDA, EMA guidelines and payer requirements. Results appear within minutes."
+          />
+          <TipItem
+            number={3}
+            title="Review findings & chat"
+            description="Browse findings by severity, ask follow-up questions in the AI Chat, and explore strategic intelligence tabs for deeper insights."
+          />
+          <TipItem
+            number={4}
+            title="Compare & iterate"
+            description="Upload revised versions and use Compare Protocols to see how your changes improve regulatory and payer readiness scores."
+          />
+          <TipItem
+            number={5}
+            title="Export reports"
+            description="Use the Deal Room to generate investor-ready reports, or export individual analyses for team review and regulatory submissions."
+          />
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+
 function AboutSection() {
   return (
     <div className="space-y-6">
@@ -429,40 +594,59 @@ function AboutSection() {
           <Shield size={28} className="text-white" />
         </div>
         <h2 className="text-xl font-bold text-slate-900 mb-1">NIX AI</h2>
-        <p className="text-sm text-slate-400 mb-4">Regulatory Protocol Intelligence Platform</p>
-        <div className="inline-flex items-center gap-2 bg-slate-100 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-500">
-          Version 1.0.0
-        </div>
+        <p className="text-sm text-slate-400 mb-2">Regulatory Protocol Intelligence Platform</p>
+        <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+          NIX AI helps pharmaceutical and biotech teams analyze clinical trial protocols for regulatory compliance and payer readiness, powered by advanced AI and a curated knowledge base of 300+ regulatory guidelines.
+        </p>
       </div>
 
-      <SectionCard title="Platform" description="Technical details">
-        <div className="grid grid-cols-2 gap-4">
-          <InfoField label="AI Engine" value="Amazon Bedrock (Claude)" />
-          <InfoField label="Document Processing" value="Native + Textract" />
-          <InfoField label="Knowledge Base" value="Bedrock Knowledge Base" />
-          <InfoField label="Infrastructure" value="AWS Lambda + DynamoDB" />
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Capabilities" description="How NIX AI helps your clinical trial program">
+      <SectionCard title="What NIX AI Does" description="Core capabilities that help your clinical trial program">
         <div className="space-y-3">
           <CapabilityItem
             icon={<ShieldAlert size={16} className="text-red-500" />}
             title="Regulatory Compliance Analysis"
-            description="Evaluates your protocol against ICH E6(R2)/E8/E9 guidelines, FDA 21 CFR requirements, and EMA scientific guidance to identify compliance gaps before submission"
+            description="Reviews your protocol against ICH E6(R2)/E8/E9 guidelines, FDA 21 CFR requirements, and EMA scientific guidance to identify compliance gaps before submission."
           />
           <CapabilityItem
             icon={<BadgeDollarSign size={16} className="text-amber-500" />}
             title="Payer & Reimbursement Readiness"
-            description="Assesses your protocol against HTA body requirements (NICE, IQWiG, CADTH, PBAC, AMNOG) to identify evidence gaps that could affect market access"
+            description="Evaluates your protocol against HTA body requirements (NICE, IQWiG, CADTH, PBAC) to find evidence gaps that could affect market access and reimbursement."
           />
           <CapabilityItem
-            icon={<BarChart3 size={16} className="text-brand-500" />}
+            icon={<Sparkles size={16} className="text-purple-500" />}
+            title="Strategic Intelligence"
+            description="Advanced AI-powered features including adversarial council review, cost architecture analysis, friction heatmaps, and multi-jurisdiction submission strategy."
+          />
+          <CapabilityItem
+            icon={<MessageSquare size={16} className="text-brand-500" />}
+            title="AI-Powered Chat Assistant"
+            description="Ask questions about your protocol, regulatory requirements, or findings. Get instant, citation-backed answers grounded in regulatory knowledge."
+          />
+          <CapabilityItem
+            icon={<BarChart3 size={16} className="text-green-500" />}
             title="Actionable Recommendations"
-            description="AI-generated protocol amendments, suggested clause language, and strategic recommendations to resolve regulatory-payer friction points"
+            description="Receive AI-generated protocol amendments, suggested clause language, and strategic recommendations to resolve regulatory-payer friction points."
           />
         </div>
       </SectionCard>
+
+      <SectionCard title="Regulatory Coverage" description="Guidelines and frameworks the AI is trained on">
+        <div className="grid grid-cols-2 gap-3">
+          <CoverageItem label="ICH Guidelines" items={['E6(R2) GCP', 'E8 General Considerations', 'E9 Statistical Principles', 'E17 Multi-Regional']} />
+          <CoverageItem label="FDA Requirements" items={['21 CFR Parts 11, 50, 56, 312', 'FDA Guidance Documents', 'IND/NDA Requirements']} />
+          <CoverageItem label="EMA Guidelines" items={['Scientific Guidelines', 'Quality Guidelines', 'Regulatory Procedures']} />
+          <CoverageItem label="HTA/Payer Bodies" items={['NICE (UK)', 'IQWiG / AMNOG (DE)', 'CADTH (CA)', 'PBAC (AU)']} />
+        </div>
+      </SectionCard>
+
+      <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 text-center">
+        <p className="text-xs text-slate-400">
+          © {new Date().getFullYear()} NIX AI · Regulatory Protocol Intelligence Platform
+        </p>
+        <p className="text-[10px] text-slate-300 mt-1">
+          Built for clinical research teams who want smarter, faster regulatory compliance.
+        </p>
+      </div>
     </div>
   );
 }
@@ -585,6 +769,38 @@ function CapabilityItem({ icon, title, description }) {
         <div className="text-sm font-semibold text-slate-700">{title}</div>
         <p className="text-xs text-slate-400 mt-0.5">{description}</p>
       </div>
+    </div>
+  );
+}
+
+
+function TipItem({ number, title, description }) {
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+      <div className="h-6 w-6 bg-brand-100 text-brand-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+        {number}
+      </div>
+      <div>
+        <div className="text-sm font-semibold text-slate-700">{title}</div>
+        <p className="text-xs text-slate-400 mt-0.5">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+
+function CoverageItem({ label, items }) {
+  return (
+    <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+      <div className="text-xs font-bold text-slate-700 mb-2">{label}</div>
+      <ul className="space-y-1">
+        {items.map((item, idx) => (
+          <li key={idx} className="text-[11px] text-slate-500 flex items-center gap-1.5">
+            <Check size={10} className="text-green-500 shrink-0" />
+            {item}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

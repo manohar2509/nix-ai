@@ -11,8 +11,9 @@ Job routes — matches frontend jobService.js endpoints:
 Note: POST /kb/sync has been moved to app/api/routes/kb.py
 """
 
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import JSONResponse
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.schemas.jobs import (
     BatchStatusRequest,
@@ -22,7 +23,10 @@ from app.api.schemas.jobs import (
     JobStatsResponse,
 )
 from app.core.auth import CurrentUser, get_current_user
+from app.core.exceptions import NixAIException
 from app.services import job_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["jobs"])
 
@@ -33,8 +37,14 @@ async def list_jobs(
     user: CurrentUser = Depends(get_current_user),
 ):
     """List all jobs for the current user."""
-    jobs = job_service.list_jobs(user, limit)
-    return JobListResponse(jobs=jobs)
+    try:
+        jobs = job_service.list_jobs(user, limit)
+        return JobListResponse(jobs=jobs)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("List jobs failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Failed to list jobs: {str(exc)[:200]}")
 
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
@@ -43,7 +53,13 @@ async def get_job_status(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Get status of a single job (ownership verified)."""
-    return job_service.get_job_status(job_id, user)
+    try:
+        return job_service.get_job_status(job_id, user)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Get job status failed for %s: %s", job_id, exc)
+        raise HTTPException(status_code=500, detail=f"Failed to get job status: {str(exc)[:200]}")
 
 
 @router.post("/jobs/batch-status", response_model=BatchStatusResponse)
@@ -52,8 +68,14 @@ async def batch_status(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Get status of multiple jobs at once (ownership verified)."""
-    jobs = job_service.get_batch_status(body.jobIds, user)
-    return BatchStatusResponse(jobs=jobs)
+    try:
+        jobs = job_service.get_batch_status(body.jobIds, user)
+        return BatchStatusResponse(jobs=jobs)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Batch status failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Failed to get batch status: {str(exc)[:200]}")
 
 
 @router.get("/jobs/{job_id}/download")
@@ -63,7 +85,13 @@ async def download_results(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Get download URL for job results (ownership verified)."""
-    return job_service.download_job_results(job_id, fmt=format, user=user)
+    try:
+        return job_service.download_job_results(job_id, fmt=format, user=user)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Download results failed for job %s: %s", job_id, exc)
+        raise HTTPException(status_code=500, detail=f"Failed to download results: {str(exc)[:200]}")
 
 
 @router.get("/jobs/{job_id}/stats", response_model=JobStatsResponse)
@@ -72,7 +100,13 @@ async def get_job_stats(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Get statistics for a completed job (ownership verified)."""
-    return job_service.get_job_stats(job_id, user)
+    try:
+        return job_service.get_job_stats(job_id, user)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Get job stats failed for %s: %s", job_id, exc)
+        raise HTTPException(status_code=500, detail=f"Failed to get job stats: {str(exc)[:200]}")
 
 
 @router.post("/jobs/{job_id}/cancel")
@@ -81,7 +115,13 @@ async def cancel_job(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Cancel a queued or in-progress job (ownership verified)."""
-    return job_service.cancel_job(user, job_id)
+    try:
+        return job_service.cancel_job(user, job_id)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Cancel job failed for %s: %s", job_id, exc)
+        raise HTTPException(status_code=500, detail=f"Failed to cancel job: {str(exc)[:200]}")
 
 
 @router.post("/jobs/{job_id}/retry")
@@ -90,4 +130,10 @@ async def retry_job(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Retry a failed job with the same parameters."""
-    return job_service.retry_job(user, job_id)
+    try:
+        return job_service.retry_job(user, job_id)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Retry job failed for %s: %s", job_id, exc)
+        raise HTTPException(status_code=500, detail=f"Failed to retry job: {str(exc)[:200]}")

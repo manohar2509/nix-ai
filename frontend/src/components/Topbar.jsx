@@ -40,7 +40,7 @@ export default function Topbar({ isAnalyzing, onAnalyze, onUpload, currentDocume
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
           <FileText size={13} />
-          <span>Clinical Protocols</span>
+          <span>Protocol Review</span>
           <ChevronRight size={11} />
         </div>
         <h1 className="text-sm font-semibold text-slate-800 flex items-center gap-2.5 min-w-0">
@@ -54,12 +54,12 @@ export default function Topbar({ isAnalyzing, onAnalyze, onUpload, currentDocume
                   ? 'bg-red-50 text-red-700 ring-red-200/60'
                   : currentDocument.status === 'analyzing'
                     ? 'bg-amber-50 text-amber-700 ring-amber-200/60 animate-pulse'
-                    : 'bg-slate-50 text-slate-600 ring-slate-200/60'
+                    : 'bg-blue-50 text-blue-700 ring-blue-200/60'
             )}>
-              {currentDocument.status === 'analyzed' ? 'Reviewed'
-                : currentDocument.status === 'analyzing' ? 'Analyzing'
-                : currentDocument.status === 'error' ? 'Failed'
-                : 'Pending Review'}
+              {currentDocument.status === 'analyzed' ? '✓ Reviewed'
+                : currentDocument.status === 'analyzing' ? '⏳ Analyzing'
+                : currentDocument.status === 'error' ? '✕ Failed'
+                : '○ Pending Review'}
             </span>
           )}
         </h1>
@@ -77,13 +77,13 @@ export default function Topbar({ isAnalyzing, onAnalyze, onUpload, currentDocume
         <div className="h-5 w-px bg-slate-200 mx-1" />
 
         <button
-          onClick={onAnalyze}
-          disabled={isAnalyzing || !currentDocument}
-          title={!currentDocument ? 'Upload a clinical trial protocol first to run regulatory analysis' : 'Run AI-powered regulatory and payer analysis on this protocol'}
+          onClick={!currentDocument ? onUpload : onAnalyze}
+          disabled={isAnalyzing}
+          title={!currentDocument ? 'Upload a clinical trial protocol to get started' : 'Run AI-powered regulatory and payer analysis on this protocol'}
           className={cn(
             'flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-300',
             !currentDocument
-              ? 'bg-slate-300 cursor-not-allowed shadow-none'
+              ? 'bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 shadow-md shadow-brand-600/20 hover:shadow-lg'
               : isAnalyzing
                 ? 'bg-slate-700 cursor-wait shadow-md'
                 : 'bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 shadow-md shadow-brand-600/20 hover:shadow-lg hover:shadow-brand-500/25'

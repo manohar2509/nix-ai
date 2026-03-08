@@ -64,6 +64,11 @@ class Settings:
     )
     BEDROCK_KB_ID: str = os.getenv("BEDROCK_KB_ID", "")
 
+    # ── Boardroom (Adversarial Council v2) ─────────────────────
+    BOARDROOM_MODEL_ID: str = os.getenv(
+        "BOARDROOM_MODEL_ID", "us.amazon.nova-pro-v1:0"
+    )
+
     # ── Textract (optional — for structured table/form extraction) ──
     TEXTRACT_ENABLED: bool = os.getenv("TEXTRACT_ENABLED", "false").lower() == "true"
 
@@ -93,11 +98,18 @@ class Settings:
     def boto3_credentials(self) -> dict:
         """Return credential kwargs for boto3 client/resource constructors.
 
-        In Lambda the IAM role provides credentials automatically, so this
-        returns only region_name. For local dev it passes the explicit keys.
+        In Lambda the IAM role provides credentials automatically via
+        AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY **and** AWS_SESSION_TOKEN.
+        We must NOT explicitly pass only the first two — that drops the
+        session token and causes "security token … invalid" errors.
+
+        For local dev we pass the explicit long-lived keys from .env.
         """
         creds: dict = {"region_name": self.AWS_REGION}
-        if self.AWS_ACCESS_KEY_ID and self.AWS_SECRET_ACCESS_KEY:
+        # Only inject explicit credentials for local development.
+        # In Lambda, boto3's default credential chain already picks up
+        # the execution-role's temporary STS creds (incl. session token).
+        if not self.is_lambda and self.AWS_ACCESS_KEY_ID and self.AWS_SECRET_ACCESS_KEY:
             creds["aws_access_key_id"] = self.AWS_ACCESS_KEY_ID
             creds["aws_secret_access_key"] = self.AWS_SECRET_ACCESS_KEY
         return creds

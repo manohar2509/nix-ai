@@ -32,8 +32,6 @@ def send_message(
       4. Save the AI response to DynamoDB
       5. Return the response with citations
     """
-    from app.services import s3_service
-
     effective_doc_id = doc_id or "global"
 
     # 1. Persist the user's message
@@ -74,14 +72,18 @@ def send_message(
                 rag_result.get("text", ""), ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
             )
 
-    # 4. Persist the AI response
+    # 4. Persist the AI response (include grounding metadata for history reload)
     ai_msg = dynamo_service.create_chat_message(
         doc_id=effective_doc_id,
         user_id="assistant",
         role="assistant",
         text=rag_result["text"],
         citations=rag_result.get("citations", []),
-        metadata={"session_id": rag_result.get("session_id")},
+        metadata={
+            "session_id": rag_result.get("session_id"),
+            "kb_grounded": rag_result.get("kb_grounded"),
+            "grounding_source": rag_result.get("grounding_source"),
+        },
     )
 
     # 5. Return response matching frontend schema
@@ -89,6 +91,8 @@ def send_message(
         "id": ai_msg["id"],
         "text": rag_result["text"],
         "citations": rag_result.get("citations", []),
+        "kb_grounded": rag_result.get("kb_grounded"),
+        "grounding_source": rag_result.get("grounding_source"),
         "metadata": {
             "user_message_id": user_msg["id"],
             "session_id": rag_result.get("session_id"),
@@ -143,6 +147,8 @@ def get_history(user: CurrentUser, doc_id: str) -> list[dict]:
             "role": m["role"],
             "text": m["text"],
             "citations": m.get("citations", []),
+            "kb_grounded": m.get("metadata", {}).get("kb_grounded"),
+            "grounding_source": m.get("metadata", {}).get("grounding_source"),
             "created_at": m.get("created_at", ""),
         }
         for m in messages
@@ -161,8 +167,8 @@ def submit_feedback(user: CurrentUser, message_id: str, feedback: str) -> dict:
     """Record feedback on an AI message (for analytics / RLHF)."""
     msg = dynamo_service.get_chat_message(message_id)
     if not msg:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="Message not found")
+        from app.core.exceptions import MessageNotFoundError
+        raise MessageNotFoundError(message_id)
 
     # Persist feedback in the message's metadata
     metadata = msg.get("metadata", {})
@@ -202,8 +208,6 @@ def send_message_stream(
 
     After streaming completes, the full response is persisted to DynamoDB.
     """
-    from app.services import s3_service
-
     effective_doc_id = doc_id or "global"
 
     # 1. Persist the user's message
@@ -243,12 +247,15 @@ def send_message_stream(
             for i in range(0, len(full_text), chunk_size):
                 yield _sse({"event": "token", "text": full_text[i:i + chunk_size]})
             # Done — persist and finish
-            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, rag_citations)
+            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, rag_citations,
+                               kb_grounded=True, grounding_source="document_library")
             yield _sse({
                 "event": "done",
                 "messageId": ai_msg_id,
                 "fullText": full_text,
                 "citations": rag_citations,
+                "kb_grounded": True,
+                "grounding_source": "document_library",
             })
             return
     except Exception as exc:
@@ -278,16 +285,29 @@ def send_message_stream(
             )
 
             # Persist the complete response
-            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, inline_citations)
+            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, inline_citations,
+                               kb_grounded=False, grounding_source="regulatory_authority")
             yield _sse({
                 "event": "done",
                 "messageId": ai_msg_id,
                 "fullText": full_text,
                 "citations": inline_citations,
+                "kb_grounded": False,
+                "grounding_source": "regulatory_authority",
             })
         except Exception as exc:
-            logger.error("Streaming chat failed: %s", exc)
-            yield _sse({"event": "error", "message": str(exc)})
+            error_str = str(exc)
+            logger.error("Streaming chat failed: %s", error_str)
+            # Provide user-friendly error messages
+            if "ThrottlingException" in error_str or "Too many requests" in error_str:
+                user_msg_text = "The AI service is experiencing high demand. Please try again in a few seconds."
+            elif "circuit" in error_str.lower():
+                user_msg_text = "The AI service is temporarily unavailable. Please try again shortly."
+            elif "timeout" in error_str.lower() or "timed out" in error_str.lower():
+                user_msg_text = "The request took too long. Please try a shorter or simpler question."
+            else:
+                user_msg_text = "An unexpected error occurred while generating the response. Please try again."
+            yield _sse({"event": "error", "message": user_msg_text, "retryable": True})
 
 
 def _sse(data: dict) -> str:
@@ -296,17 +316,28 @@ def _sse(data: dict) -> str:
 
 
 def _persist_ai_message(
-    doc_id: str, msg_id: str, text: str, citations: list
+    doc_id: str, msg_id: str, text: str, citations: list,
+    kb_grounded: bool | None = None, grounding_source: str | None = None,
 ) -> None:
-    """Save the AI response to DynamoDB after streaming completes."""
+    """Save the AI response to DynamoDB after streaming completes.
+
+    Uses the pre-generated msg_id so the frontend's reference stays valid.
+    Stores grounding metadata so history reload can show correct citation badges.
+    """
     try:
+        metadata = {}
+        if kb_grounded is not None:
+            metadata["kb_grounded"] = kb_grounded
+        if grounding_source:
+            metadata["grounding_source"] = grounding_source
         dynamo_service.create_chat_message(
             doc_id=doc_id,
             user_id="assistant",
             role="assistant",
             text=text,
             citations=citations,
-            metadata={"message_id_override": msg_id},
+            metadata=metadata,
+            message_id=msg_id,  # Use the pre-generated ID the frontend already has
         )
     except Exception as exc:
         logger.error("Failed to persist streamed AI message: %s", exc)

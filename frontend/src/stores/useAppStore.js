@@ -54,6 +54,7 @@ export const useAppStore = create(
       // ============================================================================
       currentDocument: null,
       documents: [],
+      _recentlyDeletedIds: [],  // Guard: prevents background refresh from re-adding deleted docs
       isDocumentLoading: false,
       documentError: null,
       isUploading: false,
@@ -63,7 +64,20 @@ export const useAppStore = create(
         set({ currentDocument: doc }, false, 'setCurrentDocument'),
 
       setDocuments: (docs) =>
-        set({ documents: docs }, false, 'setDocuments'),
+        set(
+          (state) => {
+            const deletedIds = state._recentlyDeletedIds || [];
+            // Filter out documents that were recently deleted (prevents
+            // background refresh from re-adding a doc before DynamoDB
+            // consistent reads fully propagate)
+            const filtered = deletedIds.length > 0
+              ? docs.filter((d) => !deletedIds.includes(d.id))
+              : docs;
+            return { documents: filtered };
+          },
+          false,
+          'setDocuments'
+        ),
 
       addDocument: (doc) =>
         set(
@@ -97,11 +111,53 @@ export const useAppStore = create(
 
       removeDocument: (docId) =>
         set(
-          (state) => ({
-            documents: state.documents.filter((d) => d.id !== docId),
-            currentDocument:
-              state.currentDocument?.id === docId ? null : state.currentDocument,
-          }),
+          (state) => {
+            const remainingDocs = state.documents.filter((d) => d.id !== docId);
+            const wasCurrentDoc = state.currentDocument?.id === docId;
+            const nextDoc = remainingDocs.length > 0 ? remainingDocs[0] : null;
+            return {
+              documents: remainingDocs,
+              currentDocument: wasCurrentDoc ? nextDoc : state.currentDocument,
+              // Clear stale analysis data when the viewed document is deleted
+              lastAnalysis: wasCurrentDoc ? null : state.lastAnalysis,
+              analysisError: wasCurrentDoc ? null : state.analysisError,
+              // Reset chat tied to deleted doc
+              chatMessages: wasCurrentDoc ? [] : state.chatMessages,
+              chatConversationId: wasCurrentDoc ? null : state.chatConversationId,
+              // Clear regulatory intelligence state for deleted doc
+              ...(wasCurrentDoc ? {
+                jurisdictionScores: [],
+                globalReadiness: 0,
+                simulations: [],
+                timeline: [],
+                payerGaps: [],
+                htaBodyScores: {},
+              } : {}),
+              // Clear strategic intelligence state for deleted doc
+              ...(wasCurrentDoc ? {
+                councilSession: null,
+                activeDebateId: null,
+                debateStatus: null,
+                isDebatePolling: false,
+                debateError: null,
+                debateHistory: [],
+                frictionMap: null,
+                costAnalysis: null,
+                payerSimulation: null,
+                submissionStrategy: null,
+                optimization: null,
+                investorReport: null,
+                watchdogAlerts: null,
+                clauseLibrary: null,
+                portfolioRisk: null,
+                crossProtocol: null,
+                strategicTimestamps: {},
+              } : {}),
+              // Track recently deleted IDs so background refresh doesn't re-add them
+              // Cap at 20 entries to prevent unbounded growth
+              _recentlyDeletedIds: [...(state._recentlyDeletedIds || []), docId].slice(-20),
+            };
+          },
           false,
           'removeDocument'
         ),
@@ -259,6 +315,8 @@ export const useAppStore = create(
       unregisterJobPollingInterval: (jobId) =>
         set(
           (state) => {
+            const intervalId = state.jobPollingIntervals[jobId];
+            if (intervalId) clearInterval(intervalId);
             const { [jobId]: _, ...rest } = state.jobPollingIntervals;
             return { jobPollingIntervals: rest };
           },
@@ -312,6 +370,7 @@ export const useAppStore = create(
       showNotification: false,
       notification: null, // { type: 'success'|'error'|'info', message }
       isKbSyncing: false, // Knowledge base is updating
+      showUploadDialog: false, // Global trigger for upload dialog (usable from any view)
 
       // ============================================================================
       // REGULATORY INTELLIGENCE STATE (REQ-1 through REQ-10)
@@ -384,6 +443,119 @@ export const useAppStore = create(
       setGuidelines: (guidelines) =>
         set({ guidelines: guidelines }, false, 'setGuidelines'),
 
+      // ── Strategic Intelligence Setters ───────────────────────────
+      // Initial state for strategic intelligence (null = not loaded yet)
+      councilSession: null,
+      isCouncilLoading: false,
+      frictionMap: null,
+      isFrictionLoading: false,
+      costAnalysis: null,
+      isCostLoading: false,
+      payerSimulation: null,
+      isPayerSimLoading: false,
+      submissionStrategy: null,
+      isStrategyLoading: false,
+      optimization: null,
+      isOptimizing: false,
+      investorReport: null,
+      isInvestorReportLoading: false,
+      watchdogAlerts: null,
+      isWatchdogLoading: false,
+      clauseLibrary: null,
+      portfolioRisk: null,
+      isPortfolioLoading: false,
+      crossProtocol: null,
+
+      setCouncilSession: (data) =>
+        set({ councilSession: data }, false, 'setCouncilSession'),
+      setIsCouncilLoading: (bool) =>
+        set({ isCouncilLoading: bool }, false, 'setIsCouncilLoading'),
+
+      // Async Boardroom Debate state
+      activeDebateId: null,
+      debateStatus: null,       // full DebateStatusResponse
+      isDebatePolling: false,
+      debateError: null,
+      debateHistory: [],        // previous debate IDs for this doc
+
+      setActiveDebateId: (id) =>
+        set({ activeDebateId: id }, false, 'setActiveDebateId'),
+      setDebateStatus: (status) =>
+        set({ debateStatus: status }, false, 'setDebateStatus'),
+      setIsDebatePolling: (bool) =>
+        set({ isDebatePolling: bool }, false, 'setIsDebatePolling'),
+      setDebateError: (error) =>
+        set({ debateError: error }, false, 'setDebateError'),
+      setDebateHistory: (history) =>
+        set({ debateHistory: history }, false, 'setDebateHistory'),
+      clearDebate: () =>
+        set({
+          activeDebateId: null,
+          debateStatus: null,
+          isDebatePolling: false,
+          debateError: null,
+        }, false, 'clearDebate'),
+
+      setFrictionMap: (data) =>
+        set({ frictionMap: data }, false, 'setFrictionMap'),
+      setIsFrictionLoading: (bool) =>
+        set({ isFrictionLoading: bool }, false, 'setIsFrictionLoading'),
+
+      setCostAnalysis: (data) =>
+        set({ costAnalysis: data }, false, 'setCostAnalysis'),
+      setIsCostLoading: (bool) =>
+        set({ isCostLoading: bool }, false, 'setIsCostLoading'),
+
+      setPayerSimulation: (data) =>
+        set({ payerSimulation: data }, false, 'setPayerSimulation'),
+      setIsPayerSimLoading: (bool) =>
+        set({ isPayerSimLoading: bool }, false, 'setIsPayerSimLoading'),
+
+      setSubmissionStrategy: (data) =>
+        set({ submissionStrategy: data }, false, 'setSubmissionStrategy'),
+      setIsStrategyLoading: (bool) =>
+        set({ isStrategyLoading: bool }, false, 'setIsStrategyLoading'),
+
+      setOptimization: (data) =>
+        set({ optimization: data }, false, 'setOptimization'),
+      setIsOptimizing: (bool) =>
+        set({ isOptimizing: bool }, false, 'setIsOptimizing'),
+
+      setInvestorReport: (data) =>
+        set({ investorReport: data }, false, 'setInvestorReport'),
+      setIsInvestorReportLoading: (bool) =>
+        set({ isInvestorReportLoading: bool }, false, 'setIsInvestorReportLoading'),
+
+      setWatchdogAlerts: (data) =>
+        set({ watchdogAlerts: data }, false, 'setWatchdogAlerts'),
+      setIsWatchdogLoading: (bool) =>
+        set({ isWatchdogLoading: bool }, false, 'setIsWatchdogLoading'),
+
+      setClauseLibrary: (data) =>
+        set({ clauseLibrary: data }, false, 'setClauseLibrary'),
+
+      setPortfolioRisk: (data) =>
+        set({ portfolioRisk: data }, false, 'setPortfolioRisk'),
+      setIsPortfolioLoading: (bool) =>
+        set({ isPortfolioLoading: bool }, false, 'setIsPortfolioLoading'),
+
+      setCrossProtocol: (data) =>
+        set({ crossProtocol: data }, false, 'setCrossProtocol'),
+
+      // Strategic cache timestamps — tracks generated_at per feature.
+      // Lives in Zustand so it survives tab switches (unlike component useState).
+      strategicTimestamps: {},
+      setStrategicTimestamps: (timestamps) =>
+        set({ strategicTimestamps: timestamps }, false, 'setStrategicTimestamps'),
+      updateStrategicTimestamp: (featureKey, generatedAt) =>
+        set(
+          (state) => ({
+            strategicTimestamps: { ...state.strategicTimestamps, [featureKey]: generatedAt },
+          }),
+          false,
+          'updateStrategicTimestamp'
+        ),
+
       setActiveView: (view) =>
         set({ activeView: view }, false, 'setActiveView'),
 
@@ -404,6 +576,9 @@ export const useAppStore = create(
 
       setIsKbSyncing: (bool) =>
         set({ isKbSyncing: bool }, false, 'setIsKbSyncing'),
+
+      setShowUploadDialog: (bool) =>
+        set({ showUploadDialog: bool }, false, 'setShowUploadDialog'),
 
       // ============================================================================
       // SELECTORS (Helpers)
@@ -482,6 +657,36 @@ export const useAppStore = create(
             benchmark: null,
             isBenchmarking: false,
             guidelines: [],
+            // Strategic intelligence state
+            councilSession: null,
+            isCouncilLoading: false,
+            // Async boardroom debate state
+            activeDebateId: null,
+            debateStatus: null,
+            isDebatePolling: false,
+            debateError: null,
+            debateHistory: [],
+            frictionMap: null,
+            isFrictionLoading: false,
+            costAnalysis: null,
+            isCostLoading: false,
+            payerSimulation: null,
+            isPayerSimLoading: false,
+            submissionStrategy: null,
+            isStrategyLoading: false,
+            optimization: null,
+            isOptimizing: false,
+            investorReport: null,
+            isInvestorReportLoading: false,
+            watchdogAlerts: null,
+            isWatchdogLoading: false,
+            clauseLibrary: null,
+            portfolioRisk: null,
+            isPortfolioLoading: false,
+            crossProtocol: null,
+            strategicTimestamps: {},
+            _recentlyDeletedIds: [],
+            showUploadDialog: false,
           },
           false,
           'reset'
@@ -541,11 +746,15 @@ export const useJobs = () =>
     activeJobs: state.activeJobs,
     completedJobs: state.completedJobs,
     failedJobs: state.failedJobs,
-    allJobs: [...state.activeJobs, ...state.completedJobs, ...state.failedJobs].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    ),
     isPolling: state.jobPollingActive,
   })));
+
+// Derived sorted jobs — call this where needed (memoize in component with useMemo)
+export const getAllJobsSorted = (state) => {
+  return [...state.activeJobs, ...state.completedJobs, ...state.failedJobs].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+};
 
 // UI selectors
 export const useUI = () =>
@@ -585,4 +794,36 @@ export const useRegulatory = () =>
     benchmark: state.benchmark,
     isBenchmarking: state.isBenchmarking,
     guidelines: state.guidelines,
+  })));
+
+// Strategic Intelligence selectors (8 killer features)
+export const useStrategic = () =>
+  useAppStore(useShallow((state) => ({
+    councilSession: state.councilSession,
+    isCouncilLoading: state.isCouncilLoading,
+    // Async boardroom debate
+    activeDebateId: state.activeDebateId,
+    debateStatus: state.debateStatus,
+    isDebatePolling: state.isDebatePolling,
+    debateError: state.debateError,
+    debateHistory: state.debateHistory,
+    frictionMap: state.frictionMap,
+    isFrictionLoading: state.isFrictionLoading,
+    costAnalysis: state.costAnalysis,
+    isCostLoading: state.isCostLoading,
+    payerSimulation: state.payerSimulation,
+    isPayerSimLoading: state.isPayerSimLoading,
+    submissionStrategy: state.submissionStrategy,
+    isStrategyLoading: state.isStrategyLoading,
+    optimization: state.optimization,
+    isOptimizing: state.isOptimizing,
+    investorReport: state.investorReport,
+    isInvestorReportLoading: state.isInvestorReportLoading,
+    watchdogAlerts: state.watchdogAlerts,
+    isWatchdogLoading: state.isWatchdogLoading,
+    clauseLibrary: state.clauseLibrary,
+    portfolioRisk: state.portfolioRisk,
+    isPortfolioLoading: state.isPortfolioLoading,
+    crossProtocol: state.crossProtocol,
+    strategicTimestamps: state.strategicTimestamps,
   })));

@@ -12,7 +12,7 @@ class RegisterDocumentRequest(BaseModel):
     """POST /documents body."""
     name: str = Field(..., min_length=1, max_length=500)
     s3_key: str = Field(..., min_length=1)
-    size: int = Field(0, ge=0)
+    size: int = Field(0, ge=0, le=50 * 1024 * 1024)  # Max 50MB — matches frontend
 
 
 # ── Responses ────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ dist/
 dist-ssr/
 build/
 .aws-sam/
+.vite/
 
 # Environment files
 .env
@@ -35,3 +36,6 @@ Thumbs.db
 # Testing
 coverage/
 .pytest_cache/
+
+test_protocols/*
+upload_kb.sh

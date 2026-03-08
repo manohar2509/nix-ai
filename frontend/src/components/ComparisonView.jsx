@@ -5,11 +5,12 @@
  * Users select 2-5 documents, then see a structured comparison.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { GitCompare, FileText, ChevronRight, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 import { useAppStore, useRegulatory, useDocuments } from '../stores/useAppStore';
 import { triggerComparison, listComparisons, getComparison } from '../services/regulatoryService';
 import { analysisService } from '../services/analysisService';
+import { documentService } from '../services/documentService';
 import { cn } from '../utils/cn';
 
 export default function ComparisonView() {
@@ -19,9 +20,23 @@ export default function ComparisonView() {
   const setActiveView = useAppStore((s) => s.setActiveView);
   const [selectedDocs, setSelectedDocs] = useState([]);
   const [error, setError] = useState(null);
+  const pollIntervalRef = useRef(null);
+
+  // Cleanup poll interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     loadComparisons();
+    // Ensure documents are loaded (user may navigate directly to comparison)
+    if (documents.length === 0) {
+      documentService.listDocuments()
+        .then(docs => store.setDocuments(docs))
+        .catch(() => {});
+    }
   }, []);
 
   const loadComparisons = async () => {
@@ -51,36 +66,49 @@ export default function ComparisonView() {
     try {
       const result = await triggerComparison(selectedDocs);
 
+      // Handle inline failures (local dev mode)
+      if (result.status === 'FAILED') {
+        setError(result.error || 'The comparison could not be completed. Please try again.');
+        store.setIsComparing(false);
+        return;
+      }
+
       if (result.inline || result.status === 'COMPLETE') {
         const cmpData = await getComparison(result.cmpId);
         store.setActiveComparison(cmpData);
+        setSelectedDocs([]);
         await loadComparisons();
       } else {
         const jobId = result.jobId;
         const cmpId = result.cmpId;
-        const pollInterval = setInterval(async () => {
+        pollIntervalRef.current = setInterval(async () => {
           try {
             const status = await analysisService.getAnalysisStatus(jobId);
             if (status.status === 'COMPLETE') {
-              clearInterval(pollInterval);
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
               const cmpData = await getComparison(cmpId);
               store.setActiveComparison(cmpData);
+              setSelectedDocs([]);
               await loadComparisons();
               store.setIsComparing(false);
             } else if (status.status === 'FAILED') {
-              clearInterval(pollInterval);
-              setError('Comparison failed');
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+              setError(status.error || 'The comparison could not be completed. Please try again.');
               store.setIsComparing(false);
             }
-          } catch (e) {
-            clearInterval(pollInterval);
+          } catch {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+            setError('Lost connection while checking comparison status. Please try again.');
             store.setIsComparing(false);
           }
         }, 2000);
         return;
       }
     } catch (err) {
-      setError(err.message || 'Comparison failed');
+      setError('The comparison could not be completed. Please try again.');
     } finally {
       store.setIsComparing(false);
     }
@@ -198,6 +226,26 @@ export default function ComparisonView() {
         {/* Active Comparison Result */}
         {activeComparison?.result && (
           <ComparisonResult comparison={activeComparison} documents={documents} />
+        )}
+        {activeComparison && !activeComparison.result && activeComparison.status === 'FAILED' && (
+          <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6">
+            <div className="text-center py-4">
+              <div className="h-10 w-10 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <GitCompare size={20} className="text-red-500" />
+              </div>
+              <p className="text-sm font-medium text-red-700">Comparison Failed</p>
+              <p className="text-xs text-slate-500 mt-1">This comparison could not be completed. Please try again with the same protocols.</p>
+            </div>
+          </div>
+        )}
+        {activeComparison && !activeComparison.result && activeComparison.status !== 'FAILED' && activeComparison.status !== 'COMPLETE' && (
+          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
+            <div className="text-center py-4">
+              <Loader2 size={24} className="animate-spin text-brand-500 mx-auto mb-3" />
+              <p className="text-sm font-medium text-slate-700">Comparison in progress</p>
+              <p className="text-xs text-slate-400 mt-1">Status: {activeComparison.status}</p>
+            </div>
+          </div>
         )}
 
         {/* Past Comparisons */}

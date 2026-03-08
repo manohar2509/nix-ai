@@ -12,12 +12,15 @@ import AdminAnalyticsView from './components/AdminAnalyticsView';
 import ConfigurationView from './components/ConfigurationView';
 import KnowledgeBaseView from './components/KnowledgeBaseView';
 import ComparisonView from './components/ComparisonView';
+import DealRoomView from './components/DealRoomView';
 import { UploadDialog } from './components/UploadDialog';
 import Toast from './components/Toast';
+import PlatformTour from './components/PlatformTour';
 import { useAppStore, useDocuments, useAnalysis } from './stores/useAppStore';
 import { analysisService } from './services/analysisService';
 import { documentService } from './services/documentService';
 import { useThemeInit } from './hooks/useTheme';
+import { useStrategicCache } from './hooks/useCustomHooks';
 
 /* ── Main Dashboard Layout (Authenticated) ── */
 function DashboardLayout() {
@@ -34,6 +37,25 @@ function DashboardLayout() {
   const { isAnalyzing, lastAnalysis } = useAnalysis();
   const activeView = useAppStore((state) => state.activeView);
 
+  // Global upload dialog trigger (allows any view like Dashboard to open upload)
+  const showUploadDialog = useAppStore((state) => state.showUploadDialog);
+  const setShowUploadDialog = useAppStore((state) => state.setShowUploadDialog);
+
+  // Sync global trigger → local state, then reset the trigger
+  React.useEffect(() => {
+    if (showUploadDialog) {
+      setShowUpload(true);
+      setShowUploadDialog(false);
+    }
+  }, [showUploadDialog, setShowUploadDialog]);
+
+  // Load cached strategic intelligence results when document changes
+  // This ensures page reloads don't lose AI-generated content
+  useStrategicCache(currentDocument?.id);
+
+  // Read timestamps from Zustand (survives tab switches, updated on regenerate)
+  const cacheTimestamps = useAppStore((state) => state.strategicTimestamps);
+
   const setIsAnalyzing = useAppStore((state) => state.setIsAnalyzing);
   const setLastAnalysis = useAppStore((state) => state.setLastAnalysis);
   const setDocuments = useAppStore((state) => state.setDocuments);
@@ -45,16 +67,34 @@ function DashboardLayout() {
   // Helper: re-fetch document list from backend (source of truth)
   const _refreshDocuments = useCallback(async () => {
     try {
+      // Skip refresh if a delete is in progress (prevent race condition)
+      const storeState = useAppStore.getState();
+      const recentlyDeleted = storeState._recentlyDeletedIds || [];
+
       const docs = await documentService.listDocuments();
-      setDocuments(docs);
+      setDocuments(docs); // store's setDocuments auto-filters recently deleted IDs
+
+      // After successful refresh, clear the recently-deleted guard
+      // (backend now reflects the deletion via ConsistentRead)
+      if (recentlyDeleted.length > 0) {
+        // Only clear IDs that are confirmed gone from the backend response
+        const stillDeletedIds = recentlyDeleted.filter(
+          (id) => docs.find((d) => d.id === id)
+        );
+        useAppStore.setState({ _recentlyDeletedIds: stillDeletedIds });
+      }
+
+      // Get the filtered documents from the store (after setDocuments filtering)
+      const filteredDocs = useAppStore.getState().documents;
+
       // If current document was deleted on the backend, clear it
-      if (currentDocument && !docs.find((d) => d.id === currentDocument.id)) {
-        setCurrentDocument(docs.length > 0 ? docs[0] : null);
+      if (currentDocument && !filteredDocs.find((d) => d.id === currentDocument.id)) {
+        setCurrentDocument(filteredDocs.length > 0 ? filteredDocs[0] : null);
         setLastAnalysis(null);
       }
       // If current document status changed (e.g. worker finished), update it
       if (currentDocument) {
-        const updated = docs.find((d) => d.id === currentDocument.id);
+        const updated = filteredDocs.find((d) => d.id === currentDocument.id);
         if (updated && updated.status !== currentDocument.status) {
           setCurrentDocument(updated);
         }
@@ -102,6 +142,29 @@ function DashboardLayout() {
       setLastAnalysis(null);
     }
   }, [currentDocument?.id, currentDocument?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clear stale strategic intelligence state when switching documents.
+  // The useStrategicCache hook will then re-populate from the backend cache.
+  const prevDocRef = React.useRef(null);
+  useEffect(() => {
+    const curId = currentDocument?.id || null;
+    // If document changed (including becoming null after deletion), clear strategic state
+    if (prevDocRef.current && prevDocRef.current !== curId) {
+      const store = useAppStore.getState();
+      store.setFrictionMap(null);
+      store.setCostAnalysis(null);
+      store.setPayerSimulation(null);
+      store.setSubmissionStrategy(null);
+      store.setOptimization(null);
+      store.setWatchdogAlerts(null);
+      store.setInvestorReport(null);
+      store.setCouncilSession(null);
+      store.setClauseLibrary(null);
+      store.setStrategicTimestamps({});
+      store.clearDebate();
+    }
+    prevDocRef.current = curId;
+  }, [currentDocument?.id]);
 
   // Real analysis flow — calls backend → Bedrock → returns results
   // In local dev: analysis runs inline (no SQS), response comes back immediately
@@ -159,7 +222,7 @@ function DashboardLayout() {
       _refreshDocuments();
     } catch (err) {
       updateDocument(currentDocument.id, { status: 'error' });
-      showToast({ type: 'error', title: 'Analysis failed', message: err.message || 'The regulatory analysis could not be completed. Please try again.' });
+      showToast({ type: 'error', title: 'Analysis unsuccessful', message: 'The regulatory analysis could not be completed. Please try again.' });
       // Refresh document list to get backend truth (may have been set to 'error' by worker)
       _refreshDocuments();
     } finally {
@@ -207,6 +270,10 @@ function DashboardLayout() {
         ) : activeView === 'comparison' ? (
           <main className="flex-1 overflow-hidden">
             <ComparisonView />
+          </main>
+        ) : activeView === 'dealroom' ? (
+          <main className="flex-1 overflow-hidden">
+            <DealRoomView />
           </main>
         ) : activeView === 'settings' ? (
           <main className="flex-1 overflow-hidden">
@@ -288,6 +355,7 @@ function DashboardLayout() {
                 hasAnalyzed={hasAnalyzed}
                 currentDocument={currentDocument}
                 lastAnalysis={lastAnalysis}
+                cacheTimestamps={cacheTimestamps}
               />
             </div>
           </main>
@@ -296,6 +364,7 @@ function DashboardLayout() {
 
       <UploadDialog isOpen={showUpload} onClose={() => setShowUpload(false)} />
       <Toast />
+      <PlatformTour />
     </div>
   );
 }

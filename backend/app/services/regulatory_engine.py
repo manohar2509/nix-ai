@@ -18,7 +18,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Optional
 
 from app.services import bedrock_service
 
@@ -142,7 +141,16 @@ Analyze this clinical trial protocol document and return a comprehensive JSON re
 AVAILABLE REGULATORY REFERENCES — You MUST cite specific guidelines with section numbers in your findings:
 {ALL_REFERENCES_PROMPT_BLOCK}
 
-CRITICAL ANALYSIS INSTRUCTIONS:
+CRITICAL ANALYSIS INSTRUCTIONS — GROUNDING REQUIREMENTS:
+⚠️ PLATFORM TRUST POLICY: This platform is built on CORRECTNESS and TRUST. You MUST:
+  1. Base EVERY finding on SPECIFIC guideline sections from the references provided above
+  2. NEVER generate findings based on general knowledge — cite the EXACT guideline
+  3. If a guideline reference is unclear, mark the finding confidence as <80%
+  4. For payer gaps, cite the EXACT HTA body manual section (e.g., "NICE PMG36 Section 5.2.4")
+  5. Include URLs for EVERY guideline reference so users can verify your claims
+  6. If you cannot ground a finding on a specific guideline, DO NOT include it
+
+ANALYSIS REQUIREMENTS:
 - Every finding MUST include guideline_refs with code, section number, title, and URL
 - Cross-reference findings against ICH guidelines, FDA guidance, AND HTA body requirements
 - For payer gaps, cite the specific HTA body manual section that requires the missing evidence
@@ -191,6 +199,7 @@ Return a JSON object with these EXACT keys:
    - "severity": "low" | "medium" | "high" | "critical"
    - "recommendation": how to address it
    - "impact_on_reimbursement": expected impact description
+   - "guideline_refs": array of {{ "code": "NICE PMG36", "section": "5.2.4", "title": "...", "relevance": "why this HTA requirement applies" }}
 
 8. "hta_body_scores": {{ "NICE": 0-100, "IQWIG": 0-100, "CADTH": 0-100, "PBAC": 0-100, "AMNOG": 0-100 }}
 
@@ -443,10 +452,39 @@ Respond with ONLY valid JSON."""
 # Helper: Parse JSON from Bedrock response
 # ════════════════════════════════════════════════════════════════
 def _parse_json_response(raw: str) -> dict:
-    """Extract and parse JSON from Bedrock model output."""
-    json_match = re.search(r'\{[\s\S]*\}', raw)
-    if json_match:
-        return json.loads(json_match.group())
+    """Extract and parse the first complete JSON object from Bedrock model output.
+
+    Uses brace-counting instead of a greedy regex so that trailing
+    narrative text after the JSON object is never captured.
+    """
+    start = raw.find('{')
+    if start == -1:
+        return {}
+    depth = 0
+    in_string = False
+    escape_next = False
+    for i in range(start, len(raw)):
+        ch = raw[i]
+        if escape_next:
+            escape_next = False
+            continue
+        if ch == '\\' and in_string:
+            escape_next = True
+            continue
+        if ch == '"' and not escape_next:
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(raw[start:i + 1])
+                except json.JSONDecodeError:
+                    return {}
     return {}
 
 
@@ -458,36 +496,73 @@ def enrich_guideline_urls(findings: list[dict]) -> list[dict]:
     for finding in findings:
         refs = finding.get("guideline_refs", [])
         for ref in refs:
-            code = ref.get("code", "")
-            # Try ICH guidelines first
-            if code in ICH_GUIDELINES:
-                ref["url"] = ICH_GUIDELINES[code]["url"]
-                if not ref.get("title"):
-                    ref["title"] = ICH_GUIDELINES[code]["title"]
-                ref["source_type"] = "ICH"
-                continue
-            # Try ICH with "ICH " prefix stripped
-            stripped = code.replace("ICH ", "").strip()
-            if stripped in ICH_GUIDELINES:
-                ref["url"] = ICH_GUIDELINES[stripped]["url"]
-                if not ref.get("title"):
-                    ref["title"] = ICH_GUIDELINES[stripped]["title"]
-                ref["source_type"] = "ICH"
-                continue
-            # Try FDA guidance
-            for fda_key, fda_info in FDA_GUIDANCE.items():
-                if fda_key.lower() in code.lower() or code.lower() in fda_info["title"].lower():
-                    ref["url"] = fda_info["url"]
-                    if not ref.get("title"):
-                        ref["title"] = fda_info["title"]
-                    ref["source_type"] = "FDA"
-                    break
-            # Try HTA body references
-            for hta_key, hta_info in HTA_BODY_REFS.items():
-                if hta_key.lower() in code.lower():
-                    ref["url"] = hta_info["url"]
-                    if not ref.get("title"):
-                        ref["title"] = hta_info["title"]
-                    ref["source_type"] = "HTA"
-                    break
+            _enrich_single_ref(ref)
     return findings
+
+
+def enrich_jurisdiction_guidelines(jurisdiction_scores: list[dict]) -> list[dict]:
+    """
+    Convert plain guideline code strings in jurisdiction_scores[].key_guidelines
+    into structured objects with url, title, and source_type so the frontend
+    can render clickable citation badges.
+    """
+    for j in jurisdiction_scores:
+        raw_guidelines = j.get("key_guidelines", [])
+        enriched = []
+        for g in raw_guidelines:
+            if isinstance(g, dict) and g.get("code"):
+                _enrich_single_ref(g)
+                enriched.append(g)
+            elif isinstance(g, str):
+                ref = {"code": g}
+                _enrich_single_ref(ref)
+                enriched.append(ref)
+        j["key_guidelines"] = enriched
+    return jurisdiction_scores
+
+
+def enrich_payer_gap_refs(payer_gaps: list[dict]) -> list[dict]:
+    """
+    Add official URLs to guideline_refs in payer_gaps entries.
+    """
+    for gap in payer_gaps:
+        refs = gap.get("guideline_refs", [])
+        for ref in refs:
+            _enrich_single_ref(ref)
+    return payer_gaps
+
+
+def _enrich_single_ref(ref: dict) -> None:
+    """Enrich a single guideline ref dict with url, title, source_type."""
+    code = ref.get("code", "")
+    # Try ICH guidelines first
+    if code in ICH_GUIDELINES:
+        ref.setdefault("url", ICH_GUIDELINES[code]["url"])
+        if not ref.get("title"):
+            ref["title"] = ICH_GUIDELINES[code]["title"]
+        ref.setdefault("source_type", "ICH")
+        return
+    # Try ICH with "ICH " prefix stripped
+    stripped = code.replace("ICH ", "").strip()
+    if stripped in ICH_GUIDELINES:
+        ref.setdefault("url", ICH_GUIDELINES[stripped]["url"])
+        if not ref.get("title"):
+            ref["title"] = ICH_GUIDELINES[stripped]["title"]
+        ref.setdefault("source_type", "ICH")
+        return
+    # Try FDA guidance
+    for fda_key, fda_info in FDA_GUIDANCE.items():
+        if fda_key.lower() in code.lower() or code.lower() in fda_info["title"].lower():
+            ref.setdefault("url", fda_info["url"])
+            if not ref.get("title"):
+                ref["title"] = fda_info["title"]
+            ref.setdefault("source_type", "FDA")
+            return
+    # Try HTA body references
+    for hta_key, hta_info in HTA_BODY_REFS.items():
+        if hta_key.lower() in code.lower():
+            ref.setdefault("url", hta_info["url"])
+            if not ref.get("title"):
+                ref["title"] = hta_info["title"]
+            ref.setdefault("source_type", "HTA")
+            return

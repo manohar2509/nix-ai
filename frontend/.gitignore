@@ -17,6 +17,10 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Keep .env.production and .env.example in git (they have no secrets)
+!.env.production
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

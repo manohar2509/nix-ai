@@ -25,10 +25,15 @@ def process_protocol_comparison(payload: dict) -> None:
         document_ids:  list[str]
         user_id:       str
     """
+    # Validate required payload keys upfront
+    _required = ("job_id", "cmp_id", "document_ids")
+    _missing = [k for k in _required if k not in payload]
+    if _missing:
+        raise ValueError(f"Missing required payload keys: {_missing}")
+
     job_id = payload["job_id"]
     cmp_id = payload["cmp_id"]
     document_ids = payload["document_ids"]
-    user_id = payload.get("user_id", "system")
 
     start_time = time.time()
 

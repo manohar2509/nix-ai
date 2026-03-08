@@ -21,7 +21,7 @@ from typing import Optional
 
 from app.core.auth import CurrentUser
 from app.core.exceptions import NixAIException, StorageError
-from app.services import dynamo_service, s3_service, sqs_service
+from app.services import dynamo_service, sqs_service
 
 logger = logging.getLogger(__name__)
 
@@ -623,9 +623,12 @@ def unsync_kb_document(kb_doc_id: str) -> dict:
         except Exception as exc:
             logger.warning("Failed to move KB file for unsync (non-blocking): %s", exc)
 
+    # Update s3_key to reflect the new location so other reads don't 404
+    new_key = original_key.replace("documents/", "unsynced/", 1) if original_key.startswith("documents/") else original_key
     dynamo_service.update_kb_document(kb_doc_id, {
         "status": "unsynced",
         "bedrock_sync_pending": False,
+        "s3_key": new_key,
         "original_s3_key": original_key,  # preserve for resync
     })
     logger.info("Unsynced KB document %s", kb_doc_id)
@@ -928,7 +931,7 @@ def _execute_kb_sync_inline(job: dict, sync_params: Optional[dict] = None) -> di
             "jobId": job_id,
             "status": "FAILED",
             "createdAt": job.get("created_at", ""),
-            "error": str(exc),
+            "error": "Knowledge base sync failed. Please try again.",
             "inline": True,
         }
 
@@ -938,11 +941,13 @@ def _find_active_sync_job(user_id: str):
     Check if there is already a QUEUED or IN_PROGRESS SYNC_KB job.
     Returns the job dict or None.
 
-    A QUEUED job older than 2 minutes is considered stale and is
-    auto-marked FAILED so it won't block new sync requests.
+    Stale-job handling (prevents stuck jobs from blocking new sync requests):
+    - QUEUED jobs older than 2 minutes → auto-marked FAILED (worker never picked up)
+    - IN_PROGRESS jobs older than 10 minutes → auto-marked FAILED (worker may have crashed)
     """
     now = datetime.now(timezone.utc)
-    stale_threshold = 120  # 2 minutes
+    stale_threshold_queued = 120       # 2 minutes for QUEUED (never picked up)
+    stale_threshold_in_progress = 600  # 10 minutes for IN_PROGRESS (running too long)
 
     recent_jobs = dynamo_service.list_jobs(user_id, limit=20)
     for job in recent_jobs:
@@ -956,15 +961,26 @@ def _find_active_sync_job(user_id: str):
             try:
                 created_at = datetime.fromisoformat(created_str)
                 age_seconds = (now - created_at).total_seconds()
-                if age_seconds > stale_threshold:
+                threshold = (
+                    stale_threshold_queued
+                    if job["status"] == "QUEUED"
+                    else stale_threshold_in_progress
+                )
+                if age_seconds > threshold:
                     logger.warning(
-                        "Stale SYNC_KB job %s (age=%ds), marking FAILED",
+                        "Stale %s SYNC_KB job %s (age=%ds, threshold=%ds), marking FAILED",
+                        job["status"],
                         job["id"],
                         age_seconds,
+                        threshold,
                     )
                     dynamo_service.update_job(job["id"], {
                         "status": "FAILED",
-                        "error": "Stale — worker never picked up the job",
+                        "error": (
+                            "Stale — worker never picked up the job"
+                            if job["status"] == "QUEUED"
+                            else "Stale — sync took too long, may have been interrupted"
+                        ),
                     })
                     continue
             except (ValueError, TypeError):

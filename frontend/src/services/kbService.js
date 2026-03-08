@@ -33,53 +33,52 @@ export const kbService = {
       });
       return res.data; // { url, key, expiration }
     } catch (error) {
-      throw {
-        message: 'Failed to get KB upload URL',
-        details: error.message,
-      };
+      throw new Error('Unable to prepare the upload. Please try again.');
     }
   },
 
   /**
    * Upload file directly to the KB S3 bucket using presigned URL.
    * Supports progress tracking via XMLHttpRequest.
+   * Returns a promise with an .abort() method for cancellation.
    */
-  uploadToKBBucket: async (file, presignedUrl, onProgress) => {
-    try {
-      await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
+  uploadToKBBucket: (file, presignedUrl, onProgress) => {
+    let xhrRef = null;
 
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded * 100) / event.total);
-            onProgress?.(percent);
-          }
-        });
+    const promise = new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhrRef = xhr;
 
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`KB upload failed: ${xhr.statusText}`));
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          reject(new Error('Network error during KB upload'));
-        });
-
-        xhr.open('PUT', presignedUrl);
-        xhr.setRequestHeader('Content-Type', file.type || 'application/pdf');
-        xhr.send(file);
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded * 100) / event.total);
+          onProgress?.(percent);
+        }
       });
 
-      return { success: true };
-    } catch (error) {
-      throw {
-        message: 'KB file upload failed',
-        details: error.message,
-      };
-    }
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve({ success: true });
+        } else {
+          reject(new Error('File upload could not be completed. Please try again.'));
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Upload interrupted — please check your internet connection and try again.'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload cancelled'));
+      });
+
+      xhr.open('PUT', presignedUrl);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/pdf');
+      xhr.send(file);
+    });
+
+    promise.abort = () => xhrRef?.abort();
+    return promise;
   },
 
   /**
@@ -97,10 +96,7 @@ export const kbService = {
       });
       return res.data; // KBDocumentItem
     } catch (error) {
-      throw {
-        message: 'Failed to register KB document',
-        details: error.message,
-      };
+      throw new Error('Unable to register the document. Please try again.');
     }
   },
 
@@ -113,10 +109,7 @@ export const kbService = {
       const res = await apiClient.get('/kb/documents');
       return res.data; // { documents: [...], total }
     } catch (error) {
-      throw {
-        message: 'Failed to fetch KB documents',
-        details: error.message,
-      };
+      throw new Error('Unable to load knowledge base documents. Please try again.');
     }
   },
 
@@ -129,10 +122,7 @@ export const kbService = {
       const res = await apiClient.delete(`/kb/documents/${kbDocId}`);
       return res.data; // { success: true, id }
     } catch (error) {
-      throw {
-        message: 'Failed to delete KB document',
-        details: error.message,
-      };
+      throw new Error('Unable to delete the document. Please try again.');
     }
   },
 
@@ -148,10 +138,7 @@ export const kbService = {
       const res = await apiClient.post('/kb/sync', null, { params });
       return res.data; // { jobId, status, createdAt, deduplicated?, inline? }
     } catch (error) {
-      throw {
-        message: 'Failed to start KB sync',
-        details: error.message,
-      };
+      throw new Error('Unable to start knowledge base sync. Please try again.');
     }
   },
 
@@ -163,10 +150,7 @@ export const kbService = {
       const res = await apiClient.get('/kb/stats');
       return res.data; // { total_documents, total_size, categories, synced_count, unsynced_count, ... }
     } catch (error) {
-      throw {
-        message: 'Failed to fetch KB stats',
-        details: error.message,
-      };
+      throw new Error('Unable to load knowledge base statistics. Please try again.');
     }
   },
 
@@ -180,10 +164,7 @@ export const kbService = {
       });
       return res.data; // { is_duplicate, existing_document, message }
     } catch (error) {
-      throw {
-        message: 'Failed to check for duplicates',
-        details: error.message,
-      };
+      throw new Error('Unable to check for duplicates. Please try again.');
     }
   },
 
@@ -195,10 +176,7 @@ export const kbService = {
       const res = await apiClient.get('/kb/sanity-check');
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to run sanity check',
-        details: error.message,
-      };
+      throw new Error('Unable to run the verification check. Please try again.');
     }
   },
 
@@ -210,10 +188,7 @@ export const kbService = {
       const res = await apiClient.post(`/kb/documents/${kbDocId}/unsync`);
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to unsync KB document',
-        details: error.message,
-      };
+      throw new Error('Unable to unsync the document. Please try again.');
     }
   },
 
@@ -225,10 +200,7 @@ export const kbService = {
       const res = await apiClient.post(`/kb/documents/${kbDocId}/resync`);
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to resync KB document',
-        details: error.message,
-      };
+      throw new Error('Unable to resync the document. Please try again.');
     }
   },
 
@@ -242,10 +214,7 @@ export const kbService = {
       });
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to bulk delete KB documents',
-        details: error.message,
-      };
+      throw new Error('Unable to delete the selected documents. Please try again.');
     }
   },
 
@@ -257,10 +226,7 @@ export const kbService = {
       const res = await apiClient.put(`/kb/documents/${kbDocId}`, updates);
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to update KB metadata',
-        details: error.message,
-      };
+      throw new Error('Unable to update the document. Please try again.');
     }
   },
 
@@ -272,10 +238,7 @@ export const kbService = {
       const res = await apiClient.post(`/kb/documents/${kbDocId}/replace`, payload);
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to replace KB file',
-        details: error.message,
-      };
+      throw new Error('Unable to replace the document file. Please try again.');
     }
   },
 
@@ -289,10 +252,7 @@ export const kbService = {
       });
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to fetch KB change history',
-        details: error.message,
-      };
+      throw new Error('Unable to load document history. Please try again.');
     }
   },
 
@@ -306,10 +266,7 @@ export const kbService = {
       const res = await apiClient.get('/kb/ingestions', { params });
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to fetch KB ingestion jobs',
-        details: error.message,
-      };
+      throw new Error('Unable to load sync details. Please try again.');
     }
   },
 
@@ -322,10 +279,7 @@ export const kbService = {
       const res = await apiClient.post('/kb/reconcile');
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to reconcile KB documents',
-        details: error.message,
-      };
+      throw new Error('Unable to reconcile documents. Please try again.');
     }
   },
 };

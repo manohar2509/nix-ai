@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Upload } from 'lucide-react';
+import { useAppStore } from '../stores/useAppStore';
 import { cn } from '../utils/cn';
 
 export default function EditorWindow({ hasAnalyzed, currentDocument }) {
   const [documentContent, setDocumentContent] = useState(null);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const setShowUploadDialog = useAppStore((state) => state.setShowUploadDialog);
+
+  // Map internal status to user-friendly labels
+  const statusLabel = (s) => {
+    const map = {
+      'analyzed': 'Analyzed',
+      'error': 'Needs Attention',
+      'analyzing': 'Analyzing',
+      'uploaded': 'Ready for Analysis',
+      'pending': 'Processing',
+    };
+    return map[s] || 'Ready';
+  };
 
   // Load document content when a document is selected
   useEffect(() => {
@@ -36,9 +50,16 @@ export default function EditorWindow({ hasAnalyzed, currentDocument }) {
           <Upload size={32} className="text-slate-300" />
         </div>
         <h3 className="text-slate-700 font-semibold mb-1">No Protocol Selected</h3>
-        <p className="text-slate-400 text-sm max-w-[260px] text-center leading-relaxed">
+        <p className="text-slate-400 text-sm max-w-[260px] text-center leading-relaxed mb-4">
           Upload a clinical trial protocol or select an existing one from the sidebar to begin regulatory analysis.
         </p>
+        <button
+          onClick={() => setShowUploadDialog(true)}
+          className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-brand-600 to-brand-500 rounded-lg hover:from-brand-500 hover:to-brand-400 shadow-md shadow-brand-600/20 hover:shadow-lg transition-all"
+        >
+          <Upload size={15} />
+          Upload Protocol
+        </button>
       </div>
     );
   }
@@ -73,7 +94,7 @@ export default function EditorWindow({ hasAnalyzed, currentDocument }) {
                 <span className="text-red-600 text-sm font-bold">!</span>
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-red-800">Analysis failed</p>
+                <p className="text-sm font-semibold text-red-800">Analysis could not be completed</p>
                 <p className="text-xs text-red-600">Click <strong>Re-run Analysis</strong> in the top bar to try again.</p>
               </div>
             </div>
@@ -88,7 +109,7 @@ export default function EditorWindow({ hasAnalyzed, currentDocument }) {
                   </h1>
                 </div>
                 <div className="text-right font-mono text-[11px] text-slate-500 space-y-1 shrink-0">
-                  <div>Status: <span className={cn('font-semibold', statusColor)}>{currentDocument.status}</span></div>
+                  <div>Status: <span className={cn('font-semibold', statusColor)}>{statusLabel(currentDocument.status)}</span></div>
                   <div>Size: <span className="text-slate-700">{currentDocument.size ? `${(currentDocument.size / 1024).toFixed(0)} KB` : '—'}</span></div>
                 </div>
               </div>
@@ -111,11 +132,11 @@ export default function EditorWindow({ hasAnalyzed, currentDocument }) {
         </div>
         <h3 className="text-lg font-semibold text-slate-800 mb-1">{currentDocument.name}</h3>
         <p className="text-sm text-slate-400 mb-4">
-          {currentDocument.size ? `${(currentDocument.size / 1024).toFixed(0)} KB` : '—'} &middot; Status: <span className={cn('font-medium', statusColor)}>{currentDocument.status}</span>
+          {currentDocument.size ? `${(currentDocument.size / 1024).toFixed(0)} KB` : '—'} &middot; Status: <span className={cn('font-medium', statusColor)}>{statusLabel(currentDocument.status)}</span>
         </p>
         {currentDocument.status === 'error' && (
           <div className="bg-red-50 border border-red-200 rounded-md px-4 py-3 text-sm text-red-700 mb-4">
-            <p className="font-medium mb-1">Analysis failed</p>
+            <p className="font-medium mb-1">Analysis could not be completed</p>
             <p className="text-red-600 text-xs">Click <strong>Retry Analysis</strong> in the top bar to try again.</p>
           </div>
         )}

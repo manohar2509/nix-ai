@@ -10,6 +10,7 @@
 import { useState, useEffect } from 'react';
 import { useAppStore, useRegulatory, useAnalysis } from '../stores/useAppStore';
 import { getPayerGaps } from '../services/regulatoryService';
+import GuidelineRefBadge from './GuidelineRefBadge';
 import { cn } from '../utils/cn';
 
 const HTA_LABELS = {
@@ -81,6 +82,7 @@ export default function PayerGapPanel({ docId }) {
   const [loading, setLoading] = useState(false);
   const [expandedGap, setExpandedGap] = useState(null);
   const [expandedHTA, setExpandedHTA] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (lastAnalysis?.payer_gaps?.length) {
@@ -94,12 +96,14 @@ export default function PayerGapPanel({ docId }) {
   const loadPayerData = async () => {
     if (!docId) return;
     setLoading(true);
+    setError(null);
     try {
       const data = await getPayerGaps(docId);
       store.setPayerGaps(data.payer_gaps || []);
       store.setHtaBodyScores(data.hta_body_scores || {});
     } catch (err) {
       console.error('Failed to load payer data:', err);
+      setError(err?.response?.data?.detail || err.message || 'Failed to load payer data');
     } finally {
       setLoading(false);
     }
@@ -110,6 +114,17 @@ export default function PayerGapPanel({ docId }) {
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin rounded-full h-5 w-5 border-2 border-brand-500 border-t-transparent" />
         <span className="ml-2 text-sm text-slate-500">Loading HTA body & payer readiness analysis...</span>
+      </div>
+    );
+  }
+
+  if (error && Object.keys(htaBodyScores).length === 0 && !payerGaps.length) {
+    return (
+      <div className="text-center py-6">
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600">
+          ⚠️ {error}
+        </div>
+        <p className="text-sm text-slate-500 mt-2">Unable to load HTA & payer data. Please try again.</p>
       </div>
     );
   }
@@ -249,7 +264,7 @@ export default function PayerGapPanel({ docId }) {
                 <p className="text-xs mt-1 opacity-80">{gap.gap_description}</p>
 
                 {/* Expand hint */}
-                {!expandedGap !== i && (gap.recommendation || gap.impact_on_reimbursement) && expandedGap !== i && (
+                {expandedGap !== i && (gap.recommendation || gap.impact_on_reimbursement) && (
                   <div className="text-[10px] text-brand-600 mt-1 font-semibold">Click for recommendation →</div>
                 )}
 
@@ -265,6 +280,13 @@ export default function PayerGapPanel({ docId }) {
                       <div className="p-2 rounded-lg bg-amber-50 border border-amber-100">
                         <div className="text-[10px] text-amber-600 font-semibold mb-0.5">💰 Reimbursement Impact</div>
                         <div className="text-xs text-slate-700 leading-relaxed">{gap.impact_on_reimbursement}</div>
+                      </div>
+                    )}
+                    {/* Guideline citations for traceability */}
+                    {gap.guideline_refs?.length > 0 && (
+                      <div>
+                        <div className="text-[10px] text-slate-500 font-semibold mb-0.5">📋 Regulatory Basis</div>
+                        <GuidelineRefBadge refs={gap.guideline_refs} />
                       </div>
                     )}
                   </div>

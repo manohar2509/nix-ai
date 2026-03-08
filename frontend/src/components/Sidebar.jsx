@@ -18,24 +18,40 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
   const showToast = useAppStore((state) => state.showToast);
   const [showDocList, setShowDocList] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const removeDocument = useAppStore((state) => state.removeDocument);
   const syncInFlightRef = useRef(false);
 
   const handleDeleteDocument = async (e, docId) => {
     e.stopPropagation();
+    // Ignore clicks while a delete is already in flight
+    if (deletingId) return;
     if (confirmDeleteId === docId) {
+      setDeletingId(docId);
       try {
-        await documentService.deleteDocument(docId);
-        removeDocument(docId);  // Optimistic local removal
-        // Also refresh from backend to ensure consistency
-        try {
-          const docs = await documentService.listDocuments();
-          useAppStore.getState().setDocuments(docs);
-        } catch { /* optimistic removal already handled */ }
-        showToast({ type: 'success', title: 'Protocol removed', message: 'The protocol has been deleted from your workspace.' });
+        // 1. Optimistically remove from UI FIRST for instant feedback
+        removeDocument(docId);
         setConfirmDeleteId(null);
+        // 2. Fire backend delete (already removed from UI, so user sees instant deletion)
+        await documentService.deleteDocument(docId);
+        showToast({ type: 'success', title: 'Protocol removed', message: 'The protocol has been deleted from your workspace.' });
       } catch (err) {
-        showToast({ type: 'error', title: 'Delete failed', message: err.message || 'Could not remove the protocol.' });
+        // Backend failed — re-fetch to restore the document
+        try {
+          const freshDocs = await documentService.listDocuments();
+          const store = useAppStore.getState();
+          // Remove the doc ID from the recently-deleted guard so re-fetch restores it
+          store.setState({
+            _recentlyDeletedIds: (store._recentlyDeletedIds || []).filter((id) => id !== docId),
+          });
+          store.setDocuments(freshDocs);
+          if (!store.currentDocument && freshDocs.length > 0) {
+            store.setCurrentDocument(freshDocs[0]);
+          }
+        } catch { /* ignore re-fetch failure */ }
+        showToast({ type: 'error', title: 'Unable to delete', message: 'Could not remove the protocol. Please try again.' });
+      } finally {
+        setDeletingId(null);
       }
     } else {
       setConfirmDeleteId(docId);
@@ -65,22 +81,22 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
 
       // ── Case 1: Deduplicated — an active job already exists ──
       if (response.deduplicated) {
-        showToast({ type: 'info', title: 'KB Sync already running', message: `Job ${response.jobId} is already in progress` });
+        showToast({ type: 'info', title: 'Sync already running', message: 'A knowledge base sync is already in progress. Please wait for it to complete.' });
         return;
       }
 
       // ── Case 2: Inline execution (local dev — already finished) ──
       if (response.inline) {
         if (response.status === 'COMPLETE') {
-          showToast({ type: 'success', title: 'KB Sync complete', message: 'Knowledge base re-indexed successfully' });
+          showToast({ type: 'success', title: 'Sync complete', message: 'Knowledge base updated successfully.' });
         } else if (response.status === 'FAILED') {
-          showToast({ type: 'error', title: 'KB Sync failed', message: response.error || 'Check backend logs' });
+          showToast({ type: 'error', title: 'Sync unsuccessful', message: 'The knowledge base sync could not be completed. Please try again later.' });
         }
         return;
       }
 
       // ── Case 3: SQS-queued (production) — poll with backoff ──
-      showToast({ type: 'success', title: 'KB Sync started', message: `Job ${response.jobId} queued` });
+      showToast({ type: 'success', title: 'Sync started', message: 'Knowledge base sync is being processed...' });
       const { jobService } = await import('../services/jobService');
       const delays = [2000, 3000, 5000, 5000, 8000, 8000, 10000, 10000]; // ~51s total
       let status = response.status || 'QUEUED';
@@ -92,14 +108,14 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
       }
 
       if (status === 'COMPLETE') {
-        showToast({ type: 'success', title: 'KB Sync complete', message: 'Knowledge base updated' });
+        showToast({ type: 'success', title: 'Sync complete', message: 'Knowledge base updated successfully.' });
       } else if (status === 'FAILED') {
-        showToast({ type: 'error', title: 'KB Sync failed', message: 'Check logs for details' });
+        showToast({ type: 'error', title: 'Sync unsuccessful', message: 'The knowledge base sync could not be completed. Please try again later.' });
       } else {
-        showToast({ type: 'info', title: 'KB Sync still processing', message: 'Running in the background. Check Job Monitor for updates.' });
+        showToast({ type: 'info', title: 'Sync in progress', message: 'The sync is still processing. You can check the status in the Job Monitor.' });
       }
     } catch (err) {
-      showToast({ type: 'error', title: 'KB Sync failed', message: err.message });
+      showToast({ type: 'error', title: 'Sync unsuccessful', message: 'Something went wrong while syncing the knowledge base. Please try again.' });
     } finally {
       setIsKbSyncing(false);
       syncInFlightRef.current = false;
@@ -112,7 +128,7 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
   const orgName = user?.organization || '';
 
   return (
-    <aside className="w-20 lg:w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 relative">
+    <aside data-tour="sidebar" className="w-20 lg:w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 relative">
       {/* Top gradient accent */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-400/60 to-transparent" />
 
@@ -135,17 +151,25 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        {/* ── Workflow Section ── */}
         <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2 hidden lg:block">
-          Workspace
+          Workflow
         </div>
-        <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" active={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')} tooltip="Overview of all your clinical trial protocols, scores, and recent activity" />
-        <NavItem icon={<FileText size={18} />} label="Protocol Review" active={activeView === 'protocol'} onClick={() => setActiveView('protocol')} tooltip="View and analyze your uploaded clinical trial protocol" />
-        <NavItem icon={<GitCompare size={18} />} label="Compare Protocols" active={activeView === 'comparison'} onClick={() => setActiveView('comparison')} tooltip="Side-by-side comparison of multiple protocol designs" />
-        <NavItem icon={<History size={18} />} label="Analysis History" active={activeView === 'history'} onClick={() => { setActiveView('history'); }} tooltip="Browse past regulatory and payer analyses" />
+        <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" badge="Home" active={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')} tooltip="Overview of all your clinical trial protocols, scores, and recent activity" dataTour="dashboard-nav" />
+        <NavItem icon={<FileText size={18} />} label="Protocol Review" badge="Core" active={activeView === 'protocol'} onClick={() => setActiveView('protocol')} tooltip="Upload → Analyze → View findings, scores, and AI insights for your protocol" dataTour="protocol-nav" />
+        <NavItem icon={<GitCompare size={18} />} label="Compare Protocols" active={activeView === 'comparison'} onClick={() => setActiveView('comparison')} tooltip="Side-by-side comparison of multiple protocol designs" dataTour="compare-nav" />
+
+        {/* ── Reports Section ── */}
+        <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-3 mt-4 mb-2 hidden lg:block">
+          Reports
+        </div>
+        <NavItem icon={<History size={18} />} label="Analysis History" active={activeView === 'history'} onClick={() => { setActiveView('history'); }} tooltip="Browse past regulatory and payer analyses" dataTour="history-nav" />
+        <NavItem icon={<Briefcase size={18} />} label="Deal Room" active={activeView === 'dealroom'} onClick={() => setActiveView('dealroom')} tooltip="Investor-ready report with portfolio risk analysis and regulatory scorecard" dataTour="dealroom-nav" />
 
         {/* Upload Button */}
         <button
           onClick={onUpload}
+          data-tour="upload-btn"
           className="flex items-center gap-3 w-full p-2.5 rounded-lg transition-all duration-200 bg-brand-500/15 hover:bg-brand-500/25 text-brand-300 group mt-3 border border-brand-500/20"
         >
           <Upload size={18} className="shrink-0" />
@@ -160,7 +184,10 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
               className="flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider hover:text-slate-200 transition-colors"
             >
               <FolderOpen size={13} />
-              <span className="hidden lg:block">Documents ({documents.length})</span>
+              <span className="hidden lg:block flex-1 text-left">My Protocols ({documents.length})</span>
+              <svg className={cn('w-3 h-3 transition-transform hidden lg:block', showDocList ? 'rotate-180' : '')} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
             {showDocList && (
               <div className="space-y-0.5 mt-1 max-h-60 overflow-y-auto pr-0.5">
@@ -168,26 +195,40 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
                   <button
                     key={doc.id}
                     onClick={() => {
+                      if (deletingId === doc.id) return;
                       onSelectDocument(doc);
                     }}
                     className={cn(
                       'flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-xs transition-all truncate group',
-                      currentDocument?.id === doc.id
-                        ? 'bg-brand-500/20 text-brand-200 ring-1 ring-brand-500/30'
-                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                      deletingId === doc.id
+                        ? 'opacity-40 pointer-events-none'
+                        : currentDocument?.id === doc.id
+                          ? 'bg-brand-500/20 text-brand-200 ring-1 ring-brand-500/30'
+                          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                     )}
                   >
                     <FileText size={13} className="shrink-0" />
                     <span className="truncate hidden lg:block flex-1 text-left">{doc.name}</span>
-                    {/* Status indicator */}
+                    {/* Status indicator with label */}
                     {doc.status === 'error' && (
-                      <span className="shrink-0 h-2 w-2 rounded-full bg-red-500" title="Analysis failed" />
+                      <span className="shrink-0 hidden lg:inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400" title="Analysis failed">
+                        Failed
+                      </span>
                     )}
                     {doc.status === 'analyzed' && (
-                      <span className="shrink-0 h-2 w-2 rounded-full bg-green-500" title="Analysis complete" />
+                      <span className="shrink-0 hidden lg:inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400" title="Analysis complete">
+                        Reviewed
+                      </span>
                     )}
                     {doc.status === 'analyzing' && (
-                      <span className="shrink-0 h-2 w-2 rounded-full bg-amber-400 animate-pulse" title="Analysis in progress..." />
+                      <span className="shrink-0 hidden lg:inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 animate-pulse" title="Analysis in progress">
+                        Running
+                      </span>
+                    )}
+                    {(!doc.status || doc.status === 'uploaded') && (
+                      <span className="shrink-0 hidden lg:inline-block text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-700/40 text-slate-500" title="Pending review">
+                        Pending
+                      </span>
                     )}
                     {/* Delete button */}
                     <button
@@ -241,7 +282,7 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
         )}
 
         <div className="pt-3 mt-3 border-t border-slate-800/60">
-          <NavItem icon={<Settings size={20} />} label="Settings" active={activeView === 'settings'} onClick={() => setActiveView('settings')} tooltip="Configure analysis preferences, thresholds, and display options" />
+          <NavItem icon={<Settings size={20} />} label="Settings" active={activeView === 'settings'} onClick={() => setActiveView('settings')} tooltip="Configure analysis preferences, thresholds, and display options" dataTour="settings-nav" />
         </div>
       </nav>
 
@@ -285,11 +326,12 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
   );
 }
 
-function NavItem({ icon, label, active, adminItem, onClick, tooltip }) {
+function NavItem({ icon, label, active, adminItem, onClick, tooltip, badge, dataTour }) {
   return (
     <button
       onClick={onClick}
       title={tooltip}
+      data-tour={dataTour}
       className={cn(
         'flex items-center gap-3 w-full p-2.5 rounded-lg transition-all duration-200 group relative',
         active
@@ -309,7 +351,15 @@ function NavItem({ icon, label, active, adminItem, onClick, tooltip }) {
       )}>
         {icon}
       </span>
-      <span className="font-medium text-sm hidden lg:block">{label}</span>
+      <span className="font-medium text-sm hidden lg:block flex-1 text-left">{label}</span>
+      {badge && (
+        <span className={cn(
+          'text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden lg:inline-block',
+          active ? 'bg-brand-400/20 text-brand-300' : 'bg-slate-700/50 text-slate-500'
+        )}>
+          {badge}
+        </span>
+      )}
       {active && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-brand-400 rounded-r-full hidden lg:block" />
       )}

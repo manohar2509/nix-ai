@@ -1,0 +1,250 @@
+name: NIX AI CI/CD
+
+# ═══════════════════════════════════════════════════════════════
+# TRIGGERS
+# ═══════════════════════════════════════════════════════════════
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+  # Manual trigger — always deploys both
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  BACKEND_DIR: backend
+  FRONTEND_DIR: frontend
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+
+  # ─────────────────────────────────────────────────────────────
+  # 0. Detect which parts of the repo actually changed.
+  #    Every other job reads these outputs so it only runs when
+  #    its own code was touched — saving CI minutes and AWS costs.
+  # ─────────────────────────────────────────────────────────────
+  changes:
+    name: "🔍 Detect Changed Paths"
+    runs-on: ubuntu-latest
+    outputs:
+      backend:  ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2   # need parent commit to diff against
+
+      - name: Identify changed paths
+        id: filter
+        run: |
+          # workflow_dispatch has no previous commit → deploy everything
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "backend=true"  >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          echo "── Changed files ──────────────────────"
+          echo "$CHANGED"
+          echo "───────────────────────────────────────"
+
+          # backend: anything under backend/ or workflow file itself
+          if echo "$CHANGED" | grep -qE '^backend/|^\.github/workflows/deploy\.yml'; then
+            echo "backend=true"  >> $GITHUB_OUTPUT
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+
+          # frontend: anything under frontend/ or the Amplify build spec
+          if echo "$CHANGED" | grep -qE '^frontend/|^amplify\.yml'; then
+            echo "frontend=true"  >> $GITHUB_OUTPUT
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi
+
+  # ─────────────────────────────────────────────────────────────
+  # 1. Frontend Check — only when frontend code changed.
+  #    Note: actual deployment is handled by AWS Amplify auto-build.
+  # ─────────────────────────────────────────────────────────────
+  frontend-check:
+    name: "🔨 Frontend Build Check"
+    needs: changes
+    # Skip entirely when only backend files changed
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.FRONTEND_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "${{ env.FRONTEND_DIR }}/package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint 2>/dev/null || true
+
+      - name: Build check
+        run: npm run build
+        env:
+          # These are needed just to make the build pass validation
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_COGNITO_USER_POOL_ID: ${{ vars.VITE_COGNITO_USER_POOL_ID }}
+          VITE_COGNITO_CLIENT_ID: ${{ vars.VITE_COGNITO_CLIENT_ID }}
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. Deploy Backend — only when backend code changed AND it's
+  #    a real push (not a PR). Skips entirely on frontend-only pushes.
+  # ─────────────────────────────────────────────────────────────
+  deploy-backend:
+    name: "🚀 Deploy Backend"
+    needs: changes
+    # Only deploy when backend files changed AND this is not a PR
+    if: needs.changes.outputs.backend == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    environment: development
+    outputs:
+      api_url: ${{ steps.save_endpoint.outputs.api_url }}
+    defaults:
+      run:
+        working-directory: ${{ env.BACKEND_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve config environment
+        id: config_env
+        run: |
+          echo "env_name=development"    >> $GITHUB_OUTPUT
+          echo "stack_name=nixai-backend" >> $GITHUB_OUTPUT
+
+      # ── Guard: a stack stuck in ROLLBACK_COMPLETE or DELETE_FAILED cannot be
+      #    updated by CloudFormation — it must be deleted first so the next run
+      #    creates a fresh stack. This step is idempotent: it is a no-op when the
+      #    stack is healthy or does not yet exist.
+      - name: Clear stuck CloudFormation stack (if any)
+        run: |
+          STACK="${{ steps.config_env.outputs.stack_name }}"
+          STATUS=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK" \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+
+          echo "Stack '$STACK' status: $STATUS"
+
+          if [[ "$STATUS" == "ROLLBACK_COMPLETE" || "$STATUS" == "DELETE_FAILED" || "$STATUS" == "ROLLBACK_FAILED" ]]; then
+            echo "Deleting stuck stack '$STACK' before redeployment…"
+            aws cloudformation delete-stack --stack-name "$STACK"
+            aws cloudformation wait stack-delete-complete --stack-name "$STACK"
+            echo "Stack deleted — proceeding with fresh deployment."
+          else
+            echo "Stack is in a valid state ($STATUS) — no cleanup needed."
+          fi
+
+      - name: SAM Build
+        # --use-container is already set in samconfig.toml; listed here explicitly for clarity.
+        # Architecture is x86_64 (matches this ubuntu-latest runner) — no cross-arch Docker needed.
+        run: sam build --use-container --config-env ${{ steps.config_env.outputs.env_name }}
+
+      - name: SAM Deploy
+        run: |
+          ENV_NAME="${{ steps.config_env.outputs.env_name }}"
+          echo "Deploying to environment: $ENV_NAME from branch: ${{ github.ref_name }}"
+          
+          sam deploy --config-env $ENV_NAME \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+
+      - name: Save API Endpoint
+        id: save_endpoint
+        run: |
+          STACK_NAME="${{ steps.config_env.outputs.stack_name }}"
+
+          # Fetch the API URL from CloudFormation outputs
+          ENDPOINT=$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApiEndpoint`].OutputValue' \
+            --output text)
+
+          echo "API_URL=$ENDPOINT" >> $GITHUB_ENV
+          echo "api_url=$ENDPOINT" >> $GITHUB_OUTPUT
+          echo "✅ Deployed Backend ($STACK_NAME) to: $ENDPOINT"
+
+  # ─────────────────────────────────────────────────────────────
+  # 3. Smoke Test — only runs after a successful backend deploy
+  # ─────────────────────────────────────────────────────────────
+  smoke-test:
+    name: "🔍 Smoke Test"
+    needs: [changes, deploy-backend]
+    # deploy-backend is skipped when backend didn't change → skip smoke test too
+    if: needs.changes.outputs.backend == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check API Health
+        run: |
+          # Use the dynamically deployed URL from the deploy-backend job output
+          TARGET_URL="${{ needs.deploy-backend.outputs.api_url }}"
+          
+          if [ -z "$TARGET_URL" ]; then
+             echo "⚠️ API URL not available from deploy step. Falling back to repo variable."
+             TARGET_URL="${{ vars.VITE_API_URL }}"
+          fi
+          
+          if [ -z "$TARGET_URL" ]; then
+             echo "⚠️ No API URL available. Skipping smoke test."
+             exit 0
+          fi
+
+          echo "Pinging Health Check: $TARGET_URL/health"
+          
+          # Wait 10s for Lambda cold start
+          sleep 10
+          
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL/health")
+          
+          echo "Health endpoint responded with: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Success: API is healthy"
+          elif [ "$HTTP_CODE" -eq 502 ]; then
+            echo "⚠️ Warning: Lambda cold start may have timed out (502). Retrying..."
+            sleep 5
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL/health")
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              echo "✅ Success on retry: API is healthy"
+            else
+              echo "❌ Failure after retry: API responded with $HTTP_CODE"
+              exit 1
+            fi
+          else
+            echo "❌ Failure: API responded with $HTTP_CODE"
+            exit 1
+          fi

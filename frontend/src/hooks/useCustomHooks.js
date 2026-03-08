@@ -17,16 +17,37 @@ export function useJobPolling(jobId, onComplete, onFailed, interval = 2000) {
   const moveJobToFailed = useAppStore((state) => state.moveJobToFailed);
   const intervalRef = useRef(null);
   const isPollingRef = useRef(false);
+  const attemptRef = useRef(0);
+  const consecutiveErrorsRef = useRef(0);
+
+  // Max polling attempts — prevents infinite polling if a job gets stuck.
+  // 90 attempts × 2s interval = 3 minutes before giving up.
+  const MAX_ATTEMPTS = 90;
+  const MAX_CONSECUTIVE_ERRORS = 5;
 
   const startPolling = useCallback(async () => {
     if (isPollingRef.current) return;
     isPollingRef.current = true;
+    attemptRef.current = 0;
+    consecutiveErrorsRef.current = 0;
 
     const { jobService } = await import('../services/jobService');
 
     const poll = async () => {
+      attemptRef.current += 1;
+
+      // Safety cap: stop polling after MAX_ATTEMPTS
+      if (attemptRef.current > MAX_ATTEMPTS) {
+        isPollingRef.current = false;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        moveJobToFailed(jobId, 'Job timed out — the operation took too long. Please try again.');
+        onFailed?.({ status: 'FAILED', error: 'Polling timeout' });
+        return;
+      }
+
       try {
         const status = await jobService.getJobStatus(jobId);
+        consecutiveErrorsRef.current = 0; // Reset on success
 
         if (status.status === 'COMPLETE') {
           isPollingRef.current = false;
@@ -37,6 +58,12 @@ export function useJobPolling(jobId, onComplete, onFailed, interval = 2000) {
           isPollingRef.current = false;
           moveJobToFailed(jobId, status.error);
           onFailed?.(status);
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        } else if (status.status === 'NOT_FOUND') {
+          // Job doesn't exist — treat as terminal failure
+          isPollingRef.current = false;
+          moveJobToFailed(jobId, 'Job not found. It may have expired or been removed.');
+          onFailed?.({ status: 'FAILED', error: 'Job not found' });
           if (intervalRef.current) clearInterval(intervalRef.current);
         } else {
           // Update progress
@@ -49,14 +76,25 @@ export function useJobPolling(jobId, onComplete, onFailed, interval = 2000) {
         }
       } catch (error) {
         console.error('Job polling error:', error);
+        consecutiveErrorsRef.current += 1;
+
+        // Stop polling after too many consecutive network errors
+        if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+          isPollingRef.current = false;
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          moveJobToFailed(jobId, 'Lost connection while checking job status. Please refresh and try again.');
+          onFailed?.({ status: 'FAILED', error: 'Consecutive polling errors' });
+        }
       }
     };
 
     // Initial poll
     await poll();
 
-    // Set up interval
-    intervalRef.current = setInterval(poll, interval);
+    // Set up interval (only if still polling after initial poll)
+    if (isPollingRef.current) {
+      intervalRef.current = setInterval(poll, interval);
+    }
   }, [jobId, updateActiveJob, moveJobToCompleted, moveJobToFailed, onComplete, onFailed, interval]);
 
   const stopPolling = useCallback(() => {
@@ -87,21 +125,40 @@ export function useDocumentUpload() {
     const { documentService } = await import('../services/documentService');
 
     try {
-      if (!file.type.includes('pdf')) {
-        throw new Error('Only PDF files are supported');
+      // Validate file type — must match UploadDialog accepted formats
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      const validExts = ['pdf', 'txt', 'csv', 'json', 'docx', 'doc'];
+      const validTypes = [
+        'application/pdf', 'text/plain', 'text/csv', 'application/json',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+      ];
+      if (!validTypes.includes(file.type) && !validExts.includes(ext)) {
+        throw new Error('Unsupported file type. Accepted: PDF, TXT, CSV, JSON, DOCX');
       }
       if (file.size > 50 * 1024 * 1024) {
         throw new Error('File size must be less than 50MB');
       }
 
+      // Resolve content type (some browsers return empty file.type)
+      const EXTENSION_TO_MIME = {
+        pdf: 'application/pdf', txt: 'text/plain', csv: 'text/csv',
+        json: 'application/json',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        doc: 'application/msword',
+      };
+      const contentType = (file.type && file.type !== 'application/octet-stream')
+        ? file.type
+        : (EXTENSION_TO_MIME[ext] || 'application/octet-stream');
+
       // Get presigned URL
       const { url, key } = await documentService.getPresignedUrl(
         file.name,
-        file.type
+        contentType
       );
 
       // Upload to S3
-      await documentService.uploadToS3(file, url);
+      await documentService.uploadToS3(file, url, undefined, contentType);
 
       // Register document
       const doc = await documentService.registerDocument(
@@ -124,12 +181,12 @@ export function useDocumentUpload() {
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Upload failed',
-        message: error.message,
+        title: 'Upload unsuccessful',
+        message: 'Something went wrong during the upload. Please try again.',
       });
       throw error;
     }
-  }, [addDocument, setCurrentDocument, showToast]);
+  }, [showToast, addDocument, setCurrentDocument]);
 
   return { uploadDocument };
 }
@@ -155,7 +212,7 @@ export function useAnalysisFlow(docId) {
 
       // ── Case: Inline execution (local dev — already finished) ──
       if (response.inline) {
-        if (response.status === 'FAILED') throw new Error(response.error || 'Analysis failed');
+        if (response.status === 'FAILED') throw new Error('The analysis could not be completed. Please try again.');
         const results = await analysisService.getAnalysisResults(docId);
         setLastAnalysis(results);
         showToast({ type: 'success', title: 'Analysis complete', message: 'Conflict detection finished' });
@@ -173,7 +230,7 @@ export function useAnalysisFlow(docId) {
       }
 
       if (status === 'FAILED') {
-        throw new Error('Analysis failed');
+        throw new Error('The analysis could not be completed. Please try again.');
       }
       if (status !== 'COMPLETE') {
         showToast({ type: 'info', title: 'Analysis still processing', message: 'Running in the background. Check back shortly.' });
@@ -194,8 +251,8 @@ export function useAnalysisFlow(docId) {
     } catch (error) {
       showToast({
         type: 'error',
-        title: 'Analysis failed',
-        message: error.message,
+        title: 'Analysis unsuccessful',
+        message: 'The analysis could not be completed. Please try again.',
       });
       throw error;
     } finally {
@@ -247,11 +304,11 @@ export function useChatMessaging(docId) {
 
         return aiMessage;
       } catch (error) {
-        setChatError(error.message);
+        setChatError('Unable to send your message. Please try again.');
         showToast({
           type: 'error',
-          title: 'Message failed',
-          message: error.message,
+          title: 'Unable to send',
+          message: 'Something went wrong. Please try sending your message again.',
         });
         throw error;
       } finally {
@@ -269,7 +326,7 @@ export function useChatMessaging(docId) {
  * Persist and hydrate state from localStorage
  */
 export function useLocalStorage(key, initialValue) {
-  const getStoredValue = useCallback(() => {
+  const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
@@ -277,32 +334,41 @@ export function useLocalStorage(key, initialValue) {
       console.error('Error reading from localStorage:', error);
       return initialValue;
     }
-  }, [key, initialValue]);
+  });
 
   const setValue = useCallback(
     (value) => {
       try {
         const valueToStore =
-          value instanceof Function ? value(getStoredValue()) : value;
+          value instanceof Function ? value(storedValue) : value;
+        setStoredValue(valueToStore);
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       } catch (error) {
         console.error('Error writing to localStorage:', error);
       }
     },
-    [key, getStoredValue]
+    [key, storedValue]
   );
 
-  return [getStoredValue(), setValue];
+  return [storedValue, setValue];
 }
 
 /**
  * Hook: useAsync
- * Handle async operations with loading/error states
+ * Handle async operations with loading/error states.
+ * Uses a ref for the async function to avoid infinite loops when
+ * callers pass inline arrow functions.
  */
 export function useAsync(asyncFunction, immediate = true) {
   const [status, setStatus] = useState('idle');
   const [value, setValue] = useState(null);
   const [error, setError] = useState(null);
+  const asyncFnRef = useRef(asyncFunction);
+
+  // Keep the ref up to date without triggering re-renders
+  useEffect(() => {
+    asyncFnRef.current = asyncFunction;
+  }, [asyncFunction]);
 
   const execute = useCallback(async () => {
     setStatus('pending');
@@ -310,16 +376,16 @@ export function useAsync(asyncFunction, immediate = true) {
     setError(null);
 
     try {
-      const response = await asyncFunction();
+      const response = await asyncFnRef.current();
       setValue(response);
       setStatus('success');
       return response;
-    } catch (error) {
-      setError(error);
+    } catch (err) {
+      setError(err);
       setStatus('error');
-      throw error;
+      throw err;
     }
-  }, [asyncFunction]);
+  }, []);
 
   useEffect(() => {
     if (immediate) {
@@ -379,4 +445,152 @@ export function usePrevious(value) {
   }, [value]);
 
   return ref.current;
+}
+
+
+/**
+ * Hook: useStrategicCache
+ *
+ * Loads ALL cached strategic intelligence results for the current document
+ * on mount (and when docId changes).  This means:
+ *   - Page reloads restore previously generated AI panels
+ *   - Switching documents instantly loads their cached results
+ *   - No token waste for results that haven't changed
+ *
+ * The hook populates the Zustand store directly so every component
+ * (CostArchitect, FrictionHeatmap, etc.) sees the data immediately.
+ *
+ * Timestamps are stored in Zustand (strategicTimestamps) so they
+ * survive tab switches — unlike component-local useState which resets.
+  *
+ * Expert Panel Debate (Adversarial Council):
+ *   A completed debate is saved as both a DEBATE entity AND a
+ *   STRATEGIC_CACHE item (council_debate).  On reload, this hook
+ *   restores debateStatus + activeDebateId so the panel shows the
+ *   full transcript instead of the empty "Start Debate" state.
+ */
+export function useStrategicCache(docId) {
+  const [loading, setLoading] = useState(false);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
+  const prevDocIdRef = useRef(null);
+
+  // Subscribe only to the specific setters we need — not the entire store.
+  // This prevents re-renders on every unrelated store mutation.
+  const setFrictionMap = useAppStore((s) => s.setFrictionMap);
+  const setCostAnalysis = useAppStore((s) => s.setCostAnalysis);
+  const setPayerSimulation = useAppStore((s) => s.setPayerSimulation);
+  const setSubmissionStrategy = useAppStore((s) => s.setSubmissionStrategy);
+  const setOptimization = useAppStore((s) => s.setOptimization);
+  const setWatchdogAlerts = useAppStore((s) => s.setWatchdogAlerts);
+  const setInvestorReport = useAppStore((s) => s.setInvestorReport);
+  const setCouncilSession = useAppStore((s) => s.setCouncilSession);
+  const setStrategicTimestamps = useAppStore((s) => s.setStrategicTimestamps);
+  const setDebateStatus = useAppStore((s) => s.setDebateStatus);
+  const setActiveDebateId = useAppStore((s) => s.setActiveDebateId);
+
+  useEffect(() => {
+    if (!docId) return;
+    // If the document changed, reset the loaded flag and re-fetch
+    if (docId !== prevDocIdRef.current) {
+      setCacheLoaded(false);
+      prevDocIdRef.current = docId;
+    } else if (cacheLoaded) {
+      // Same doc, already loaded — skip
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadCache = async () => {
+      setLoading(true);
+      try {
+        const { getCachedResults } = await import('../services/strategicService');
+        const data = await getCachedResults(docId);
+        if (cancelled) return;
+
+        const cached = data?.cached || {};
+        const timestamps = {};
+
+        // Map cached results → Zustand store
+        if (cached.friction_map) {
+          setFrictionMap(cached.friction_map.result);
+          timestamps.friction_map = cached.friction_map.generated_at;
+        }
+        if (cached.cost_analysis) {
+          setCostAnalysis(cached.cost_analysis.result);
+          timestamps.cost_analysis = cached.cost_analysis.generated_at;
+        }
+        if (cached.payer_simulation) {
+          setPayerSimulation(cached.payer_simulation.result);
+          timestamps.payer_simulation = cached.payer_simulation.generated_at;
+        }
+        if (cached.submission_strategy) {
+          setSubmissionStrategy(cached.submission_strategy.result);
+          timestamps.submission_strategy = cached.submission_strategy.generated_at;
+        }
+        if (cached.optimization) {
+          setOptimization(cached.optimization.result);
+          timestamps.optimization = cached.optimization.generated_at;
+        }
+        if (cached.watchdog) {
+          setWatchdogAlerts(cached.watchdog.result);
+          timestamps.watchdog = cached.watchdog.generated_at;
+        }
+        if (cached.investor_report) {
+          setInvestorReport(cached.investor_report.result);
+          timestamps.investor_report = cached.investor_report.generated_at;
+        }
+        if (cached.council) {
+          setCouncilSession(cached.council.result);
+          timestamps.council = cached.council.generated_at;
+        }
+
+        // Restore completed Expert Panel debate transcript on page reload.
+        // council_debate contains the full async debate result (transcript + verdict).
+        // We restore it into debateStatus so the component shows the completed
+        // session instead of the empty "Start Debate" state.
+        if (cached.council_debate) {
+          const debateResult = cached.council_debate.result || {};
+          const debateId = debateResult.debate_id;
+
+          // Build a DebateStatusResponse-shaped object from the cached result
+          const restoredStatus = {
+            status: 'COMPLETED',
+            progress: 100,
+            protocol_name: debateResult.protocol_name || '',
+            scores: debateResult.scores || {},
+            current_round: debateResult.rounds_completed || 0,
+            total_rounds: debateResult.rounds_completed || 0,
+            current_topic: '',
+            transcript: debateResult.transcript || [],
+            final_verdict: debateResult.final_verdict || null,
+            total_turns: debateResult.total_turns || 0,
+            rounds_completed: debateResult.rounds_completed || 0,
+            elapsed_seconds: debateResult.elapsed_seconds || 0,
+            error: null,
+            created_at: cached.council_debate.generated_at,
+            updated_at: cached.council_debate.generated_at,
+            completed_at: cached.council_debate.generated_at,
+          };
+
+          setActiveDebateId(debateId || 'restored');
+          setDebateStatus(restoredStatus);
+          timestamps.council = cached.council_debate.generated_at;
+        }
+
+        // Persist timestamps in Zustand so they survive tab switches
+        setStrategicTimestamps(timestamps);
+        setCacheLoaded(true);
+      } catch (err) {
+        console.error('Failed to load strategic cache:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadCache();
+    return () => { cancelled = true; };
+  }, [docId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { loading, cacheLoaded };
 }

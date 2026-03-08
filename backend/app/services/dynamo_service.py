@@ -21,15 +21,60 @@ import hashlib
 import logging
 import time
 import uuid
+import random
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Optional
 
 from boto3.dynamodb.conditions import Attr, Key
 
 from app.core.aws_clients import get_dynamodb_table
+from app.core.resilience import dynamodb_circuit, CircuitBreakerError
 
 logger = logging.getLogger(__name__)
+
+# DynamoDB retry config for transient failures (throttling, 5xx)
+_MAX_RETRIES = 3
+_BASE_DELAY = 0.2  # seconds
+
+
+def _dynamo_op(operation_name: str, func, *args, **kwargs):
+    """Execute a DynamoDB operation with circuit breaker + retry.
+
+    Wraps all DynamoDB calls to provide:
+    - Circuit breaker: prevents cascading failures when DynamoDB is degraded
+    - Retry with exponential backoff: handles transient throttling/5xx errors
+    """
+    last_exc = None
+    for attempt in range(_MAX_RETRIES):
+        try:
+            dynamodb_circuit.before_call()
+            result = func(*args, **kwargs)
+            dynamodb_circuit.on_success()
+            return result
+        except CircuitBreakerError:
+            logger.error("DynamoDB circuit breaker OPEN — cannot perform %s", operation_name)
+            raise
+        except Exception as exc:
+            dynamodb_circuit.on_failure()
+            last_exc = exc
+            error_code = getattr(exc, "response", {}).get("Error", {}).get("Code", "")
+            # Don't retry validation/client errors
+            if error_code in (
+                "ValidationException", "ConditionalCheckFailedException",
+                "ResourceNotFoundException", "AccessDeniedException",
+            ):
+                raise
+            if attempt < _MAX_RETRIES - 1:
+                delay = _BASE_DELAY * (2 ** attempt) + random.uniform(0, 0.15)
+                logger.warning(
+                    "DynamoDB %s attempt %d/%d failed: %s — retrying in %.2fs",
+                    operation_name, attempt + 1, _MAX_RETRIES, exc, delay,
+                )
+                time.sleep(delay)
+            else:
+                logger.error("DynamoDB %s failed after %d attempts: %s", operation_name, _MAX_RETRIES, exc)
+                raise
 
 
 # ── Helpers ──────────────────────────────────────────────────────
@@ -101,14 +146,16 @@ def create_document(
         "created_at": now,
         "updated_at": now,
     }
-    table.put_item(Item=_prepare_item(item))
+    _dynamo_op("create_document", table.put_item, Item=_prepare_item(item))
     logger.info("Created document %s for user %s", doc_id, user_id)
     return _clean_item(item)
 
 
 def get_document(doc_id: str) -> Optional[dict]:
     table = get_dynamodb_table()
-    resp = table.query(
+    resp = _dynamo_op(
+        "get_document",
+        table.query,
         IndexName="GSI1",
         KeyConditionExpression=Key("GSI1PK").eq(f"DOC#{doc_id}") & Key("GSI1SK").eq("#META"),
         Limit=1,
@@ -122,9 +169,10 @@ def list_documents(user_id: str) -> list[dict]:
     items: list[dict] = []
     params = {
         "KeyConditionExpression": Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("DOC#"),
+        "ConsistentRead": True,  # Strong consistency — prevents stale reads after deletion
     }
     while True:
-        resp = table.query(**params)
+        resp = _dynamo_op("list_documents", table.query, **params)
         items.extend(resp.get("Items", []))
         if "LastEvaluatedKey" not in resp:
             break
@@ -146,7 +194,9 @@ def update_document(doc_id: str, updates: dict) -> Optional[dict]:
         expr_names[safe_key] = k
         expr_parts.append(f"{safe_key} = :{k}")
         expr_values[f":{k}"] = _prepare_value(v)
-    table.update_item(
+    _dynamo_op(
+        "update_document",
+        table.update_item,
         Key={"PK": doc["PK"], "SK": doc["SK"]},
         UpdateExpression="SET " + ", ".join(expr_parts),
         ExpressionAttributeValues=expr_values,
@@ -156,12 +206,22 @@ def update_document(doc_id: str, updates: dict) -> Optional[dict]:
     return _clean_item(doc)
 
 
-def delete_document(doc_id: str) -> bool:
+def delete_document(doc_id: str, pk: str | None = None, sk: str | None = None) -> bool:
+    """Delete a document record from DynamoDB.
+
+    If *pk* and *sk* are provided (from an already-fetched doc), skips
+    the redundant GSI lookup.
+    """
+    if pk and sk:
+        table = get_dynamodb_table()
+        _dynamo_op("delete_document", table.delete_item, Key={"PK": pk, "SK": sk})
+        logger.info("Deleted document %s", doc_id)
+        return True
     doc = get_document(doc_id)
     if not doc:
         return False
     table = get_dynamodb_table()
-    table.delete_item(Key={"PK": doc["PK"], "SK": doc["SK"]})
+    _dynamo_op("delete_document", table.delete_item, Key={"PK": doc["PK"], "SK": doc["SK"]})
     logger.info("Deleted document %s", doc_id)
     return True
 
@@ -172,9 +232,10 @@ def delete_document(doc_id: str) -> bool:
 def create_chat_message(
     doc_id: str, user_id: str, role: str, text: str,
     citations: list = None, metadata: dict = None,
+    message_id: str = None,
 ) -> dict:
     table = get_dynamodb_table()
-    msg_id = _uuid()
+    msg_id = message_id or _uuid()
     ts = int(time.time() * 1000)
     now = _now_iso()
     item = {
@@ -192,13 +253,15 @@ def create_chat_message(
         "metadata": metadata or {},
         "created_at": now,
     }
-    table.put_item(Item=_prepare_item(item))
+    _dynamo_op("create_chat_message", table.put_item, Item=_prepare_item(item))
     return _clean_item(item)
 
 
 def get_chat_message(message_id: str) -> Optional[dict]:
     table = get_dynamodb_table()
-    resp = table.query(
+    resp = _dynamo_op(
+        "get_chat_message",
+        table.query,
         IndexName="GSI1",
         KeyConditionExpression=Key("GSI1PK").eq(f"MSG#{message_id}") & Key("GSI1SK").eq("#META"),
         Limit=1,
@@ -215,7 +278,7 @@ def get_chat_history(doc_id: str) -> list[dict]:
         "ScanIndexForward": True,  # oldest first
     }
     while True:
-        resp = table.query(**params)
+        resp = _dynamo_op("get_chat_history", table.query, **params)
         items.extend(resp.get("Items", []))
         if "LastEvaluatedKey" not in resp:
             break
@@ -237,7 +300,9 @@ def update_chat_message(message_id: str, updates: dict) -> Optional[dict]:
         expr_names[safe_key] = k
         expr_parts.append(f"{safe_key} = :{k}")
         expr_values[f":{k}"] = _prepare_value(v)
-    table.update_item(
+    _dynamo_op(
+        "update_chat_message",
+        table.update_item,
         Key={"PK": msg["PK"], "SK": msg["SK"]},
         UpdateExpression="SET " + ", ".join(expr_parts),
         ExpressionAttributeValues=expr_values,
@@ -262,15 +327,20 @@ def delete_chat_history(doc_id: str) -> int:
 def delete_analyses_for_document(doc_id: str) -> int:
     """Delete all ANALYSIS records for a document (cascade cleanup)."""
     table = get_dynamodb_table()
-    resp = table.query(
-        KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("ANALYSIS#"),
-    )
-    items = resp.get("Items", [])
     count = 0
-    with table.batch_writer() as batch:
-        for item in items:
-            batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
-            count += 1
+    params = {
+        "KeyConditionExpression": Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("ANALYSIS#"),
+    }
+    while True:
+        resp = table.query(**params)
+        items = resp.get("Items", [])
+        with table.batch_writer() as batch:
+            for item in items:
+                batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+                count += 1
+        if "LastEvaluatedKey" not in resp:
+            break
+        params["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
     if count:
         logger.info("Deleted %d analysis records for doc %s", count, doc_id)
     return count
@@ -279,15 +349,20 @@ def delete_analyses_for_document(doc_id: str) -> int:
 def delete_simulations_for_document(doc_id: str) -> int:
     """Delete all SIM records for a document (cascade cleanup)."""
     table = get_dynamodb_table()
-    resp = table.query(
-        KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("SIM#"),
-    )
-    items = resp.get("Items", [])
     count = 0
-    with table.batch_writer() as batch:
-        for item in items:
-            batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
-            count += 1
+    params = {
+        "KeyConditionExpression": Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("SIM#"),
+    }
+    while True:
+        resp = table.query(**params)
+        items = resp.get("Items", [])
+        with table.batch_writer() as batch:
+            for item in items:
+                batch.delete_item(Key={"PK": item["PK"], "SK": item["SK"]})
+                count += 1
+        if "LastEvaluatedKey" not in resp:
+            break
+        params["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
     if count:
         logger.info("Deleted %d simulation records for doc %s", count, doc_id)
     return count
@@ -336,14 +411,16 @@ def create_job(
         "updated_at": now,
         "completed_at": None,
     }
-    table.put_item(Item=_prepare_item(item))
+    _dynamo_op("create_job", table.put_item, Item=_prepare_item(item))
     logger.info("Created job %s (%s) for user %s", job_id, job_type, user_id)
     return _clean_item(item)
 
 
 def get_job(job_id: str) -> Optional[dict]:
     table = get_dynamodb_table()
-    resp = table.query(
+    resp = _dynamo_op(
+        "get_job",
+        table.query,
         IndexName="GSI1",
         KeyConditionExpression=Key("GSI1PK").eq(f"JOB#{job_id}") & Key("GSI1SK").eq("#META"),
         Limit=1,
@@ -366,7 +443,9 @@ def update_job(job_id: str, updates: dict) -> Optional[dict]:
         expr_names[safe_key] = k
         expr_parts.append(f"{safe_key} = :{k}")
         expr_values[f":{k}"] = _prepare_value(v)
-    table.update_item(
+    _dynamo_op(
+        "update_job",
+        table.update_item,
         Key={"PK": job["PK"], "SK": job["SK"]},
         UpdateExpression="SET " + ", ".join(expr_parts),
         ExpressionAttributeValues=expr_values,
@@ -378,7 +457,9 @@ def update_job(job_id: str, updates: dict) -> Optional[dict]:
 
 def list_jobs(user_id: str, limit: int = 50) -> list[dict]:
     table = get_dynamodb_table()
-    resp = table.query(
+    resp = _dynamo_op(
+        "list_jobs",
+        table.query,
         KeyConditionExpression=Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("JOB#"),
         ScanIndexForward=False,  # newest first
         Limit=limit,
@@ -420,14 +501,16 @@ def create_analysis(doc_id: str, job_id: str) -> dict:
         "created_at": now,
         "completed_at": None,
     }
-    table.put_item(Item=_prepare_item(item))
+    _dynamo_op("create_analysis", table.put_item, Item=_prepare_item(item))
     return _clean_item(item)
 
 
 def get_analysis_for_document(doc_id: str) -> Optional[dict]:
     """Get the most recent analysis for a document."""
     table = get_dynamodb_table()
-    resp = table.query(
+    resp = _dynamo_op(
+        "get_analysis_for_document",
+        table.query,
         KeyConditionExpression=Key("PK").eq(f"DOC#{doc_id}") & Key("SK").begins_with("ANALYSIS#"),
         ScanIndexForward=False,
         Limit=1,
@@ -450,7 +533,9 @@ def update_analysis(doc_id: str, analysis_id: str, updates: dict) -> Optional[di
         expr_names[safe_key] = k
         expr_parts.append(f"{safe_key} = :{k}")
         expr_values[f":{k}"] = _prepare_value(v)
-    table.update_item(
+    _dynamo_op(
+        "update_analysis",
+        table.update_item,
         Key=key,
         UpdateExpression="SET " + ", ".join(expr_parts),
         ExpressionAttributeValues=expr_values,
@@ -508,7 +593,7 @@ def create_simulation(
         "created_at": now,
         "completed_at": None,
     }
-    table.put_item(Item=_prepare_item(item))
+    _dynamo_op("create_simulation", table.put_item, Item=_prepare_item(item))
     logger.info("Created simulation %s for doc %s", sim_id, doc_id)
     return _clean_item(item)
 
@@ -602,7 +687,10 @@ def update_comparison(cmp_id: str, updates: dict) -> Optional[dict]:
     if not cmp:
         return None
     table = get_dynamodb_table()
-    updates["completed_at"] = _now_iso()
+    # Only set completed_at for terminal states
+    status = updates.get("status", "")
+    if status in ("COMPLETE", "FAILED", "CANCELLED"):
+        updates["completed_at"] = _now_iso()
     expr_parts = []
     expr_values = {}
     expr_names = {}
@@ -976,3 +1064,296 @@ def get_last_kb_sync_job() -> Optional[dict]:
         return None
     kb_jobs.sort(key=lambda j: j.get("created_at", ""), reverse=True)
     return kb_jobs[0]
+
+
+# ════════════════════════════════════════════════════════════════
+# ADVERSARIAL BOARDROOM DEBATES
+#
+#   PK:     USER#{user_id}
+#   SK:     DEBATE#{debate_id}
+#   GSI1PK: DEBATE#{debate_id}
+#   GSI1SK: #META
+#
+# Each debate is a multi-agent discussion about a document.
+# The transcript is stored as a list and updated in real-time
+# (appended turn-by-turn) so the frontend can poll and animate.
+# ════════════════════════════════════════════════════════════════
+
+def create_debate(
+    user_id: str,
+    doc_id: str,
+    job_id: str,
+) -> dict:
+    """Create a new debate record for the Adversarial Boardroom."""
+    table = get_dynamodb_table()
+    debate_id = _uuid()
+    now = _now_iso()
+    item = {
+        "PK": f"USER#{user_id}",
+        "SK": f"DEBATE#{debate_id}",
+        "GSI1PK": f"DEBATE#{debate_id}",
+        "GSI1SK": "#META",
+        "entity": "DEBATE",
+        "id": debate_id,
+        "user_id": user_id,
+        "doc_id": doc_id,
+        "job_id": job_id,
+        "status": "QUEUED",
+        "progress": 0,
+        "protocol_name": "",
+        "scores": {},
+        "current_round": 0,
+        "total_rounds": 0,
+        "current_topic": "",
+        "transcript": [],
+        "final_verdict": None,
+        "total_turns": 0,
+        "rounds_completed": 0,
+        "elapsed_seconds": 0,
+        "error": None,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+    }
+    table.put_item(Item=_prepare_item(item))
+    logger.info("Created debate %s for doc %s", debate_id, doc_id)
+    return _clean_item(item)
+
+
+def get_debate(debate_id: str) -> Optional[dict]:
+    """Get a debate by ID via GSI1."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        IndexName="GSI1",
+        KeyConditionExpression=Key("GSI1PK").eq(f"DEBATE#{debate_id}") & Key("GSI1SK").eq("#META"),
+        Limit=1,
+    )
+    items = resp.get("Items", [])
+    return _clean_item(items[0]) if items else None
+
+
+def get_debates_for_document(doc_id: str, user_id: str) -> list[dict]:
+    """List all debates for a specific document."""
+    table = get_dynamodb_table()
+    resp = table.query(
+        KeyConditionExpression=Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("DEBATE#"),
+    )
+    debates = [_clean_item(i) for i in resp.get("Items", [])]
+    return [d for d in debates if d.get("doc_id") == doc_id]
+
+
+def update_debate(debate_id: str, updates: dict) -> Optional[dict]:
+    """Update a debate record."""
+    debate = get_debate(debate_id)
+    if not debate:
+        return None
+    table = get_dynamodb_table()
+    updates["updated_at"] = _now_iso()
+    if updates.get("status") in ("COMPLETED", "FAILED"):
+        updates["completed_at"] = _now_iso()
+    expr_parts = []
+    expr_values = {}
+    expr_names = {}
+    for k, v in updates.items():
+        safe_key = f"#{k}"
+        expr_names[safe_key] = k
+        expr_parts.append(f"{safe_key} = :{k}")
+        expr_values[f":{k}"] = _prepare_value(v)
+    table.update_item(
+        Key={"PK": debate["PK"], "SK": debate["SK"]},
+        UpdateExpression="SET " + ", ".join(expr_parts),
+        ExpressionAttributeValues=expr_values,
+        ExpressionAttributeNames=expr_names,
+    )
+    debate.update(updates)
+    return _clean_item(debate)
+
+
+def append_debate_transcript_turn(debate_id: str, turn_data: dict) -> None:
+    """Atomically append a single debate turn to the transcript array.
+
+    Uses DynamoDB list_append for atomic, concurrent-safe appends.
+    This is the KEY operation for real-time UI updates — each turn is
+    appended immediately so the frontend can poll and animate.
+    """
+    debate = get_debate(debate_id)
+    if not debate:
+        logger.error("Debate %s not found for transcript append", debate_id)
+        return
+    table = get_dynamodb_table()
+    prepared_turn = _prepare_value(turn_data)
+    table.update_item(
+        Key={"PK": debate["PK"], "SK": debate["SK"]},
+        UpdateExpression=(
+            "SET #transcript = list_append(if_not_exists(#transcript, :empty), :turn), "
+            "#updated_at = :now"
+        ),
+        ExpressionAttributeNames={
+            "#transcript": "transcript",
+            "#updated_at": "updated_at",
+        },
+        ExpressionAttributeValues={
+            ":turn": [prepared_turn],
+            ":empty": [],
+            ":now": _now_iso(),
+        },
+    )
+    logger.info("Appended turn from %s to debate %s", turn_data.get("agent", "unknown"), debate_id)
+
+
+def get_latest_debate_for_document(doc_id: str, user_id: str) -> Optional[dict]:
+    """Get the most recent debate for a document."""
+    debates = get_debates_for_document(doc_id, user_id)
+    if not debates:
+        return None
+    debates.sort(key=lambda d: d.get("created_at", ""), reverse=True)
+    return debates[0]
+
+
+# ════════════════════════════════════════════════════════════════
+# STRATEGIC INTELLIGENCE CACHE
+#
+#   PK:     DOC#{doc_id}
+#   SK:     STRATEGIC#{feature_key}  (e.g. friction_map, cost_analysis)
+#
+# Caches expensive AI-generated strategic results per document so
+# they survive page reloads without wasting tokens.  Each record
+# stores the full result JSON, a generated_at timestamp, and a
+# content_hash of the analysis that was used as input.  When the
+# underlying analysis changes (re-run), the hash won't match and
+# the frontend can prompt the user to regenerate.
+# ════════════════════════════════════════════════════════════════
+
+STRATEGIC_FEATURES = {
+    "friction_map",
+    "cost_analysis",
+    "payer_simulation",
+    "submission_strategy",
+    "optimization",
+    "watchdog",
+    "clause_library",
+    "investor_report",
+    "council",          # sync council (legacy)
+    "council_debate",   # async boardroom debate (full transcript + verdict)
+}
+
+
+def save_strategic_result(
+    doc_id: str,
+    feature_key: str,
+    result: dict,
+    analysis_hash: str = "",
+) -> dict:
+    """Cache a strategic intelligence result for a document.
+
+    Args:
+        doc_id: The document ID.
+        feature_key: One of STRATEGIC_FEATURES (e.g. "friction_map").
+        result: The full JSON result from the AI.
+        analysis_hash: Hash of the analysis data used as input. When the
+            analysis changes, the hash won't match → stale indicator.
+    """
+    if feature_key not in STRATEGIC_FEATURES:
+        logger.warning("Unknown strategic feature key: %s", feature_key)
+
+    table = get_dynamodb_table()
+    now = _now_iso()
+
+    # TTL: auto-expire after 30 days to garbage-collect orphaned caches
+    ttl_seconds = 30 * 24 * 60 * 60  # 30 days
+    ttl_epoch = int(time.time()) + ttl_seconds
+
+    item = {
+        "PK": f"DOC#{doc_id}",
+        "SK": f"STRATEGIC#{feature_key}",
+        "entity": "STRATEGIC_CACHE",
+        "doc_id": doc_id,
+        "feature_key": feature_key,
+        "result": result,
+        "analysis_hash": analysis_hash,
+        "generated_at": now,
+        "updated_at": now,
+        "ttl": ttl_epoch,
+    }
+    table.put_item(Item=_prepare_item(item))
+    logger.info("Cached strategic result '%s' for doc %s", feature_key, doc_id)
+    return _clean_item(item)
+
+
+def get_strategic_result(doc_id: str, feature_key: str) -> Optional[dict]:
+    """Retrieve a cached strategic intelligence result.
+
+    Returns None if no cache exists for this doc+feature combination.
+    """
+    table = get_dynamodb_table()
+    resp = table.get_item(
+        Key={"PK": f"DOC#{doc_id}", "SK": f"STRATEGIC#{feature_key}"},
+    )
+    item = resp.get("Item")
+    return _clean_item(item) if item else None
+
+
+def get_all_strategic_results(doc_id: str) -> dict:
+    """Retrieve ALL cached strategic results for a document.
+
+    Returns a dict keyed by feature_key → {result, generated_at, analysis_hash}.
+    Handles DynamoDB pagination in case results exceed 1MB.
+    """
+    table = get_dynamodb_table()
+    all_items: list[dict] = []
+    params = {
+        "KeyConditionExpression": (
+            Key("PK").eq(f"DOC#{doc_id}")
+            & Key("SK").begins_with("STRATEGIC#")
+        ),
+    }
+    while True:
+        resp = table.query(**params)
+        all_items.extend(resp.get("Items", []))
+        if "LastEvaluatedKey" not in resp:
+            break
+        params["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
+
+    results = {}
+    for item in all_items:
+        cleaned = _clean_item(item)
+        fk = cleaned.get("feature_key", "")
+        results[fk] = {
+            "result": cleaned.get("result", {}),
+            "generated_at": cleaned.get("generated_at"),
+            "analysis_hash": cleaned.get("analysis_hash", ""),
+        }
+    return results
+
+
+def delete_strategic_results(doc_id: str) -> int:
+    """Delete ALL cached strategic results for a document (e.g. on re-analysis).
+
+    Handles DynamoDB pagination to ensure every item is deleted.
+    """
+    table = get_dynamodb_table()
+    all_keys: list[dict] = []
+    params = {
+        "KeyConditionExpression": (
+            Key("PK").eq(f"DOC#{doc_id}")
+            & Key("SK").begins_with("STRATEGIC#")
+        ),
+        "ProjectionExpression": "PK, SK",
+    }
+    while True:
+        resp = table.query(**params)
+        all_keys.extend(
+            {"PK": item["PK"], "SK": item["SK"]} for item in resp.get("Items", [])
+        )
+        if "LastEvaluatedKey" not in resp:
+            break
+        params["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
+
+    count = 0
+    with table.batch_writer() as batch:
+        for key in all_keys:
+            batch.delete_item(Key=key)
+            count += 1
+    if count:
+        logger.info("Deleted %d strategic cache records for doc %s", count, doc_id)
+    return count
