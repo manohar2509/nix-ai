@@ -249,7 +249,7 @@ export default function PayerGapPanel({ docId }) {
                 <p className="text-xs mt-1 opacity-80">{gap.gap_description}</p>
 
                 {/* Expand hint */}
-                {!expandedGap !== i && (gap.recommendation || gap.impact_on_reimbursement) && expandedGap !== i && (
+                {expandedGap !== i && (gap.recommendation || gap.impact_on_reimbursement) && (
                   <div className="text-[10px] text-brand-600 mt-1 font-semibold">Click for recommendation →</div>
                 )}
 

@@ -98,73 +98,73 @@ const TABS = [
 
   // ── INTELLIGENCE ──
   {
-    key: 'council', category: 'intelligence', label: 'AI Debate', icon: Users,
-    shortDesc: 'Adversarial Council — AI Debate Engine',
-    longDesc: 'Three AI agents debate your protocol: a Regulator, a Payer, and a Patient Advocate.',
+    key: 'council', category: 'intelligence', label: 'Expert Panel', icon: Users,
+    shortDesc: 'AI Expert Panel — Multi-Perspective Debate',
+    longDesc: 'Three specialized AI experts debate your protocol: a Regulatory Expert, a Commercial Director, and a Patient Advocate — with real-time transcript and consensus verdict.',
   },
   {
-    key: 'friction', category: 'intelligence', label: 'Risk Heatmap', icon: Flame,
-    shortDesc: 'Strategic Friction Heatmap',
-    longDesc: 'Where regulatory and commercial requirements conflict — high friction = fixing one worsens the other.',
+    key: 'friction', category: 'intelligence', label: 'Risk Conflicts', icon: Flame,
+    shortDesc: 'Regulatory vs. Commercial Conflict Map',
+    longDesc: 'Identifies where regulatory and commercial requirements conflict — high-conflict areas mean resolving one issue may worsen the other.',
   },
   {
-    key: 'cost', category: 'intelligence', label: 'Cost Analysis', icon: Calculator,
-    shortDesc: 'Trial Cost Architect',
-    longDesc: 'Full cost estimate with per-finding impacts, amendment risk, and optimization scenarios.',
+    key: 'cost', category: 'intelligence', label: 'Cost Forecast', icon: Calculator,
+    shortDesc: 'Trial Cost Forecast & Optimization',
+    longDesc: 'Full cost estimate with per-finding financial impact, amendment risk quantification, and cost-reduction scenarios using real industry benchmarks.',
   },
   {
-    key: 'payer-sim', category: 'intelligence', label: 'Coverage Predictor', icon: CreditCard,
-    shortDesc: 'Synthetic Payer Simulator',
-    longDesc: 'Predict coverage from UnitedHealthcare, Anthem, NICE, IQWiG — denial probabilities and revenue at risk.',
+    key: 'payer-sim', category: 'intelligence', label: 'Coverage Forecast', icon: CreditCard,
+    shortDesc: 'Payer Coverage Forecast',
+    longDesc: 'Predict coverage decisions from UnitedHealthcare, Anthem, NICE, IQWiG and other major payers — with denial probabilities and revenue-at-risk estimates.',
   },
   {
     key: 'strategy', category: 'intelligence', label: 'Filing Strategy', icon: Route,
-    shortDesc: 'Submission Strategy & Regulatory Arbitrage',
-    longDesc: 'Optimized global submission order and a "golden protocol" for all jurisdictions.',
+    shortDesc: 'Global Submission Strategy',
+    longDesc: 'Optimized global filing order across FDA, EMA, PMDA, and other agencies with a unified protocol that satisfies all jurisdictions simultaneously.',
   },
   {
     key: 'optimizer', category: 'intelligence', label: 'Protocol Rewrites', icon: Wand2,
-    shortDesc: 'Protocol Optimizer — AI Text Rewrites',
-    longDesc: 'Copy-paste-ready protocol text rewrites for each finding with guideline citations.',
+    shortDesc: 'AI Protocol Rewrite Suggestions',
+    longDesc: 'Ready-to-use protocol text rewrites for each finding — showing original text, improved text, and the specific guideline citation that justifies each change.',
   },
 
   // ── COMPLIANCE ──
   {
-    key: 'watchdog', category: 'compliance', label: 'Change Scanner', icon: Eye,
-    shortDesc: 'Compliance Watchdog',
-    longDesc: 'Scan against recent regulatory updates — ICH E6(R3), FDA Diversity Plans, EU HTA Regulation.',
+    key: 'watchdog', category: 'compliance', label: 'Regulatory Updates', icon: Eye,
+    shortDesc: 'Regulatory Change Scanner',
+    longDesc: 'Scans your protocol against recent regulatory updates — ICH E6(R3), FDA Diversity Plans, EU HTA Regulation — and flags compliance drift with required actions.',
   },
   {
     key: 'clauses', category: 'compliance', label: 'Clause Library', icon: BookOpen,
-    shortDesc: 'Smart Clause Library',
-    longDesc: 'Browse and copy AI-suggested regulatory clauses — filtered by severity, guideline-cited.',
+    shortDesc: 'Regulatory Clause Library',
+    longDesc: 'Browse AI-suggested regulatory clauses for your protocol — filtered by severity, with full guideline citations and copy-to-clipboard support.',
   },
   {
     key: 'timeline', category: 'compliance', label: 'Audit Trail', icon: Clock,
-    shortDesc: 'Regulatory Audit Trail',
-    longDesc: 'GCP-compliant record of all protocol events — supports 21 CFR Part 11.',
+    shortDesc: 'GCP-Compliant Audit Trail',
+    longDesc: 'Full chronological record of all protocol events, analysis runs, and changes — supports 21 CFR Part 11 electronic record requirements.',
   },
 
   // ── TOOLS ──
   {
-    key: 'simulation', category: 'tools', label: 'Simulate Changes', icon: Zap,
-    shortDesc: 'Amendment Impact Simulator',
-    longDesc: 'Model a proposed amendment and see its effect on scores across all jurisdictions.',
+    key: 'simulation', category: 'tools', label: 'Amendment Simulator', icon: Zap,
+    shortDesc: 'Protocol Amendment Impact Simulator',
+    longDesc: 'Model a proposed protocol amendment and instantly see its impact on compliance scores across all jurisdictions before committing to the change.',
   },
   {
-    key: 'benchmark', category: 'tools', label: 'Trial Benchmark', icon: BarChart3,
-    shortDesc: 'ClinicalTrials.gov Comparison',
-    longDesc: 'Compare design metrics against similar registered trials for your TA and phase.',
+    key: 'benchmark', category: 'tools', label: 'Trial Benchmarks', icon: BarChart3,
+    shortDesc: 'ClinicalTrials.gov Benchmark Comparison',
+    longDesc: 'Compare your protocol design metrics against similar registered trials — by therapeutic area, phase, and population size.',
   },
   {
-    key: 'chat', category: 'tools', label: 'Ask AI Advisor', icon: MessageSquare,
-    shortDesc: 'AI Regulatory Advisor',
-    longDesc: 'Chat about strategy, guidelines, endpoints, comparators — instant expert guidance.',
+    key: 'chat', category: 'tools', label: 'AI Advisor', icon: MessageSquare,
+    shortDesc: 'AI Regulatory Advisor Chat',
+    longDesc: 'Ask questions about strategy, guidelines, endpoints, comparators, or any protocol detail — backed by your Knowledge Base for grounded, cited answers.',
   },
   {
     key: 'factory', category: 'tools', label: 'References', icon: Database,
     shortDesc: 'Regulatory Reference Library',
-    longDesc: 'Manage ICH, FDA, EMA, and HTA reference documents powering the AI.',
+    longDesc: 'Manage ICH, FDA, EMA, and HTA reference documents powering all AI analysis.',
     adminOnly: true,
   },
 ];
@@ -196,7 +196,7 @@ const COLORS = {
 /* ════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ════════════════════════════════════════════════════════════════ */
-export default function IntelligencePanel({ activeTab, setActiveTab, isAnalyzing, hasAnalyzed, currentDocument, lastAnalysis }) {
+export default function IntelligencePanel({ activeTab, setActiveTab, isAnalyzing, hasAnalyzed, currentDocument, lastAnalysis, cacheTimestamps }) {
   const { isAdmin } = useAuth();
   const [activeCategory, setActiveCategory] = useState('review');
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -363,19 +363,19 @@ export default function IntelligencePanel({ activeTab, setActiveTab, isAnalyzing
           ) : activeTab === 'payer' ? (
             <div className="p-4"><PayerGapPanel docId={currentDocument?.id} /></div>
           ) : activeTab === 'council' ? (
-            <div className="p-4"><AdversarialCouncil docId={currentDocument?.id} /></div>
+            <div className="p-4"><AdversarialCouncil docId={currentDocument?.id} generatedAt={cacheTimestamps?.council} /></div>
           ) : activeTab === 'friction' ? (
-            <div className="p-4"><FrictionHeatmap docId={currentDocument?.id} /></div>
+            <div className="p-4"><FrictionHeatmap docId={currentDocument?.id} generatedAt={cacheTimestamps?.friction_map} /></div>
           ) : activeTab === 'cost' ? (
-            <div className="p-4"><CostArchitect docId={currentDocument?.id} /></div>
+            <div className="p-4"><CostArchitect docId={currentDocument?.id} generatedAt={cacheTimestamps?.cost_analysis} /></div>
           ) : activeTab === 'payer-sim' ? (
-            <div className="p-4"><PayerSimulator docId={currentDocument?.id} /></div>
+            <div className="p-4"><PayerSimulator docId={currentDocument?.id} generatedAt={cacheTimestamps?.payer_simulation} /></div>
           ) : activeTab === 'strategy' ? (
-            <div className="p-4"><SubmissionStrategy docId={currentDocument?.id} /></div>
+            <div className="p-4"><SubmissionStrategy docId={currentDocument?.id} generatedAt={cacheTimestamps?.submission_strategy} /></div>
           ) : activeTab === 'optimizer' ? (
-            <div className="p-4"><ProtocolOptimizer docId={currentDocument?.id} /></div>
+            <div className="p-4"><ProtocolOptimizer docId={currentDocument?.id} generatedAt={cacheTimestamps?.optimization} /></div>
           ) : activeTab === 'watchdog' ? (
-            <div className="p-4"><ComplianceWatchdog docId={currentDocument?.id} /></div>
+            <div className="p-4"><ComplianceWatchdog docId={currentDocument?.id} generatedAt={cacheTimestamps?.watchdog} /></div>
           ) : activeTab === 'clauses' ? (
             <div className="p-4"><SmartClauseLibrary docId={currentDocument?.id} /></div>
           ) : activeTab === 'timeline' ? (
@@ -427,11 +427,12 @@ function AnalysisContent({ lastAnalysis, currentDocument }) {
         {/* How to read findings */}
         <div className="px-3 py-2 rounded-lg bg-brand-50/50 border border-brand-100/60">
           <p className="text-[11px] text-slate-600 leading-relaxed">
-            <span className="font-semibold text-brand-700">How to read:</span> Each finding shows
+            <span className="font-semibold text-brand-700">✓ KB-Grounded Analysis:</span> All findings are cross-referenced against 
+            <span className="font-semibold"> ICH/FDA/EMA/HTA guidelines</span> in your Knowledge Base. Each finding shows
             a <span className="font-semibold text-red-600">severity</span> (Critical → Low), the
             <span className="font-semibold"> protocol section</span>,
-            <span className="font-semibold"> jurisdictions impacted</span>, and
-            <span className="font-semibold"> ICH/FDA/EMA guideline</span> reference.
+            <span className="font-semibold"> affected jurisdictions</span>, and
+            <span className="font-semibold"> clickable guideline citations</span> with section numbers.
             Click any finding to see the recommended action and suggested protocol language.
           </p>
         </div>

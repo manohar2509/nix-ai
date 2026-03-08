@@ -33,8 +33,7 @@ export const jobService = {
         return { jobId, status: 'NOT_FOUND' };
       }
       throw {
-        message: 'Failed to fetch job status',
-        details: error.message,
+        message: 'Unable to retrieve job status. Please try again.',
       };
     }
   },
@@ -49,8 +48,7 @@ export const jobService = {
       return res.data.jobs; // Array of job statuses
     } catch (error) {
       throw {
-        message: 'Failed to fetch job statuses',
-        details: error.message,
+        message: 'Unable to retrieve job statuses. Please try again.',
       };
     }
   },
@@ -68,7 +66,7 @@ export const jobService = {
       const { url, filename } = res.data;
 
       if (!url) {
-        throw new Error(res.data.error || 'No download URL available');
+        throw new Error('The download is not available yet. Please try again shortly.');
       }
 
       // Open presigned S3 URL to trigger browser download
@@ -84,8 +82,7 @@ export const jobService = {
       return { success: true, filename: filename || `results-${jobId}.${format}` };
     } catch (error) {
       throw {
-        message: 'Failed to download results',
-        details: error.message,
+        message: 'Unable to download results. Please try again.',
       };
     }
   },
@@ -108,8 +105,7 @@ export const jobService = {
       // }
     } catch (error) {
       throw {
-        message: 'Failed to fetch job stats',
-        details: error.message,
+        message: 'Unable to retrieve job details. Please try again.',
       };
     }
   },
@@ -126,8 +122,7 @@ export const jobService = {
       return res.data; // { success: true, jobId }
     } catch (error) {
       throw {
-        message: 'Failed to cancel job',
-        details: error.message,
+        message: 'Unable to cancel the job. Please try again.',
       };
     }
   },
@@ -142,8 +137,7 @@ export const jobService = {
       return res.data; // { newJobId, status: 'QUEUED' }
     } catch (error) {
       throw {
-        message: 'Failed to retry job',
-        details: error.message,
+        message: 'Unable to retry the job. Please try again.',
       };
     }
   },
@@ -160,8 +154,7 @@ export const jobService = {
       return res.data.jobs; // Array of jobs
     } catch (error) {
       throw {
-        message: 'Failed to fetch jobs',
-        details: error.message,
+        message: 'Unable to load jobs. Please try again.',
       };
     }
   },
@@ -177,8 +170,7 @@ export const jobService = {
       return res.data; // { jobId, status: 'QUEUED', createdAt }
     } catch (error) {
       throw {
-        message: 'Failed to start KB sync',
-        details: error.message,
+        message: 'Unable to start knowledge base sync. Please try again.',
       };
     }
   },

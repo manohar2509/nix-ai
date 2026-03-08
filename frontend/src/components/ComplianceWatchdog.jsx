@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, Loader2, AlertTriangle, CheckCircle, Clock, Bell, Shield, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 const urgencyStyle = {
@@ -17,7 +18,7 @@ const complianceStyle = {
   not_applicable: { label: 'N/A', color: 'bg-slate-100 text-slate-500' },
 };
 
-export default function ComplianceWatchdog({ docId }) {
+export default function ComplianceWatchdog({ docId, generatedAt }) {
   const watchdog = useAppStore(s => s.watchdogAlerts);
   const isLoading = useAppStore(s => s.isWatchdogLoading);
   const setWatchdog = useAppStore(s => s.setWatchdogAlerts);
@@ -30,6 +31,7 @@ export default function ComplianceWatchdog({ docId }) {
     try {
       const result = await strategicService.runWatchdog(docId);
       setWatchdog(result);
+      useAppStore.getState().updateStrategicTimestamp('watchdog', new Date().toISOString());
     } catch (err) {
       console.error('Watchdog failed:', err);
     } finally {
@@ -56,8 +58,8 @@ export default function ComplianceWatchdog({ docId }) {
         <div className="h-20 w-20 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <Eye size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Compliance Watchdog</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Scan your protocol against recent regulatory updates (ICH E6(R3), FDA Diversity Plans, EU HTA Regulation, etc.) to detect compliance drift.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Regulatory Change Scanner</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Scan your protocol against recent regulatory updates (ICH E6(R3), FDA Diversity Plans, EU HTA Regulation, etc.) to detect compliance drift and required changes.</p>
         <button onClick={scan} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Run Compliance Scan
         </button>
@@ -216,9 +218,12 @@ export default function ComplianceWatchdog({ docId }) {
         </div>
       )}
 
-      <button onClick={scan} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Re-scan for Compliance Drift
-      </button>
+      <CacheStatusBanner
+        generatedAt={generatedAt}
+        onRegenerate={scan}
+        isLoading={isLoading}
+        label="compliance scan"
+      />
     </div>
   );
 }

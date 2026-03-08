@@ -8,17 +8,26 @@ from __future__ import annotations
 
 import json
 import logging
+import time
+import random
 
 from app.core.aws_clients import get_sqs_client
 from app.core.config import get_settings
 from app.core.exceptions import QueueError
+from app.core.resilience import sqs_circuit, CircuitBreakerError
 
 logger = logging.getLogger(__name__)
+
+# SQS retry config (network transients, throttling)
+_MAX_RETRIES = 3
+_BASE_DELAY = 0.5  # seconds
 
 
 def send_message(task: str, payload: dict) -> str:
     """
     Send a task message to the worker queue.
+
+    Resilience: circuit breaker + retry with exponential backoff.
 
     Args:
         task:    Task type (e.g. GENERATE_SYNTHETIC, ANALYZE_DOCUMENT, SYNC_KB)
@@ -39,22 +48,43 @@ def send_message(task: str, payload: dict) -> str:
         **payload,
     }
 
-    try:
-        send_params = {
-            "QueueUrl": settings.SQS_URL,
-            "MessageBody": json.dumps(message_body, default=str),
-        }
-        # MessageGroupId is only valid for FIFO queues
-        if settings.SQS_URL.endswith(".fifo"):
-            send_params["MessageGroupId"] = task
+    last_exc = None
+    for attempt in range(_MAX_RETRIES):
+        try:
+            # Circuit breaker check
+            sqs_circuit.before_call()
 
-        response = sqs.send_message(**send_params)
-        message_id = response["MessageId"]
-        logger.info("SQS message sent: task=%s, messageId=%s", task, message_id)
-        return message_id
-    except Exception as exc:
-        logger.error("SQS send failed: %s", exc)
-        raise QueueError(f"Failed to queue task {task}: {exc}")
+            send_params = {
+                "QueueUrl": settings.SQS_URL,
+                "MessageBody": json.dumps(message_body, default=str),
+            }
+            # MessageGroupId is only valid for FIFO queues
+            if settings.SQS_URL.endswith(".fifo"):
+                send_params["MessageGroupId"] = task
+
+            response = sqs.send_message(**send_params)
+            message_id = response["MessageId"]
+            sqs_circuit.on_success()
+            logger.info("SQS message sent: task=%s, messageId=%s", task, message_id)
+            return message_id
+
+        except CircuitBreakerError:
+            logger.error("SQS circuit breaker OPEN — cannot send task=%s", task)
+            raise QueueError(f"SQS service unavailable (circuit open) for task {task}")
+        except Exception as exc:
+            sqs_circuit.on_failure()
+            last_exc = exc
+            if attempt < _MAX_RETRIES - 1:
+                delay = _BASE_DELAY * (2 ** attempt) + random.uniform(0, 0.3)
+                logger.warning(
+                    "SQS send attempt %d/%d failed for task=%s: %s — retrying in %.1fs",
+                    attempt + 1, _MAX_RETRIES, task, exc, delay,
+                )
+                time.sleep(delay)
+            else:
+                logger.error("SQS send failed after %d attempts: %s", _MAX_RETRIES, exc)
+
+    raise QueueError(f"Failed to queue task {task} after {_MAX_RETRIES} attempts: {last_exc}")
 
 
 def send_analysis_task(

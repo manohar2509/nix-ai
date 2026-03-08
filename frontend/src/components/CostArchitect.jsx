@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calculator, Loader2, TrendingDown, TrendingUp, DollarSign, ArrowRight, PieChart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 function formatUSD(val) {
@@ -13,7 +14,7 @@ function formatUSD(val) {
   return `$${num.toLocaleString()}`;
 }
 
-export default function CostArchitect({ docId }) {
+export default function CostArchitect({ docId, generatedAt }) {
   const costData = useAppStore(s => s.costAnalysis);
   const isLoading = useAppStore(s => s.isCostLoading);
   const setCost = useAppStore(s => s.setCostAnalysis);
@@ -26,6 +27,7 @@ export default function CostArchitect({ docId }) {
     try {
       const result = await strategicService.getCostAnalysis(docId);
       setCost(result);
+      useAppStore.getState().updateStrategicTimestamp('cost_analysis', new Date().toISOString());
     } catch (err) {
       console.error('Cost analysis failed:', err);
     } finally {
@@ -52,8 +54,8 @@ export default function CostArchitect({ docId }) {
         <div className="h-20 w-20 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <Calculator size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Trial Cost Architect</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Estimate full trial costs, see per-finding cost impacts, and compare optimization scenarios — using real industry benchmarks.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Trial Cost Forecast</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Estimate total trial costs, see the financial impact of each finding, and compare cost-reduction scenarios — benchmarked against real industry data.</p>
         <button onClick={analyze} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Analyze Costs
         </button>
@@ -231,9 +233,12 @@ export default function CostArchitect({ docId }) {
         </div>
       )}
 
-      <button onClick={analyze} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Recalculate Costs
-      </button>
+      <CacheStatusBanner
+        generatedAt={generatedAt}
+        onRegenerate={analyze}
+        isLoading={isLoading}
+        label="cost analysis"
+      />
     </div>
   );
 }

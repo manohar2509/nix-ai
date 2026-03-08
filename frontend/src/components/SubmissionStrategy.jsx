@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Route, Loader2, Globe, ArrowRight, CheckCircle, AlertTriangle, Clock, Zap } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 const flagMap = { FDA: '🇺🇸', EMA: '🇪🇺', PMDA: '🇯🇵', 'Health Canada': '🇨🇦', MHRA: '🇬🇧', NMPA: '🇨🇳', TGA: '🇦🇺' };
 
-export default function SubmissionStrategy({ docId }) {
+export default function SubmissionStrategy({ docId, generatedAt }) {
   const strategy = useAppStore(s => s.submissionStrategy);
   const isLoading = useAppStore(s => s.isStrategyLoading);
   const setStrategy = useAppStore(s => s.setSubmissionStrategy);
@@ -19,6 +20,7 @@ export default function SubmissionStrategy({ docId }) {
     try {
       const result = await strategicService.getSubmissionStrategy(docId);
       setStrategy(result);
+      useAppStore.getState().updateStrategicTimestamp('submission_strategy', new Date().toISOString());
     } catch (err) {
       console.error('Strategy failed:', err);
     } finally {
@@ -45,8 +47,8 @@ export default function SubmissionStrategy({ docId }) {
         <div className="h-20 w-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <Route size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Submission Strategy</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Optimize your global submission order, generate a "golden protocol" that satisfies all jurisdictions, and find accelerated pathways.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Global Filing Strategy</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Optimize your global filing order across FDA, EMA, PMDA and other agencies — with a unified "golden protocol" that satisfies all jurisdictions and identifies accelerated pathways.</p>
         <button onClick={generate} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Generate Strategy
         </button>
@@ -255,9 +257,12 @@ export default function SubmissionStrategy({ docId }) {
         <p className="text-xs text-slate-500 italic border-t border-slate-100 pt-3">{strategy.executive_summary}</p>
       )}
 
-      <button onClick={generate} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Regenerate Strategy
-      </button>
+      <CacheStatusBanner
+        generatedAt={generatedAt}
+        onRegenerate={generate}
+        isLoading={isLoading}
+        label="submission strategy"
+      />
     </div>
   );
 }

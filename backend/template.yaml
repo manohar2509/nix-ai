@@ -223,6 +223,8 @@ Resources:
                 - bedrock-agent:ListDataSources
                 - bedrock-agent:StartIngestionJob
                 - bedrock-agent:GetIngestionJob
+                - bedrock-agent-runtime:Retrieve
+                - bedrock-agent-runtime:RetrieveAndGenerate
               Resource: "*"
             - Effect: Allow
               Action:

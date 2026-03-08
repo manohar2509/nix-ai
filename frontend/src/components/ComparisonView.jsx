@@ -5,7 +5,7 @@
  * Users select 2-5 documents, then see a structured comparison.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { GitCompare, FileText, ChevronRight, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 import { useAppStore, useRegulatory, useDocuments } from '../stores/useAppStore';
 import { triggerComparison, listComparisons, getComparison } from '../services/regulatoryService';
@@ -19,6 +19,14 @@ export default function ComparisonView() {
   const setActiveView = useAppStore((s) => s.setActiveView);
   const [selectedDocs, setSelectedDocs] = useState([]);
   const [error, setError] = useState(null);
+  const pollIntervalRef = useRef(null);
+
+  // Cleanup poll interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     loadComparisons();
@@ -58,29 +66,32 @@ export default function ComparisonView() {
       } else {
         const jobId = result.jobId;
         const cmpId = result.cmpId;
-        const pollInterval = setInterval(async () => {
+        pollIntervalRef.current = setInterval(async () => {
           try {
             const status = await analysisService.getAnalysisStatus(jobId);
             if (status.status === 'COMPLETE') {
-              clearInterval(pollInterval);
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
               const cmpData = await getComparison(cmpId);
               store.setActiveComparison(cmpData);
               await loadComparisons();
               store.setIsComparing(false);
             } else if (status.status === 'FAILED') {
-              clearInterval(pollInterval);
-              setError('Comparison failed');
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+              setError('The comparison could not be completed. Please try again.');
               store.setIsComparing(false);
             }
-          } catch (e) {
-            clearInterval(pollInterval);
+          } catch {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
             store.setIsComparing(false);
           }
         }, 2000);
         return;
       }
     } catch (err) {
-      setError(err.message || 'Comparison failed');
+      setError('The comparison could not be completed. Please try again.');
     } finally {
       store.setIsComparing(false);
     }

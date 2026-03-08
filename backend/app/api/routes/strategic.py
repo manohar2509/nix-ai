@@ -37,6 +37,7 @@ from app.api.schemas.strategic import (
 )
 from app.core.auth import CurrentUser, get_current_user
 from app.core.config import get_settings
+from app.core.exceptions import NixAIException
 from app.services import dynamo_service, sqs_service, strategic_service
 
 import logging
@@ -47,6 +48,46 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/strategic", tags=["strategic-intelligence"])
 
 
+# ── Cached results — GET endpoint for all features ──────────────
+@router.get("/documents/{doc_id}/cached")
+async def get_cached_results(
+    doc_id: str,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Return ALL cached strategic results for a document.
+
+    Frontend calls this on mount / page reload to restore previously
+    generated intelligence panels without burning tokens.
+
+    Returns a dict keyed by feature name → {result, generated_at, analysis_hash}.
+
+    Also includes the latest COMPLETED boardroom debate so the AI Expert Panel
+    transcript is restored on page reload without re-running the debate.
+    """
+    try:
+        cached = dynamo_service.get_all_strategic_results(doc_id)
+
+        # If no council_debate in strategic cache, fall back to the most recent
+        # completed DEBATE entity.  This handles debates that completed before
+        # the strategic-cache-on-completion fix was deployed.
+        if "council_debate" not in cached:
+            try:
+                latest = dynamo_service.get_latest_debate_for_document(doc_id, user.user_id)
+                if latest and latest.get("status") == "COMPLETED":
+                    cached["council_debate"] = {
+                        "result": latest,
+                        "generated_at": latest.get("completed_at") or latest.get("updated_at"),
+                        "analysis_hash": "",
+                    }
+            except Exception as debate_exc:
+                logger.warning("Could not fetch latest debate for %s: %s", doc_id, debate_exc)
+
+        return {"cached": cached, "doc_id": doc_id}
+    except Exception as exc:
+        logger.error("Failed to fetch cached strategic results for %s: %s", doc_id, exc)
+        return {"cached": {}, "doc_id": doc_id}
+
+
 # ── 1. Adversarial Council (sync — legacy) ──────────────────────
 @router.post("/documents/{doc_id}/council", response_model=CouncilResponse)
 async def run_council(
@@ -54,8 +95,14 @@ async def run_council(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Launch multi-agent adversarial debate on a protocol (synchronous)."""
-    result = strategic_service.run_adversarial_council(doc_id)
-    return CouncilResponse(**result)
+    try:
+        result = strategic_service.run_adversarial_council(doc_id)
+        return CouncilResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Council endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Council analysis failed: {str(exc)[:200]}")
 
 
 # ── 1b. Async Boardroom Debate (NEW — recommended) ─────────────
@@ -226,8 +273,14 @@ async def get_friction_map(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Generate section-by-section regulatory vs commercial friction map."""
-    result = strategic_service.generate_friction_map(doc_id)
-    return FrictionMapResponse(**result)
+    try:
+        result = strategic_service.generate_friction_map(doc_id)
+        return FrictionMapResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Friction map endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Friction map analysis failed: {str(exc)[:200]}")
 
 
 # ── 3. Trial Cost Architect ─────────────────────────────────────
@@ -237,8 +290,14 @@ async def get_cost_analysis(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Estimate trial costs and per-finding cost impacts."""
-    result = strategic_service.analyze_trial_costs(doc_id)
-    return CostAnalysisResponse(**result)
+    try:
+        result = strategic_service.analyze_trial_costs(doc_id)
+        return CostAnalysisResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Cost analysis endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Cost analysis failed: {str(exc)[:200]}")
 
 
 # ── 4. Synthetic Payer Simulator ────────────────────────────────
@@ -248,8 +307,14 @@ async def simulate_payer(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Predict insurer and HTA body coverage decisions."""
-    result = strategic_service.simulate_payer_decisions(doc_id)
-    return PayerSimulationResponse(**result)
+    try:
+        result = strategic_service.simulate_payer_decisions(doc_id)
+        return PayerSimulationResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Payer simulation endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Payer simulation failed: {str(exc)[:200]}")
 
 
 # ── 5. Submission Strategy ──────────────────────────────────────
@@ -259,8 +324,14 @@ async def get_submission_strategy(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Optimize global submission order and generate golden protocol changes."""
-    result = strategic_service.generate_submission_strategy(doc_id)
-    return SubmissionStrategyResponse(**result)
+    try:
+        result = strategic_service.generate_submission_strategy(doc_id)
+        return SubmissionStrategyResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Submission strategy endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Submission strategy failed: {str(exc)[:200]}")
 
 
 # ── 6. Protocol Optimizer ───────────────────────────────────────
@@ -270,8 +341,14 @@ async def optimize(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Generate specific protocol text rewrites to resolve findings."""
-    result = strategic_service.optimize_protocol(doc_id)
-    return ProtocolOptimizationResponse(**result)
+    try:
+        result = strategic_service.optimize_protocol(doc_id)
+        return ProtocolOptimizationResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Protocol optimizer endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Protocol optimization failed: {str(exc)[:200]}")
 
 
 # ── 7. Deal Room / Investor Report ──────────────────────────────
@@ -281,8 +358,14 @@ async def get_investor_report(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Generate VC/investor due diligence package."""
-    result = strategic_service.generate_investor_report(doc_id)
-    return InvestorReportResponse(**result)
+    try:
+        result = strategic_service.generate_investor_report(doc_id)
+        return InvestorReportResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Investor report endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Investor report generation failed: {str(exc)[:200]}")
 
 
 # ── 8. Compliance Watchdog ──────────────────────────────────────
@@ -292,8 +375,14 @@ async def run_watchdog(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Scan protocol against recent regulatory updates."""
-    result = strategic_service.run_compliance_watchdog(doc_id)
-    return WatchdogResponse(**result)
+    try:
+        result = strategic_service.run_compliance_watchdog(doc_id)
+        return WatchdogResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Watchdog endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Compliance watchdog failed: {str(exc)[:200]}")
 
 
 # ── Smart Clause Library ────────────────────────────────────────
@@ -303,8 +392,14 @@ async def get_clauses(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Extract suggested regulatory clauses from analysis findings."""
-    result = strategic_service.get_smart_clauses(doc_id)
-    return ClauseLibraryResponse(**result)
+    try:
+        result = strategic_service.get_smart_clauses(doc_id)
+        return ClauseLibraryResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Clauses endpoint failed for doc %s: %s", doc_id, exc)
+        raise HTTPException(status_code=500, detail=f"Clause library failed: {str(exc)[:200]}")
 
 
 # ── Portfolio Risk ──────────────────────────────────────────────
@@ -313,8 +408,14 @@ async def get_portfolio(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Aggregate risk scores across all user protocols."""
-    result = strategic_service.get_portfolio_risk(user.user_id)
-    return PortfolioRiskResponse(**result)
+    try:
+        result = strategic_service.get_portfolio_risk(user.user_id)
+        return PortfolioRiskResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Portfolio endpoint failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Portfolio risk calculation failed: {str(exc)[:200]}")
 
 
 # ── Cross-Protocol Intelligence ─────────────────────────────────
@@ -323,5 +424,11 @@ async def get_cross_protocol(
     user: CurrentUser = Depends(get_current_user),
 ):
     """Find patterns across all analyzed protocols."""
-    result = strategic_service.get_cross_protocol_intelligence()
-    return CrossProtocolResponse(**result)
+    try:
+        result = strategic_service.get_cross_protocol_intelligence()
+        return CrossProtocolResponse(**result)
+    except NixAIException:
+        raise
+    except Exception as exc:
+        logger.error("Cross-protocol endpoint failed: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Cross-protocol intelligence failed: {str(exc)[:200]}")

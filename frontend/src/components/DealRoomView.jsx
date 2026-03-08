@@ -25,6 +25,8 @@ export default function DealRoomView() {
   const setPortfolio = useAppStore(s => s.setPortfolioRisk);
   const setPortfolioLoading = useAppStore(s => s.setIsPortfolioLoading);
   const [tab, setTab] = useState('report');
+  const [reportError, setReportError] = useState(null);
+  const [portfolioError, setPortfolioError] = useState(null);
 
   useEffect(() => {
     if (!portfolioRisk && !isPortfolioLoading) {
@@ -34,11 +36,14 @@ export default function DealRoomView() {
 
   const loadPortfolio = async () => {
     setPortfolioLoading(true);
+    setPortfolioError(null);
     try {
       const result = await strategicService.getPortfolioRisk();
       setPortfolio(result);
     } catch (err) {
       console.error('Portfolio load failed:', err);
+      const msg = 'Unable to load portfolio data. Please try again.';
+      setPortfolioError(msg);
     } finally {
       setPortfolioLoading(false);
     }
@@ -47,11 +52,14 @@ export default function DealRoomView() {
   const generateReport = async () => {
     if (!currentDocument?.id) return;
     setReportLoading(true);
+    setReportError(null);
     try {
       const result = await strategicService.getInvestorReport(currentDocument.id);
       setReport(result);
     } catch (err) {
       console.error('Report failed:', err);
+      const msg = 'Unable to generate the investor report. Please try again.';
+      setReportError(msg);
     } finally {
       setReportLoading(false);
     }
@@ -124,8 +132,14 @@ export default function DealRoomView() {
                 <p className="text-slate-400 text-sm max-w-sm mx-auto mb-4">
                   Create a VC-ready due diligence package for "<span className="font-medium text-slate-600">{currentDocument.name}</span>" with risk scores, market opportunity, and recommended actions.
                 </p>
+                {reportError && (
+                  <div className="mb-4 mx-auto max-w-sm bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-start gap-2">
+                    <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                    <span>{reportError}</span>
+                  </div>
+                )}
                 <button onClick={generateReport} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
-                  Generate Report
+                  {reportError ? 'Retry Report' : 'Generate Report'}
                 </button>
               </div>
             ) : (
@@ -140,6 +154,15 @@ export default function DealRoomView() {
               <div className="flex flex-col items-center justify-center py-16">
                 <div className="h-12 w-12 rounded-full border-[3px] border-slate-100 border-t-brand-600 animate-spin mb-4" />
                 <p className="text-sm text-slate-500">Loading portfolio...</p>
+              </div>
+            ) : portfolioError ? (
+              <div className="text-center py-12">
+                <AlertTriangle size={32} className="mx-auto text-red-400 mb-3" />
+                <h3 className="text-slate-600 font-semibold mb-1">Unable to Load Portfolio</h3>
+                <p className="text-red-500 text-sm mb-4">{portfolioError}</p>
+                <button onClick={loadPortfolio} className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors">
+                  Retry
+                </button>
               </div>
             ) : (
               <PortfolioContent data={portfolioRisk} onRefresh={loadPortfolio} />

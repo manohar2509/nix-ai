@@ -164,7 +164,7 @@ export function SyntheticFactoryPanel() {
         results.success++;
       } catch (err) {
         console.error(`KB upload failed for ${file.name}:`, err);
-        setUploadProgress((prev) => ({ ...prev, [fileId]: { status: 'failed', percent: 0, error: err.message } }));
+        setUploadProgress((prev) => ({ ...prev, [fileId]: { status: 'failed', percent: 0, error: 'Upload could not be completed' } }));
         results.failed++;
       }
     }
@@ -174,13 +174,13 @@ export function SyntheticFactoryPanel() {
     if (results.success > 0) {
       showToast({
         type: 'success',
-        title: 'KB Upload complete',
-        message: `${results.success} reference document(s) added to Knowledge Base${results.failed > 0 ? `, ${results.failed} failed` : ''}. Remember to Sync.`,
+        title: 'Upload complete',
+        message: `${results.success} reference document(s) added to Knowledge Base${results.failed > 0 ? `, ${results.failed} unsuccessful` : ''}. Remember to Sync.`,
       });
     }
 
     if (results.failed > 0 && results.success === 0) {
-      showToast({ type: 'error', title: 'Upload failed', message: 'All uploads failed. Check file formats and try again.' });
+      showToast({ type: 'error', title: 'Upload unsuccessful', message: 'All uploads could not be completed. Check file formats and try again.' });
     }
 
     setTimeout(() => {
@@ -193,9 +193,9 @@ export function SyntheticFactoryPanel() {
     try {
       await kbService.deleteDocument(kbDocId);
       removeKbDocument(kbDocId);
-      showToast({ type: 'success', title: 'Deleted', message: 'KB document removed. Sync to update Bedrock index.' });
+      showToast({ type: 'success', title: 'Deleted', message: 'Document removed. Sync to update the knowledge base.' });
     } catch (err) {
-      showToast({ type: 'error', title: 'Delete failed', message: err.message });
+      showToast({ type: 'error', title: 'Unable to delete', message: 'Could not remove the document. Please try again.' });
     } finally {
       setDeletingId(null);
     }
@@ -210,7 +210,7 @@ export function SyntheticFactoryPanel() {
       const response = await kbService.syncKnowledgeBase();
 
       if (response.deduplicated) {
-        showToast({ type: 'info', title: 'KB Sync already running', message: `Job ${response.jobId} is already in progress` });
+        showToast({ type: 'info', title: 'Sync already running', message: 'A knowledge base sync is already in progress.' });
         setSyncStatus(null);
         return;
       }
@@ -219,15 +219,15 @@ export function SyntheticFactoryPanel() {
         if (response.status === 'COMPLETE') {
           setSyncStatus('complete');
           setLastSyncTime(new Date().toLocaleString());
-          showToast({ type: 'success', title: 'KB Sync complete', message: 'Knowledge Base re-indexed successfully' });
+          showToast({ type: 'success', title: 'Sync complete', message: 'Knowledge Base updated successfully' });
         } else if (response.status === 'FAILED') {
           setSyncStatus('failed');
-          showToast({ type: 'error', title: 'KB Sync failed', message: response.error || 'Check backend logs' });
+          showToast({ type: 'error', title: 'Sync unsuccessful', message: 'The knowledge base sync could not be completed. Please try again.' });
         }
         return;
       }
 
-      showToast({ type: 'success', title: 'KB Sync started', message: `Job ${response.jobId} queued` });
+      showToast({ type: 'success', title: 'Sync started', message: 'Knowledge base sync is being processed...' });
       const delays = [2000, 3000, 5000, 5000, 8000, 8000, 10000, 10000];
       let status = response.status || 'QUEUED';
       for (const delay of delays) {
@@ -240,17 +240,17 @@ export function SyntheticFactoryPanel() {
       if (status === 'COMPLETE') {
         setSyncStatus('complete');
         setLastSyncTime(new Date().toLocaleString());
-        showToast({ type: 'success', title: 'KB Sync complete', message: 'Knowledge Base updated and re-indexed' });
+        showToast({ type: 'success', title: 'Sync complete', message: 'Knowledge Base updated successfully' });
       } else if (status === 'FAILED') {
         setSyncStatus('failed');
-        showToast({ type: 'error', title: 'KB Sync failed', message: 'Check logs for details' });
+        showToast({ type: 'error', title: 'Sync unsuccessful', message: 'The knowledge base sync could not be completed. Please try again.' });
       } else {
         setSyncStatus(null);
-        showToast({ type: 'info', title: 'KB Sync still processing', message: 'Running in the background.' });
+        showToast({ type: 'info', title: 'Sync still processing', message: 'Running in the background.' });
       }
     } catch (err) {
       setSyncStatus('failed');
-      showToast({ type: 'error', title: 'KB Sync failed', message: err.message });
+      showToast({ type: 'error', title: 'Sync unsuccessful', message: 'Something went wrong while syncing. Please try again.' });
     } finally {
       setIsKbSyncing(false);
       syncInFlightRef.current = false;
@@ -301,7 +301,7 @@ export function SyntheticFactoryPanel() {
           <Info size={14} className="text-purple-500 shrink-0 mt-0.5" />
           <p className="text-[10px] text-purple-700 leading-relaxed">
             <strong>Admin-only curated reference materials.</strong> Documents uploaded here
-            are indexed by Bedrock and become searchable by <em>all users</em> via RAG chat.
+            are indexed and become searchable by <em>all users</em> via AI chat.
             User trial documents are private and never enter the Knowledge Base.
           </p>
         </div>
@@ -437,10 +437,10 @@ export function SyntheticFactoryPanel() {
           <div className="flex items-center justify-between">
             <div>
               <h4 className="text-xs font-bold text-slate-700 uppercase tracking-[0.1em]">
-                Bedrock Sync
+                Knowledge Base Sync
               </h4>
               <p className="text-[10px] text-slate-500 mt-0.5">
-                Re-index KB documents so uploads/deletions take effect in RAG
+                Update the search index so uploads and deletions take effect
               </p>
             </div>
             {syncStatus === 'complete' && (
@@ -560,9 +560,9 @@ export function SyntheticFactoryPanel() {
           <p className="text-[10px] text-slate-500 leading-relaxed">
             <strong className="text-slate-600">How it works:</strong>{' '}
             Upload curated reference documents (FDA guidelines, regulatory templates, standard protocols)
-            → Documents are stored in the <strong>KB S3 bucket</strong> (separate from user uploads)
-            → Click <strong>Sync Knowledge Base</strong> to trigger Bedrock re-indexing
-            → Content becomes searchable by <em>all users</em> in the Consultant Chat via RAG.
+            → Documents are stored securely in the knowledge base (separate from user uploads)
+            → Click <strong>Sync Knowledge Base</strong> to update the search index
+            → Content becomes searchable by <em>all users</em> in the Consultant Chat.
           </p>
           <p className="text-[10px] text-red-500/80 leading-relaxed mt-2">
             <strong>⚠ Important:</strong> User trial documents are private and are NEVER added to the

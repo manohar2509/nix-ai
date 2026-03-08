@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Wand2, Loader2, ArrowRight, CheckCircle, Copy, Check } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import GuidelineRefBadge from './GuidelineRefBadge';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
-export default function ProtocolOptimizer({ docId }) {
+export default function ProtocolOptimizer({ docId, generatedAt }) {
   const optimization = useAppStore(s => s.optimization);
   const isLoading = useAppStore(s => s.isOptimizing);
   const setOpt = useAppStore(s => s.setOptimization);
@@ -18,6 +20,7 @@ export default function ProtocolOptimizer({ docId }) {
     try {
       const result = await strategicService.optimizeProtocol(docId);
       setOpt(result);
+      useAppStore.getState().updateStrategicTimestamp('optimization', new Date().toISOString());
     } catch (err) {
       console.error('Optimize failed:', err);
     } finally {
@@ -50,8 +53,8 @@ export default function ProtocolOptimizer({ docId }) {
         <div className="h-20 w-20 bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <Wand2 size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Protocol Optimizer</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Generate specific protocol text rewrites for each finding. See original text, optimized text, and guideline justification side-by-side.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Protocol Rewrite Suggestions</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Generate specific protocol text rewrites for each finding — with original text, improved text, and the exact guideline citation justifying each change.</p>
         <button onClick={optimize} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Generate Optimizations
         </button>
@@ -174,11 +177,11 @@ export default function ProtocolOptimizer({ docId }) {
                   <div className="text-[10px] text-brand-600 font-bold mb-0.5">📋 Regulatory Justification</div>
                   <p className="text-[11px] text-slate-700">{item.regulatory_justification}</p>
                   {item.guideline_refs?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {item.guideline_refs.map((ref, i) => (
-                        <span key={i} className="text-[9px] bg-white text-brand-600 px-1.5 py-0.5 rounded border border-brand-200">{ref}</span>
-                      ))}
-                    </div>
+                    <GuidelineRefBadge refs={
+                      item.guideline_refs.map(ref =>
+                        typeof ref === 'string' ? { code: ref } : ref
+                      )
+                    } />
                   )}
                 </div>
 
@@ -196,9 +199,12 @@ export default function ProtocolOptimizer({ docId }) {
         );
       })}
 
-      <button onClick={optimize} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Regenerate Optimizations
-      </button>
+      <CacheStatusBanner
+        generatedAt={generatedAt}
+        onRegenerate={optimize}
+        isLoading={isLoading}
+        label="protocol optimization"
+      />
     </div>
   );
 }

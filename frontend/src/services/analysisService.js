@@ -46,8 +46,7 @@ export const analysisService = {
       return res.data; // { jobId, status: 'QUEUED' }
     } catch (error) {
       throw {
-        message: 'Failed to start analysis',
-        details: error.message,
+        message: 'Unable to start the analysis. Please try again.',
       };
     }
   },
@@ -62,8 +61,7 @@ export const analysisService = {
       return res.data; // { jobId, status, progress, result }
     } catch (error) {
       throw {
-        message: 'Failed to fetch analysis status',
-        details: error.message,
+        message: 'Unable to check analysis progress. Please try again.',
       };
     }
   },
@@ -78,8 +76,7 @@ export const analysisService = {
       return res.data; // { regulatorScore, payerScore, findings, ... }
     } catch (error) {
       throw {
-        message: 'Failed to fetch analysis results',
-        details: error.message,
+        message: 'Unable to load analysis results. Please try again.',
       };
     }
   },
@@ -94,8 +91,7 @@ export const analysisService = {
       return res.data; // New jobId
     } catch (error) {
       throw {
-        message: 'Failed to retry analysis',
-        details: error.message,
+        message: 'Unable to retry the analysis. Please try again.',
       };
     }
   },

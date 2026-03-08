@@ -67,7 +67,7 @@ export default function ChatInterface({ currentDocument }) {
       setShowSuggestions(true);
       showToast({ type: 'success', title: 'Conversation cleared', message: 'Chat history has been removed.' });
     } catch {
-      showToast({ type: 'error', title: 'Clear failed', message: 'Could not clear conversation history.' });
+      showToast({ type: 'error', title: 'Unable to clear', message: 'Could not clear conversation history. Please try again.' });
     }
   };
 
@@ -96,6 +96,8 @@ export default function ChatInterface({ currentDocument }) {
             role: m.role === 'assistant' ? 'ai' : m.role,
             text: m.text,
             citations: m.citations,
+            kb_grounded: m.kb_grounded,
+            grounding_source: m.grounding_source,
             time: m.created_at || '',
           }));
           setChatMessages(formatted);
@@ -185,7 +187,7 @@ export default function ChatInterface({ currentDocument }) {
             text: 'Sorry, I encountered an error processing your request. Please try again.',
             isStreaming: false,
           });
-          showToast({ type: 'error', title: 'Chat error', message: errorMsg });
+          showToast({ type: 'error', title: 'Unable to respond', message: 'Something went wrong. Please try sending your message again.' });
         },
       });
     } catch (err) {
@@ -194,7 +196,7 @@ export default function ChatInterface({ currentDocument }) {
         text: 'Sorry, I encountered an error processing your request. Please try again.',
         isStreaming: false,
       });
-      showToast({ type: 'error', title: 'Chat error', message: err.message || 'Failed to get response' });
+      showToast({ type: 'error', title: 'Unable to respond', message: 'Something went wrong. Please try sending your message again.' });
     } finally {
       setIsChatLoading(false);
     }
@@ -295,6 +297,8 @@ function MessageBubble({ msg, onFeedback }) {
   const [showCitations, setShowCitations] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(null);
   const hasCitations = isAI && msg.citations && msg.citations.length > 0;
+  const isKBGrounded = msg.kb_grounded === true;
+  const isAIInference = msg.grounding_source === 'regulatory_authority' || (!msg.kb_grounded && !!msg.grounding_source);
 
   return (
     <div className={cn('flex gap-3 animate-fade-in', !isAI && 'flex-row-reverse')}>
@@ -329,16 +333,36 @@ function MessageBubble({ msg, onFeedback }) {
               className="inline-flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-800 transition-colors py-1"
             >
               <BookOpen size={11} />
-              <span>{msg.citations.length} reference{msg.citations.length !== 1 ? 's' : ''}</span>
+              <span>{msg.citations.length} source{msg.citations.length !== 1 ? 's' : ''} cited</span>
               {showCitations ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
             </button>
             {showCitations && (
-              <div className="mt-1 space-y-1 animate-fade-in">
+              <div className="mt-1 space-y-1.5 animate-fade-in">
+                {!isKBGrounded && (
+                  <div className="text-[10px] text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-2 mb-1 leading-relaxed">
+                    <span className="font-semibold">Official regulatory sources —</span>{' '}
+                    These citations reference publicly published guidelines from ICH, FDA, EMA, and HTA bodies. Click any source to open the official document.
+                  </div>
+                )}
+                {isKBGrounded && (
+                  <div className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-2 mb-1 leading-relaxed">
+                    ✓ <span className="font-semibold">Sourced from your Document Library</span> — Answers are grounded on the regulatory documents your team has uploaded.
+                  </div>
+                )}
                 {msg.citations.map((cit, i) => (
                   <CitationPill key={i} citation={cit} />
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Regulatory training data notice (no citations) */}
+        {isAI && !isStreaming && !hasCitations && isAIInference && (
+          <div className="px-1 mt-1">
+            <div className="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 rounded px-2 py-1.5">
+              Based on regulatory training data — populate your Document Library for document-specific answers
+            </div>
           </div>
         )}
 
@@ -376,40 +400,99 @@ function MessageBubble({ msg, onFeedback }) {
   );
 }
 
+/* ── Source type config ── */
+const SOURCE_CONFIG = {
+  ICH: {
+    label: 'ICH Guideline',
+    colors: 'bg-blue-50 border-blue-200 text-blue-800',
+    badge: 'bg-blue-100 text-blue-700',
+    icon: '📋',
+  },
+  FDA: {
+    label: 'FDA Guidance',
+    colors: 'bg-indigo-50 border-indigo-200 text-indigo-800',
+    badge: 'bg-indigo-100 text-indigo-700',
+    icon: '🏛️',
+  },
+  EMA: {
+    label: 'EMA Guideline',
+    colors: 'bg-violet-50 border-violet-200 text-violet-800',
+    badge: 'bg-violet-100 text-violet-700',
+    icon: '🇪🇺',
+  },
+  HTA: {
+    label: 'HTA Standard',
+    colors: 'bg-amber-50 border-amber-200 text-amber-800',
+    badge: 'bg-amber-100 text-amber-700',
+    icon: '💊',
+  },
+  knowledge_base: {
+    label: 'Document Library',
+    colors: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+    badge: 'bg-emerald-100 text-emerald-700',
+    icon: '📂',
+  },
+};
+
 /* ── Citation Pill ── */
 function CitationPill({ citation }) {
   const sourceType = citation.source_type || 'knowledge_base';
-  const typeColors = {
-    ICH: 'bg-blue-50 border-blue-200 text-blue-700',
-    FDA: 'bg-indigo-50 border-indigo-200 text-indigo-700',
-    EMA: 'bg-violet-50 border-violet-200 text-violet-700',
-    HTA: 'bg-amber-50 border-amber-200 text-amber-700',
-    knowledge_base: 'bg-slate-50 border-slate-200 text-slate-600',
-  };
-  const colorClass = typeColors[sourceType] || typeColors.knowledge_base;
+  const config = SOURCE_CONFIG[sourceType] || SOURCE_CONFIG.knowledge_base;
 
   const hasUrl = citation.url && citation.url !== '#';
   const Tag = hasUrl ? 'a' : 'div';
-  const linkProps = hasUrl ? { href: citation.url, target: '_blank', rel: 'noopener noreferrer' } : {};
+  const linkProps = hasUrl
+    ? { href: citation.url, target: '_blank', rel: 'noopener noreferrer' }
+    : {};
+
+  // Build a clean display name from the source filename or code
+  const displayName = citation.source
+    ? citation.source.replace(/[-_]/g, ' ').replace(/\.(pdf|json|txt|md|docx?)$/i, '')
+    : config.label;
 
   return (
     <Tag
       {...linkProps}
       className={cn(
-        'flex items-start gap-2 px-2.5 py-1.5 rounded-lg border text-[11px] transition-colors',
-        colorClass,
-        hasUrl && 'hover:opacity-80 cursor-pointer'
+        'flex items-start gap-2.5 px-3 py-2 rounded-lg border text-[11px] transition-all',
+        config.colors,
+        hasUrl && 'hover:shadow-sm hover:opacity-90 cursor-pointer'
       )}
       title={citation.text || citation.source}
     >
+      {/* Source type icon */}
+      <span className="text-sm shrink-0 mt-px">{config.icon}</span>
+
       <div className="flex-1 min-w-0">
-        <div className="font-semibold truncate">{citation.source || 'Source'}</div>
-        {citation.section && <span className="text-[10px] opacity-70">§ {citation.section}</span>}
+        {/* Header row: type badge + document name */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className={cn('text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded', config.badge)}>
+            {config.label}
+          </span>
+          {citation.section && (
+            <span className="text-[10px] font-semibold opacity-70">§ {citation.section}</span>
+          )}
+          {citation.score != null && (
+            <span className="text-[9px] opacity-50 ml-auto">{Math.round(citation.score * 100)}% match</span>
+          )}
+        </div>
+
+        {/* Document / guideline name */}
+        <div className="font-semibold mt-0.5 leading-tight">{displayName}</div>
+
+        {/* Excerpt */}
         {citation.text && (
-          <p className="text-[10px] opacity-70 line-clamp-2 mt-0.5">{citation.text}</p>
+          <p className="text-[10px] opacity-70 line-clamp-2 mt-0.5 leading-relaxed">{citation.text}</p>
+        )}
+
+        {/* Link row */}
+        {hasUrl && (
+          <div className="flex items-center gap-1 mt-1 text-[10px] font-medium opacity-80">
+            <ExternalLink size={9} />
+            <span>Open official document</span>
+          </div>
         )}
       </div>
-      {hasUrl && <ExternalLink size={10} className="shrink-0 mt-0.5 opacity-50" />}
     </Tag>
   );
 }

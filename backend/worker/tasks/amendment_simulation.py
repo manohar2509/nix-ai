@@ -27,6 +27,12 @@ def process_amendment_simulation(payload: dict) -> None:
         amendment_text:  str
         user_id:         str
     """
+    # Validate required payload keys upfront
+    _required = ("job_id", "doc_id", "sim_id", "amendment_text")
+    _missing = [k for k in _required if k not in payload]
+    if _missing:
+        raise ValueError(f"Missing required payload keys: {_missing}")
+
     job_id = payload["job_id"]
     doc_id = payload["doc_id"]
     sim_id = payload["sim_id"]

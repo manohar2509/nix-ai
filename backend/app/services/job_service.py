@@ -138,6 +138,31 @@ def retry_job(user: CurrentUser, job_id: str) -> dict:
             user_id=user.user_id,
             sync_params=params or None,
         )
+    elif job_type == "SIMULATE_AMENDMENT":
+        sqs_service.send_simulation_task(
+            job_id=new_job["id"],
+            doc_id=params.get("doc_id", ""),
+            sim_id=params.get("sim_id", ""),
+            amendment_text=params.get("amendment_text", ""),
+            user_id=user.user_id,
+        )
+    elif job_type == "COMPARE_PROTOCOLS":
+        sqs_service.send_comparison_task(
+            job_id=new_job["id"],
+            cmp_id=params.get("cmp_id", ""),
+            document_ids=params.get("document_ids", []),
+            user_id=user.user_id,
+        )
+    elif job_type == "RUN_BOARDROOM_DEBATE":
+        sqs_service.send_boardroom_debate_task(
+            job_id=new_job["id"],
+            debate_id=params.get("debate_id", ""),
+            doc_id=params.get("doc_id", ""),
+            user_id=user.user_id,
+            max_rounds=params.get("max_rounds", 3),
+        )
+    else:
+        logger.warning("Unknown job type %s for retry — job created but not queued", job_type)
 
     return {"newJobId": new_job["id"], "status": "QUEUED"}
 

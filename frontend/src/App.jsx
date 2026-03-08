@@ -15,10 +15,12 @@ import ComparisonView from './components/ComparisonView';
 import DealRoomView from './components/DealRoomView';
 import { UploadDialog } from './components/UploadDialog';
 import Toast from './components/Toast';
+import PlatformTour from './components/PlatformTour';
 import { useAppStore, useDocuments, useAnalysis } from './stores/useAppStore';
 import { analysisService } from './services/analysisService';
 import { documentService } from './services/documentService';
 import { useThemeInit } from './hooks/useTheme';
+import { useStrategicCache } from './hooks/useCustomHooks';
 
 /* ── Main Dashboard Layout (Authenticated) ── */
 function DashboardLayout() {
@@ -34,6 +36,13 @@ function DashboardLayout() {
   const { currentDocument, documents } = useDocuments();
   const { isAnalyzing, lastAnalysis } = useAnalysis();
   const activeView = useAppStore((state) => state.activeView);
+
+  // Load cached strategic intelligence results when document changes
+  // This ensures page reloads don't lose AI-generated content
+  useStrategicCache(currentDocument?.id);
+
+  // Read timestamps from Zustand (survives tab switches, updated on regenerate)
+  const cacheTimestamps = useAppStore((state) => state.strategicTimestamps);
 
   const setIsAnalyzing = useAppStore((state) => state.setIsAnalyzing);
   const setLastAnalysis = useAppStore((state) => state.setLastAnalysis);
@@ -104,6 +113,29 @@ function DashboardLayout() {
     }
   }, [currentDocument?.id, currentDocument?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Clear stale strategic intelligence state when switching documents.
+  // The useStrategicCache hook will then re-populate from the backend cache.
+  const prevDocRef = React.useRef(null);
+  useEffect(() => {
+    if (!currentDocument?.id) return;
+    if (prevDocRef.current && prevDocRef.current !== currentDocument.id) {
+      // Document changed — clear old strategic state
+      const store = useAppStore.getState();
+      store.setFrictionMap(null);
+      store.setCostAnalysis(null);
+      store.setPayerSimulation(null);
+      store.setSubmissionStrategy(null);
+      store.setOptimization(null);
+      store.setWatchdogAlerts(null);
+      store.setInvestorReport(null);
+      store.setCouncilSession(null);
+      store.setClauseLibrary(null);
+      store.setStrategicTimestamps({});
+      store.clearDebate();
+    }
+    prevDocRef.current = currentDocument.id;
+  }, [currentDocument?.id]);
+
   // Real analysis flow — calls backend → Bedrock → returns results
   // In local dev: analysis runs inline (no SQS), response comes back immediately
   // In production: analysis runs via SQS → Worker Lambda, frontend polls with backoff
@@ -160,7 +192,7 @@ function DashboardLayout() {
       _refreshDocuments();
     } catch (err) {
       updateDocument(currentDocument.id, { status: 'error' });
-      showToast({ type: 'error', title: 'Analysis failed', message: err.message || 'The regulatory analysis could not be completed. Please try again.' });
+      showToast({ type: 'error', title: 'Analysis unsuccessful', message: 'The regulatory analysis could not be completed. Please try again.' });
       // Refresh document list to get backend truth (may have been set to 'error' by worker)
       _refreshDocuments();
     } finally {
@@ -293,6 +325,7 @@ function DashboardLayout() {
                 hasAnalyzed={hasAnalyzed}
                 currentDocument={currentDocument}
                 lastAnalysis={lastAnalysis}
+                cacheTimestamps={cacheTimestamps}
               />
             </div>
           </main>
@@ -301,6 +334,7 @@ function DashboardLayout() {
 
       <UploadDialog isOpen={showUpload} onClose={() => setShowUpload(false)} />
       <Toast />
+      <PlatformTour />
     </div>
   );
 }

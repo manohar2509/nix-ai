@@ -35,6 +35,8 @@ from worker.boardroom.agents import (
     REGULATOR_SYSTEM_PROMPT,
     PAYER_SYSTEM_PROMPT,
     PATIENT_SYSTEM_PROMPT,
+)
+from worker.boardroom.tools import (
     REGULATOR_TOOLS,
     PAYER_TOOLS,
     PATIENT_TOOLS,
@@ -46,24 +48,24 @@ logger = logging.getLogger(__name__)
 # Agent configurations
 AGENTS = {
     "Regulator": {
-        "display_name": "Dr. No",
-        "role": "The Regulator",
+        "display_name": "Regulatory Expert",
+        "role": "Chief Regulatory Officer",
         "system_prompt": REGULATOR_SYSTEM_PROMPT,
         "tools": REGULATOR_TOOLS,
         "icon": "shield",
         "color": "red",
     },
     "Payer": {
-        "display_name": "The Accountant",
-        "role": "The Payer",
+        "display_name": "Commercial Director",
+        "role": "Market Access Lead",
         "system_prompt": PAYER_SYSTEM_PROMPT,
         "tools": PAYER_TOOLS,
         "icon": "dollar-sign",
         "color": "amber",
     },
     "Patient": {
-        "display_name": "The Voice",
-        "role": "The Patient Advocate",
+        "display_name": "Patient Advocate",
+        "role": "Patient & Community Lead",
         "system_prompt": PATIENT_SYSTEM_PROMPT,
         "tools": PATIENT_TOOLS,
         "icon": "heart",
@@ -210,117 +212,137 @@ def run_boardroom_debate(
     current_round = 0
     spoken_this_round = []
 
-    # Append opening announcement
-    opening_turn = {
-        "agent": "Chairman",
-        "role": "Board Chairman",
-        "content": (
-            f"The Adversarial Council is now in session for protocol: {ctx['doc_name']}. "
-            f"Current scores — Regulatory: {ctx['regulator_score']}/100, "
-            f"Payer: {ctx['payer_score']}/100. "
-            f"We have {len(topics)} issues to debate. Let us begin."
-        ),
-        "round_number": 0,
-        "tool_calls": [],
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-    transcript.append(opening_turn)
-    dynamo_service.append_debate_transcript_turn(debate_id, opening_turn)
+    try:
+        # Append opening announcement
+        opening_turn = {
+            "agent": "Chairman",
+            "role": "Panel Chairperson",
+            "content": (
+                f"The AI Expert Panel is now in session for protocol: {ctx['doc_name']}. "
+                f"Current scores — Regulatory: {ctx['regulator_score']}/100, "
+                f"Payer: {ctx['payer_score']}/100. "
+                f"We have {len(topics)} issues to debate. Let us begin."
+            ),
+            "round_number": 0,
+            "tool_calls": [],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        transcript.append(opening_turn)
+        dynamo_service.append_debate_transcript_turn(debate_id, opening_turn)
 
-    # Update progress
-    dynamo_service.update_debate(debate_id, {
-        "current_round": 0,
-        "total_rounds": min(max_rounds, len(topics)),
-        "progress": 5,
-    })
-
-    for round_idx in range(max_rounds):
-        current_round = round_idx + 1
-        spoken_this_round = []
-        topic = topics[round_idx] if round_idx < len(topics) else f"General protocol assessment (Round {current_round})"
-
-        logger.info("Debate %s: Round %d — Topic: %s", debate_id, current_round, topic[:80])
-
-        # Update round info
+        # Update progress
         dynamo_service.update_debate(debate_id, {
-            "current_round": current_round,
-            "current_topic": topic,
-            "progress": int(10 + (round_idx / max_rounds) * 80),
+            "current_round": 0,
+            "total_rounds": min(max_rounds, len(topics)),
+            "progress": 5,
         })
 
-        # ── Run each agent in order ──
-        for agent_name in ["Regulator", "Payer", "Patient"]:
-            agent_config = AGENTS[agent_name]
+        for round_idx in range(max_rounds):
+            current_round = round_idx + 1
+            spoken_this_round = []
+            topic = topics[round_idx] if round_idx < len(topics) else f"General protocol assessment (Round {current_round})"
 
-            try:
-                result = invoke_agent(
-                    agent_name=agent_name,
-                    system_prompt=agent_config["system_prompt"],
-                    tool_registry=agent_config["tools"],
-                    protocol_context=ctx["context_text"],
-                    debate_history=transcript,
-                    current_topic=topic,
-                )
+            logger.info("Debate %s: Round %d — Topic: %s", debate_id, current_round, topic[:80])
 
-                # Enrich with display metadata
-                result["role"] = f"{agent_config['display_name']} ({agent_config['role']})"
-                result["round_number"] = current_round
-                result["topic"] = topic
-                result["icon"] = agent_config["icon"]
-                result["color"] = agent_config["color"]
+            # Update round info
+            dynamo_service.update_debate(debate_id, {
+                "current_round": current_round,
+                "current_topic": topic,
+                "progress": int(10 + (round_idx / max_rounds) * 80),
+            })
 
-                transcript.append(result)
-                spoken_this_round.append(agent_name)
+            # ── Run each agent in order ──
+            for agent_name in ["Regulator", "Payer", "Patient"]:
+                agent_config = AGENTS[agent_name]
 
-                # ── CRITICAL: Write to DynamoDB immediately ──
-                # This is what makes the UI animate in real-time
-                dynamo_service.append_debate_transcript_turn(debate_id, result)
+                try:
+                    result = invoke_agent(
+                        agent_name=agent_name,
+                        system_prompt=agent_config["system_prompt"],
+                        tool_registry=agent_config["tools"],
+                        protocol_context=ctx["context_text"],
+                        debate_history=transcript,
+                        current_topic=topic,
+                    )
 
-                logger.info(
-                    "Debate %s: %s spoke (%d chars, %d tool calls)",
-                    debate_id, agent_name,
-                    len(result.get("content", "")),
-                    len(result.get("tool_calls", [])),
-                )
+                    # Enrich with display metadata
+                    result["role"] = f"{agent_config['display_name']} ({agent_config['role']})"
+                    result["round_number"] = current_round
+                    result["topic"] = topic
+                    result["icon"] = agent_config["icon"]
+                    result["color"] = agent_config["color"]
 
-            except Exception as exc:
-                logger.error(
-                    "Debate %s: %s failed: %s",
-                    debate_id, agent_name, exc
-                )
-                error_turn = {
-                    "agent": agent_name,
-                    "role": f"{agent_config['display_name']} ({agent_config['role']})",
-                    "content": f"[{agent_name} encountered a technical issue and could not respond]",
-                    "round_number": current_round,
-                    "tool_calls": [],
-                    "error": str(exc),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
-                transcript.append(error_turn)
-                dynamo_service.append_debate_transcript_turn(debate_id, error_turn)
+                    transcript.append(result)
+                    spoken_this_round.append(agent_name)
 
-        # ── Check if Supervisor says FINISH ──
-        supervisor_decision = invoke_supervisor(
-            debate_history=transcript,
-            spoken_this_round=spoken_this_round,
-            current_round=current_round,
-            max_rounds=max_rounds,
-        )
+                    # ── CRITICAL: Write to DynamoDB immediately ──
+                    # This is what makes the UI animate in real-time
+                    dynamo_service.append_debate_transcript_turn(debate_id, result)
 
-        if supervisor_decision == "FINISH":
-            logger.info("Debate %s: Supervisor called FINISH after round %d", debate_id, current_round)
-            break
+                    logger.info(
+                        "Debate %s: %s spoke (%d chars, %d tool calls)",
+                        debate_id, agent_name,
+                        len(result.get("content", "")),
+                        len(result.get("tool_calls", [])),
+                    )
+
+                except Exception as exc:
+                    logger.error(
+                        "Debate %s: %s failed: %s",
+                        debate_id, agent_name, exc
+                    )
+                    error_turn = {
+                        "agent": agent_name,
+                        "role": f"{agent_config['display_name']} ({agent_config['role']})",
+                        "content": f"[{agent_name} encountered a technical issue and could not respond]",
+                        "round_number": current_round,
+                        "tool_calls": [],
+                        "error": str(exc),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                    transcript.append(error_turn)
+                    dynamo_service.append_debate_transcript_turn(debate_id, error_turn)
+
+            # ── Check if Supervisor says FINISH ──
+            supervisor_decision = invoke_supervisor(
+                debate_history=transcript,
+                spoken_this_round=spoken_this_round,
+                current_round=current_round,
+                max_rounds=max_rounds,
+            )
+
+            if supervisor_decision == "FINISH":
+                logger.info("Debate %s: Supervisor called FINISH after round %d", debate_id, current_round)
+                break
+
+    except Exception as exc:
+        # Catastrophic error in the debate loop — mark as FAILED
+        logger.error("Debate %s: Catastrophic failure in debate loop: %s", debate_id, exc, exc_info=True)
+        dynamo_service.update_debate(debate_id, {
+            "status": "FAILED",
+            "error": f"Debate loop failed: {str(exc)[:500]}",
+            "rounds_completed": current_round,
+            "total_turns": len(transcript),
+        })
+        return {"error": str(exc), "debate_id": debate_id, "partial_transcript": transcript}
 
     # ── Step 5: Generate final verdict ──
     dynamo_service.update_debate(debate_id, {"progress": 90, "current_topic": "Generating final verdict..."})
 
-    verdict = generate_final_verdict(
-        debate_transcript=transcript,
-        protocol_context=ctx["context_text"],
-        regulator_score=ctx["regulator_score"],
-        payer_score=ctx["payer_score"],
-    )
+    try:
+        verdict = generate_final_verdict(
+            debate_transcript=transcript,
+            protocol_context=ctx["context_text"],
+            regulator_score=ctx["regulator_score"],
+            payer_score=ctx["payer_score"],
+        )
+    except Exception as exc:
+        logger.error("Debate %s: Failed to generate verdict: %s", debate_id, exc)
+        verdict = {
+            "executive_summary": "The debate concluded but verdict generation failed due to a technical error.",
+            "error": str(exc),
+            "recommendations": [],
+        }
 
     # Append verdict as final turn
     verdict_turn = {
@@ -358,6 +380,38 @@ def run_boardroom_debate(
     result["rounds_completed"] = current_round
     result["total_turns"] = len(transcript)
     result["elapsed_seconds"] = round(elapsed, 1)
+    result["status"] = "COMPLETED"
+    result["scores"] = {
+        "regulator": ctx.get("regulator_score", 0),
+        "payer": ctx.get("payer_score", 0),
+        "global_readiness": ctx.get("global_readiness_score", 0),
+    }
+    result["protocol_name"] = ctx.get("doc_name", "")
+
+    # ── Persist completed debate into STRATEGIC cache ──
+    # This makes the full transcript available via GET /strategic/documents/{doc_id}/cached
+    # so the frontend can restore it on page reload without re-running the debate.
+    try:
+        analysis = ctx.get("analysis", {})
+        from app.services.dynamo_service import save_strategic_result
+        import hashlib, json
+        analysis_hash = hashlib.md5(
+            json.dumps({
+                "rs": analysis.get("regulator_score", 0),
+                "ps": analysis.get("payer_score", 0),
+                "fc": len(analysis.get("findings", [])),
+            }, sort_keys=True).encode()
+        ).hexdigest()[:12]
+        save_strategic_result(
+            doc_id=doc_id,
+            feature_key="council_debate",
+            result=result,
+            analysis_hash=analysis_hash,
+        )
+        logger.info("Debate %s persisted to strategic cache for doc %s", debate_id, doc_id)
+    except Exception as cache_exc:
+        logger.warning("Could not persist debate to strategic cache: %s", cache_exc)
+
     return result
 
 
@@ -470,7 +524,7 @@ def _build_council_response(
     # Build opening summary
     opening = next(
         (t["content"] for t in transcript if t.get("agent") == "Chairman" and t.get("round_number", 0) == 0),
-        f"Adversarial Council session for: {ctx['doc_name']}",
+        f"AI Expert Panel session for: {ctx['doc_name']}",
     )
 
     return {

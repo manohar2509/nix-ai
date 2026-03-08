@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Flame, Loader2, AlertTriangle, Shield, DollarSign, Zap, Info } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import GuidelineRefBadge from './GuidelineRefBadge';
+import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
 const riskColors = {
@@ -23,7 +25,7 @@ function RiskBar({ value, color, label }) {
   );
 }
 
-export default function FrictionHeatmap({ docId }) {
+export default function FrictionHeatmap({ docId, generatedAt }) {
   const frictionMap = useAppStore(s => s.frictionMap);
   const isLoading = useAppStore(s => s.isFrictionLoading);
   const setFriction = useAppStore(s => s.setFrictionMap);
@@ -36,6 +38,7 @@ export default function FrictionHeatmap({ docId }) {
     try {
       const result = await strategicService.getFrictionMap(docId);
       setFriction(result);
+      useAppStore.getState().updateStrategicTimestamp('friction_map', new Date().toISOString());
     } catch (err) {
       console.error('Friction map failed:', err);
     } finally {
@@ -62,8 +65,8 @@ export default function FrictionHeatmap({ docId }) {
         <div className="h-20 w-20 bg-gradient-to-br from-red-50 to-amber-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <Flame size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Strategic Friction Heatmap</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Visualize where regulatory requirements and commercial objectives conflict in your protocol — and find the resolution path.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Regulatory vs. Commercial Conflict Map</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Identify protocol sections where regulatory requirements and commercial objectives pull in opposite directions — and find the best resolution path.</p>
         <button onClick={generate} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Generate Friction Map
         </button>
@@ -85,7 +88,7 @@ export default function FrictionHeatmap({ docId }) {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Flame size={16} className={overall.score > 60 ? 'text-red-500' : overall.score > 30 ? 'text-amber-500' : 'text-emerald-500'} />
-            <span className="text-sm font-bold text-slate-800">Overall Protocol Friction</span>
+            <span className="text-sm font-bold text-slate-800">Overall Protocol Conflict Score</span>
           </div>
           <span className={cn('text-2xl font-black', overall.score > 60 ? 'text-red-600' : overall.score > 30 ? 'text-amber-600' : 'text-emerald-600')}>
             {overall.score}<span className="text-sm font-normal text-slate-400">/100</span>
@@ -102,6 +105,12 @@ export default function FrictionHeatmap({ docId }) {
       </div>
 
       {/* Section Heatmap Grid */}
+      <div className="flex items-center gap-4 px-1 py-1.5 text-[10px] text-slate-500 bg-slate-50 rounded-lg border border-slate-100">
+        <span className="font-semibold text-slate-600">Score key:</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Reg = Regulatory Risk</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Com = Commercial Risk</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-400 inline-block" /> Gap = Conflict Score (higher = harder to resolve)</span>
+      </div>
       <div className="grid gap-2">
         {sections.map((section) => {
           const rc = riskColors[section.risk_category] || riskColors.low_risk;
@@ -129,8 +138,8 @@ export default function FrictionHeatmap({ docId }) {
 
                 <div className="space-y-1.5">
                   <RiskBar value={section.regulatory_risk} color="bg-red-400" label="Reg" />
-                  <RiskBar value={section.commercial_risk} color="bg-amber-400" label="Comm" />
-                  <RiskBar value={section.friction_score} color="bg-purple-400" label="Δ" />
+                  <RiskBar value={section.commercial_risk} color="bg-amber-400" label="Com" />
+                  <RiskBar value={section.friction_score} color="bg-purple-400" label="Gap" />
                 </div>
 
                 {isSelected && (
@@ -151,11 +160,11 @@ export default function FrictionHeatmap({ docId }) {
                       </div>
                     )}
                     {section.guideline_refs?.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {section.guideline_refs.map((ref, i) => (
-                          <span key={i} className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{ref}</span>
-                        ))}
-                      </div>
+                      <GuidelineRefBadge refs={
+                        section.guideline_refs.map(ref =>
+                          typeof ref === 'string' ? { code: ref } : ref
+                        )
+                      } />
                     )}
                   </div>
                 )}
@@ -165,9 +174,12 @@ export default function FrictionHeatmap({ docId }) {
         })}
       </div>
 
-      <button onClick={generate} className="w-full py-2 text-xs font-medium text-brand-600 border border-brand-200 rounded-lg hover:bg-brand-50 transition-colors">
-        Regenerate Friction Map
-      </button>
+      <CacheStatusBanner
+        generatedAt={generatedAt}
+        onRegenerate={generate}
+        isLoading={isLoading}
+        label="friction map"
+      />
     </div>
   );
 }

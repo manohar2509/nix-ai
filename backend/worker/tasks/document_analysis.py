@@ -35,6 +35,12 @@ def process_document_analysis(payload: dict) -> None:
         s3_key: str
         user_id: str
     """
+    # Validate required payload keys upfront
+    _required = ("job_id", "doc_id", "s3_key")
+    _missing = [k for k in _required if k not in payload]
+    if _missing:
+        raise ValueError(f"Missing required payload keys: {_missing}")
+
     job_id = payload["job_id"]
     doc_id = payload["doc_id"]
     s3_key = payload["s3_key"]
@@ -159,15 +165,24 @@ def process_document_analysis(payload: dict) -> None:
         # 5. Sanitise scores — Bedrock returns Python floats which
         #    DynamoDB rejects ("Float types are not supported").
         #    Round to 1 decimal place to preserve precision.
-        reg_score = round(float(analysis_result.get("regulatorScore", 0) or 0), 1)
-        pay_score = round(float(analysis_result.get("payerScore", 0) or 0), 1)
+        def _safe_float(val, default=0.0):
+            try:
+                return round(float(val or 0), 1)
+            except (ValueError, TypeError):
+                return default
+
+        reg_score = _safe_float(analysis_result.get("regulatorScore", 0))
+        pay_score = _safe_float(analysis_result.get("payerScore", 0))
         findings  = analysis_result.get("findings", []) or []
         summary   = str(analysis_result.get("summary", "") or "")
-        tables_n  = int(analysis_result.get("tables_detected", 0) or 0)
+        try:
+            tables_n = int(analysis_result.get("tables_detected", 0) or 0)
+        except (ValueError, TypeError):
+            tables_n = 0
 
         # 5a. Enhanced regulatory intelligence fields (REQ-1 through REQ-7)
         jurisdiction_scores = analysis_result.get("jurisdiction_scores", []) or []
-        global_readiness    = round(float(analysis_result.get("global_readiness_score", 0) or 0), 1)
+        global_readiness    = _safe_float(analysis_result.get("global_readiness_score", 0))
         payer_gaps          = analysis_result.get("payer_gaps", []) or []
         hta_body_scores     = analysis_result.get("hta_body_scores", {}) or {}
 
@@ -199,6 +214,19 @@ def process_document_analysis(payload: dict) -> None:
 
         # 6. Update document status
         dynamo_service.update_document(doc_id, {"status": "analyzed"})
+
+        # 6b. Invalidate stale strategic cache — analysis changed, so
+        #     cached strategic results (friction map, cost analysis, etc.)
+        #     were computed from old analysis data and are now stale.
+        try:
+            deleted_count = dynamo_service.delete_strategic_results(doc_id)
+            if deleted_count:
+                logger.info(
+                    "Invalidated %d stale strategic cache entries for doc %s",
+                    deleted_count, doc_id,
+                )
+        except Exception as cache_exc:
+            logger.warning("Failed to invalidate strategic cache for doc %s: %s", doc_id, cache_exc)
 
         # 7. Mark job as COMPLETE
         duration_s = round(time.time() - start_time, 2)

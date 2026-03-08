@@ -132,11 +132,11 @@ export function UploadDialog({ isOpen, onClose }) {
       handleClose();
     } catch (err) {
       console.error('Upload failed:', err);
-      setError(err.message || 'Upload failed. Please try again.');
+      setError('Upload could not be completed. Please try again.');
       showToast({
         type: 'error',
-        title: 'Upload failed',
-        message: err.message,
+        title: 'Upload unsuccessful',
+        message: 'Something went wrong during the upload. Please try again.',
       });
     } finally {
       setIsUploading(false);

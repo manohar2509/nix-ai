@@ -23,8 +23,7 @@ export const analyticsService = {
       return res.data;
     } catch (error) {
       throw {
-        message: 'Failed to fetch dashboard analytics',
-        details: error.message,
+        message: 'Unable to load dashboard data. Please try refreshing.',
       };
     }
   },
@@ -39,8 +38,7 @@ export const analyticsService = {
       return res.data;
     } catch (error) {
       throw {
-        message: 'Failed to fetch analysis history',
-        details: error.message,
+        message: 'Unable to load analysis history. Please try refreshing.',
       };
     }
   },
@@ -57,8 +55,7 @@ export const analyticsService = {
       return res.data;
     } catch (error) {
       throw {
-        message: 'Failed to fetch admin platform analytics',
-        details: error.message,
+        message: 'Unable to load platform analytics. Please try refreshing.',
       };
     }
   },
@@ -73,8 +70,7 @@ export const analyticsService = {
       return res.data;
     } catch (error) {
       throw {
-        message: 'Failed to fetch admin RAG analytics',
-        details: error.message,
+        message: 'Unable to load knowledge base analytics. Please try refreshing.',
       };
     }
   },

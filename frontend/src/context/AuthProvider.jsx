@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('Auth initialization failed:', error);
-        setAuthError(error.message || 'Failed to restore session');
+        setAuthError('Unable to restore your session. Please sign in again.');
         setUser(null);
       } finally {
         setAuthLoading(false);
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
             }
           } catch (err) {
             console.error('Failed to load user after signIn:', err);
-            setAuthError('Failed to load user profile');
+            setAuthError('Unable to load your profile. Please try signing in again.');
           }
           break;
         }

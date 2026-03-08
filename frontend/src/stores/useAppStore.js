@@ -269,6 +269,8 @@ export const useAppStore = create(
       unregisterJobPollingInterval: (jobId) =>
         set(
           (state) => {
+            const intervalId = state.jobPollingIntervals[jobId];
+            if (intervalId) clearInterval(intervalId);
             const { [jobId]: _, ...rest } = state.jobPollingIntervals;
             return { jobPollingIntervals: rest };
           },
@@ -395,6 +397,28 @@ export const useAppStore = create(
         set({ guidelines: guidelines }, false, 'setGuidelines'),
 
       // ── Strategic Intelligence Setters ───────────────────────────
+      // Initial state for strategic intelligence (null = not loaded yet)
+      councilSession: null,
+      isCouncilLoading: false,
+      frictionMap: null,
+      isFrictionLoading: false,
+      costAnalysis: null,
+      isCostLoading: false,
+      payerSimulation: null,
+      isPayerSimLoading: false,
+      submissionStrategy: null,
+      isStrategyLoading: false,
+      optimization: null,
+      isOptimizing: false,
+      investorReport: null,
+      isInvestorReportLoading: false,
+      watchdogAlerts: null,
+      isWatchdogLoading: false,
+      clauseLibrary: null,
+      portfolioRisk: null,
+      isPortfolioLoading: false,
+      crossProtocol: null,
+
       setCouncilSession: (data) =>
         set({ councilSession: data }, false, 'setCouncilSession'),
       setIsCouncilLoading: (bool) =>
@@ -470,6 +494,20 @@ export const useAppStore = create(
 
       setCrossProtocol: (data) =>
         set({ crossProtocol: data }, false, 'setCrossProtocol'),
+
+      // Strategic cache timestamps — tracks generated_at per feature.
+      // Lives in Zustand so it survives tab switches (unlike component useState).
+      strategicTimestamps: {},
+      setStrategicTimestamps: (timestamps) =>
+        set({ strategicTimestamps: timestamps }, false, 'setStrategicTimestamps'),
+      updateStrategicTimestamp: (featureKey, generatedAt) =>
+        set(
+          (state) => ({
+            strategicTimestamps: { ...state.strategicTimestamps, [featureKey]: generatedAt },
+          }),
+          false,
+          'updateStrategicTimestamp'
+        ),
 
       setActiveView: (view) =>
         set({ activeView: view }, false, 'setActiveView'),
@@ -596,6 +634,7 @@ export const useAppStore = create(
             portfolioRisk: null,
             isPortfolioLoading: false,
             crossProtocol: null,
+            strategicTimestamps: {},
           },
           false,
           'reset'
@@ -655,11 +694,15 @@ export const useJobs = () =>
     activeJobs: state.activeJobs,
     completedJobs: state.completedJobs,
     failedJobs: state.failedJobs,
-    allJobs: [...state.activeJobs, ...state.completedJobs, ...state.failedJobs].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    ),
     isPolling: state.jobPollingActive,
   })));
+
+// Derived sorted jobs — call this where needed (memoize in component with useMemo)
+export const getAllJobsSorted = (state) => {
+  return [...state.activeJobs, ...state.completedJobs, ...state.failedJobs].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+};
 
 // UI selectors
 export const useUI = () =>
@@ -730,4 +773,5 @@ export const useStrategic = () =>
     portfolioRisk: state.portfolioRisk,
     isPortfolioLoading: state.isPortfolioLoading,
     crossProtocol: state.crossProtocol,
+    strategicTimestamps: state.strategicTimestamps,
   })));

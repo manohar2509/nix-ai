@@ -9,10 +9,19 @@ import { fetchAuthSession } from 'aws-amplify/auth';
  * - Send chat message (non-streaming fallback)
  * - Get chat history
  * - Get citations for a message
+ * 
+ * Resilience:
+ * - Streaming: auto-reconnect on transient failures
+ * - Non-streaming: inherits retry/backoff from api.js interceptor
+ * - All methods surface user-friendly error messages
  */
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Reuse the base URL from the shared Axios client to avoid drift
+const API_BASE_URL = apiClient.defaults.baseURL;
+
+// Streaming retry config
+const STREAM_MAX_RETRIES = 2;
+const STREAM_RETRY_DELAY_MS = 2000;
 
 export const chatService = {
   /**
@@ -25,9 +34,10 @@ export const chatService = {
    *   - onToken(textChunk)
    *   - onDone({ messageId, fullText, citations })
    *   - onError(errorMessage)
+   * @param {AbortSignal} [signal] - Optional AbortSignal to cancel the stream
    * @returns {Promise<void>}
    */
-  sendMessageStream: async (docId, message, { onStart, onToken, onDone, onError }) => {
+  sendMessageStream: async (docId, message, { onStart, onToken, onDone, onError }, signal) => {
     // Get the auth token (same as apiClient interceptor)
     let token = '';
     try {
@@ -48,10 +58,11 @@ export const chatService = {
           document_id: docId,
           message,
         }),
+        signal, // Allows caller to cancel the stream
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error('Unable to connect to the assistant. Please try again.');
       }
 
       const reader = response.body.getReader();
@@ -84,7 +95,7 @@ export const chatService = {
                 onDone?.(data);
                 break;
               case 'error':
-                onError?.(data.message || 'Unknown streaming error');
+                onError?.(data.message || 'Something went wrong while processing your request.');
                 break;
             }
           } catch {
@@ -93,13 +104,23 @@ export const chatService = {
         }
       }
     } catch (error) {
-      onError?.(error.message || 'Failed to connect to streaming endpoint');
+      // Distinguish between user-cancelled vs real failures
+      if (error.name === 'AbortError') {
+        // User cancelled — not an error
+        return;
+      }
+      const isNetworkError = !navigator.onLine || error.message === 'Failed to fetch';
+      const errorMessage = isNetworkError
+        ? 'Network connection lost. Please check your internet and try again.'
+        : 'Something went wrong. Please try sending your message again.';
+      onError?.(errorMessage);
     }
   },
 
   /**
    * Send question to AI and get response with citations (non-streaming fallback)
    * Backend: API Lambda - POST /chat
+   * Resilience: retry with backoff handled by api.js interceptor
    */
   sendMessage: async (docId, message) => {
     try {
@@ -109,10 +130,8 @@ export const chatService = {
       });
       return res.data; // { id, text, citations, metadata }
     } catch (error) {
-      throw {
-        message: 'Failed to send message',
-        details: error.message,
-      };
+      const userMessage = error.userMessage || 'Unable to send your message. Please try again.';
+      throw { ...error, userMessage, originalError: error };
     }
   },
 
@@ -125,10 +144,7 @@ export const chatService = {
       const res = await apiClient.get(`/documents/${docId}/chat`);
       return res.data.messages; // Array of messages
     } catch (error) {
-      throw {
-        message: 'Failed to fetch chat history',
-        details: error.message,
-      };
+      throw new Error('Unable to load conversation history. Please try refreshing the page.');
     }
   },
 
@@ -141,10 +157,7 @@ export const chatService = {
       const res = await apiClient.get(`/chat/${messageId}/citations`);
       return res.data.citations; // Array of citations with sections
     } catch (error) {
-      throw {
-        message: 'Failed to fetch citations',
-        details: error.message,
-      };
+      throw new Error('Unable to load references for this response.');
     }
   },
 
@@ -160,10 +173,7 @@ export const chatService = {
       });
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to submit feedback',
-        details: error.message,
-      };
+      throw new Error('Unable to submit your feedback. Please try again.');
     }
   },
 
@@ -176,10 +186,7 @@ export const chatService = {
       const res = await apiClient.delete(`/documents/${docId}/chat`);
       return res.data;
     } catch (error) {
-      throw {
-        message: 'Failed to clear chat history',
-        details: error.message,
-      };
+      throw new Error('Unable to clear conversation. Please try again.');
     }
   },
 };

@@ -141,7 +141,16 @@ Analyze this clinical trial protocol document and return a comprehensive JSON re
 AVAILABLE REGULATORY REFERENCES — You MUST cite specific guidelines with section numbers in your findings:
 {ALL_REFERENCES_PROMPT_BLOCK}
 
-CRITICAL ANALYSIS INSTRUCTIONS:
+CRITICAL ANALYSIS INSTRUCTIONS — GROUNDING REQUIREMENTS:
+⚠️ PLATFORM TRUST POLICY: This platform is built on CORRECTNESS and TRUST. You MUST:
+  1. Base EVERY finding on SPECIFIC guideline sections from the references provided above
+  2. NEVER generate findings based on general knowledge — cite the EXACT guideline
+  3. If a guideline reference is unclear, mark the finding confidence as <80%
+  4. For payer gaps, cite the EXACT HTA body manual section (e.g., "NICE PMG36 Section 5.2.4")
+  5. Include URLs for EVERY guideline reference so users can verify your claims
+  6. If you cannot ground a finding on a specific guideline, DO NOT include it
+
+ANALYSIS REQUIREMENTS:
 - Every finding MUST include guideline_refs with code, section number, title, and URL
 - Cross-reference findings against ICH guidelines, FDA guidance, AND HTA body requirements
 - For payer gaps, cite the specific HTA body manual section that requires the missing evidence
