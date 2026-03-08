@@ -54,6 +54,7 @@ export const useAppStore = create(
       // ============================================================================
       currentDocument: null,
       documents: [],
+      _recentlyDeletedIds: [],  // Guard: prevents background refresh from re-adding deleted docs
       isDocumentLoading: false,
       documentError: null,
       isUploading: false,
@@ -63,7 +64,20 @@ export const useAppStore = create(
         set({ currentDocument: doc }, false, 'setCurrentDocument'),
 
       setDocuments: (docs) =>
-        set({ documents: docs }, false, 'setDocuments'),
+        set(
+          (state) => {
+            const deletedIds = state._recentlyDeletedIds || [];
+            // Filter out documents that were recently deleted (prevents
+            // background refresh from re-adding a doc before DynamoDB
+            // consistent reads fully propagate)
+            const filtered = deletedIds.length > 0
+              ? docs.filter((d) => !deletedIds.includes(d.id))
+              : docs;
+            return { documents: filtered };
+          },
+          false,
+          'setDocuments'
+        ),
 
       addDocument: (doc) =>
         set(
@@ -100,16 +114,47 @@ export const useAppStore = create(
           (state) => {
             const remainingDocs = state.documents.filter((d) => d.id !== docId);
             const wasCurrentDoc = state.currentDocument?.id === docId;
+            const nextDoc = remainingDocs.length > 0 ? remainingDocs[0] : null;
             return {
               documents: remainingDocs,
-              currentDocument: wasCurrentDoc
-                ? (remainingDocs.length > 0 ? remainingDocs[0] : null)
-                : state.currentDocument,
+              currentDocument: wasCurrentDoc ? nextDoc : state.currentDocument,
               // Clear stale analysis data when the viewed document is deleted
               lastAnalysis: wasCurrentDoc ? null : state.lastAnalysis,
+              analysisError: wasCurrentDoc ? null : state.analysisError,
               // Reset chat tied to deleted doc
               chatMessages: wasCurrentDoc ? [] : state.chatMessages,
               chatConversationId: wasCurrentDoc ? null : state.chatConversationId,
+              // Clear regulatory intelligence state for deleted doc
+              ...(wasCurrentDoc ? {
+                jurisdictionScores: [],
+                globalReadiness: 0,
+                simulations: [],
+                timeline: [],
+                payerGaps: [],
+                htaBodyScores: {},
+              } : {}),
+              // Clear strategic intelligence state for deleted doc
+              ...(wasCurrentDoc ? {
+                councilSession: null,
+                activeDebateId: null,
+                debateStatus: null,
+                isDebatePolling: false,
+                debateError: null,
+                debateHistory: [],
+                frictionMap: null,
+                costAnalysis: null,
+                payerSimulation: null,
+                submissionStrategy: null,
+                optimization: null,
+                investorReport: null,
+                watchdogAlerts: null,
+                clauseLibrary: null,
+                portfolioRisk: null,
+                crossProtocol: null,
+                strategicTimestamps: {},
+              } : {}),
+              // Track recently deleted IDs so background refresh doesn't re-add them
+              _recentlyDeletedIds: [...(state._recentlyDeletedIds || []), docId],
             };
           },
           false,
@@ -635,6 +680,7 @@ export const useAppStore = create(
             isPortfolioLoading: false,
             crossProtocol: null,
             strategicTimestamps: {},
+            _recentlyDeletedIds: [],
           },
           false,
           'reset'

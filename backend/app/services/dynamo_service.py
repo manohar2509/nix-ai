@@ -169,6 +169,7 @@ def list_documents(user_id: str) -> list[dict]:
     items: list[dict] = []
     params = {
         "KeyConditionExpression": Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("DOC#"),
+        "ConsistentRead": True,  # Strong consistency — prevents stale reads after deletion
     }
     while True:
         resp = _dynamo_op("list_documents", table.query, **params)
