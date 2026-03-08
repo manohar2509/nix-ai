@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Sparkles, ArrowUpRight, ExternalLink, BookOpen, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
+import { Send, User, Sparkles, ArrowUpRight, ExternalLink, BookOpen, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, Trash2, ShieldCheck, Globe, AlertTriangle, Copy, Check } from 'lucide-react';
 import { useAppStore, useChat } from '../stores/useAppStore';
 import { chatService } from '../services/chatService';
 import { cn } from '../utils/cn';
+import MarkdownMessage from './MarkdownMessage';
 
 const SUGGESTIONS = [
   'What are the main regulatory risks in this protocol that could trigger an FDA clinical hold?',
@@ -298,31 +299,48 @@ function MessageBubble({ msg, onFeedback }) {
   const isStreaming = msg.isStreaming && isAI;
   const [showCitations, setShowCitations] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(null);
+  const [copied, setCopied] = useState(false);
   const hasCitations = isAI && msg.citations && msg.citations.length > 0;
   const isKBGrounded = msg.kb_grounded === true;
   const isAIInference = msg.grounding_source === 'regulatory_authority' || (!msg.kb_grounded && !!msg.grounding_source);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(msg.text || '').then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   return (
     <div className={cn('flex gap-3 animate-fade-in', !isAI && 'flex-row-reverse')}>
       <div
         className={cn(
-          'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border shadow-sm',
+          'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border shadow-sm mt-0.5',
           isAI ? 'bg-brand-50 border-brand-100 text-brand-600' : 'bg-slate-900 border-slate-800 text-white'
         )}
       >
         {isAI ? <Sparkles size={13} /> : <User size={13} />}
       </div>
-      <div className="max-w-[82%] space-y-1">
+      <div className={cn('space-y-1', isAI ? 'max-w-[88%]' : 'max-w-[82%]')}>
+        {/* Grounding trust badge — shown above AI messages */}
+        {isAI && !isStreaming && msg.text && (
+          <GroundingBadge isKBGrounded={isKBGrounded} groundingSource={msg.grounding_source} hasCitations={hasCitations} />
+        )}
+
         <div
           className={cn(
-            'px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap',
+            'rounded-2xl text-sm leading-relaxed',
             isAI
-              ? 'bg-slate-50 border border-slate-100 text-slate-700 rounded-tl-md'
-              : 'bg-slate-800 text-white rounded-tr-md shadow-md'
+              ? 'bg-white border border-slate-200 text-slate-700 rounded-tl-md shadow-sm px-4 py-3'
+              : 'bg-slate-800 text-white rounded-tr-md shadow-md px-4 py-3'
           )}
         >
-          {msg.text || (isStreaming ? '' : msg.text)}
-          {isStreaming && (
+          {isAI ? (
+            <MarkdownMessage text={msg.text} isStreaming={isStreaming} />
+          ) : (
+            <span className="whitespace-pre-wrap">{msg.text}</span>
+          )}
+          {isStreaming && !msg.text && (
             <span className="inline-block w-0.5 h-4 bg-brand-500 ml-0.5 animate-pulse align-text-bottom" />
           )}
         </div>
@@ -340,19 +358,24 @@ function MessageBubble({ msg, onFeedback }) {
             </button>
             {showCitations && (
               <div className="mt-1 space-y-1.5 animate-fade-in">
-                {!isKBGrounded && (
-                  <div className="text-[10px] text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-2 mb-1 leading-relaxed">
-                    <span className="font-semibold">Official regulatory sources —</span>{' '}
-                    These citations reference publicly published guidelines from ICH, FDA, EMA, and HTA bodies. Click any source to open the official document.
+                {isKBGrounded && (
+                  <div className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-2 mb-1 leading-relaxed flex items-start gap-1.5">
+                    <ShieldCheck size={12} className="shrink-0 mt-0.5" />
+                    <span>
+                      <span className="font-semibold">Verified from your Document Library</span> — Answers are grounded on the regulatory documents your team has uploaded and verified.
+                    </span>
                   </div>
                 )}
-                {isKBGrounded && (
-                  <div className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-2 mb-1 leading-relaxed">
-                    ✓ <span className="font-semibold">Sourced from your Document Library</span> — Answers are grounded on the regulatory documents your team has uploaded.
+                {!isKBGrounded && (
+                  <div className="text-[10px] text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-2 mb-1 leading-relaxed flex items-start gap-1.5">
+                    <Globe size={12} className="shrink-0 mt-0.5" />
+                    <span>
+                      <span className="font-semibold">Official regulatory sources</span> — These citations reference publicly published guidelines from ICH, FDA, EMA, and HTA bodies. Click any source to open the official document.
+                    </span>
                   </div>
                 )}
                 {msg.citations.map((cit, i) => (
-                  <CitationPill key={i} citation={cit} />
+                  <CitationPill key={i} citation={cit} index={i + 1} />
                 ))}
               </div>
             )}
@@ -362,17 +385,28 @@ function MessageBubble({ msg, onFeedback }) {
         {/* Regulatory training data notice (no citations) */}
         {isAI && !isStreaming && !hasCitations && isAIInference && (
           <div className="px-1 mt-1">
-            <div className="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 rounded px-2 py-1.5">
-              Based on regulatory training data — populate your Document Library for document-specific answers
+            <div className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-start gap-1.5">
+              <AlertTriangle size={11} className="shrink-0 mt-0.5" />
+              <span>Based on regulatory training data — populate your Document Library for document-grounded answers with verifiable citations</span>
             </div>
           </div>
         )}
 
-        {/* Feedback buttons for AI messages */}
+        {/* Action bar for AI messages */}
         {isAI && !isStreaming && msg.text && (
-          <div className="flex items-center gap-1 px-1 mt-1">
+          <div className="flex items-center gap-0.5 px-1 mt-1">
+            {/* Copy button */}
+            <button
+              onClick={handleCopy}
+              className="p-1 text-slate-300 hover:text-slate-500 hover:bg-slate-100 rounded transition-colors"
+              title="Copy response"
+            >
+              {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+            </button>
+
+            {/* Feedback buttons */}
             {feedbackGiven ? (
-              <span className="text-[10px] text-slate-400">Thanks for your feedback</span>
+              <span className="text-[10px] text-slate-400 ml-1">Thanks for your feedback</span>
             ) : (
               <>
                 <button
@@ -400,6 +434,42 @@ function MessageBubble({ msg, onFeedback }) {
       </div>
     </div>
   );
+}
+
+/* ── Grounding Trust Badge ── */
+function GroundingBadge({ isKBGrounded, groundingSource, hasCitations }) {
+  if (isKBGrounded) {
+    return (
+      <div className="flex items-center gap-1 px-1 mb-0.5">
+        <div className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+          <ShieldCheck size={10} />
+          <span>Document Library Verified</span>
+        </div>
+        {hasCitations && (
+          <span className="text-[10px] text-slate-400">·</span>
+        )}
+        {hasCitations && (
+          <span className="text-[10px] text-slate-400">Grounded on your uploaded documents</span>
+        )}
+      </div>
+    );
+  }
+
+  if (groundingSource === 'regulatory_authority') {
+    return (
+      <div className="flex items-center gap-1 px-1 mb-0.5">
+        <div className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+          <Globe size={10} />
+          <span>Regulatory Sources</span>
+        </div>
+        {hasCitations && (
+          <span className="text-[10px] text-slate-400">· Citations link to official guideline documents</span>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 /* ── Source type config ── */
@@ -437,7 +507,7 @@ const SOURCE_CONFIG = {
 };
 
 /* ── Citation Pill ── */
-function CitationPill({ citation }) {
+function CitationPill({ citation, index }) {
   const sourceType = citation.source_type || 'knowledge_base';
   const config = SOURCE_CONFIG[sourceType] || SOURCE_CONFIG.knowledge_base;
 
@@ -458,12 +528,14 @@ function CitationPill({ citation }) {
       className={cn(
         'flex items-start gap-2.5 px-3 py-2 rounded-lg border text-[11px] transition-all',
         config.colors,
-        hasUrl && 'hover:shadow-sm hover:opacity-90 cursor-pointer'
+        hasUrl && 'hover:shadow-md hover:opacity-90 cursor-pointer group'
       )}
       title={citation.text || citation.source}
     >
-      {/* Source type icon */}
-      <span className="text-sm shrink-0 mt-px">{config.icon}</span>
+      {/* Citation number badge */}
+      <div className={cn('w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mt-px', config.badge)}>
+        {index}
+      </div>
 
       <div className="flex-1 min-w-0">
         {/* Header row: type badge + document name */}
@@ -475,7 +547,7 @@ function CitationPill({ citation }) {
             <span className="text-[10px] font-semibold opacity-70">§ {citation.section}</span>
           )}
           {citation.score != null && (
-            <span className="text-[9px] opacity-50 ml-auto">{Math.round(citation.score * 100)}% match</span>
+            <span className="text-[9px] opacity-50 ml-auto">{Math.round(citation.score * 100)}% relevance</span>
           )}
         </div>
 
@@ -484,14 +556,14 @@ function CitationPill({ citation }) {
 
         {/* Excerpt */}
         {citation.text && (
-          <p className="text-[10px] opacity-70 line-clamp-2 mt-0.5 leading-relaxed">{citation.text}</p>
+          <p className="text-[10px] opacity-70 line-clamp-3 mt-0.5 leading-relaxed">{citation.text}</p>
         )}
 
         {/* Link row */}
         {hasUrl && (
-          <div className="flex items-center gap-1 mt-1 text-[10px] font-medium opacity-80">
+          <div className="flex items-center gap-1 mt-1 text-[10px] font-medium opacity-80 group-hover:opacity-100 transition-opacity">
             <ExternalLink size={9} />
-            <span>Open official document</span>
+            <span>Open official document →</span>
           </div>
         )}
       </div>

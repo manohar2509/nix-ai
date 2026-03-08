@@ -144,6 +144,16 @@ def rag_chat(
                             f"When referencing regulatory requirements, always name the specific guideline "
                             f"(ICH, FDA, EMA) and section. When referencing HTA requirements, name the body "
                             f"(NICE, IQWiG, CADTH, PBAC). If unsure, say so.\n\n"
+                            f"RESPONSE FORMATTING — You MUST format your response using Markdown for readability:\n"
+                            f"- Use **bold** for key terms, guideline codes, and important conclusions\n"
+                            f"- Use ## headings to organize distinct topics or sections in longer answers\n"
+                            f"- Use bullet points (- or *) for lists of findings, requirements, or recommendations\n"
+                            f"- Use numbered lists (1. 2. 3.) for sequential steps or ranked items\n"
+                            f"- Use > blockquotes for direct quotations from guidelines\n"
+                            f"- Use `inline code` for specific regulatory codes like `ICH E6(R3) §5.2.1`\n"
+                            f"- Use tables (| col1 | col2 |) when comparing across jurisdictions or criteria\n"
+                            f"- Always bold the guideline source when citing: e.g., **ICH E6(R3) Section 5.2.1**\n"
+                            f"- Keep paragraphs short (2-4 sentences max) for scannability\n\n"
                             f"IMPORTANT: You are ONLY authorized to answer questions related to clinical trials, "
                             f"regulatory compliance, protocol design, drug development, payer/HTA strategy, "
                             f"and biomedical/pharmaceutical topics. If the user asks a question that is "
@@ -281,6 +291,19 @@ def direct_chat(
     max_doc_chars = 12_000
     doc_excerpt = document_text[:max_doc_chars] if document_text else ""
 
+    _FORMAT_INSTRUCTIONS = (
+        "RESPONSE FORMATTING — You MUST format your response using Markdown for readability:\n"
+        "- Use **bold** for key terms, guideline codes, and important conclusions\n"
+        "- Use ## headings to organize distinct topics or sections in longer answers\n"
+        "- Use bullet points (- or *) for lists of findings, requirements, or recommendations\n"
+        "- Use numbered lists (1. 2. 3.) for sequential steps or ranked items\n"
+        "- Use > blockquotes for direct quotations from guidelines\n"
+        "- Use `inline code` for specific regulatory codes like `ICH E6(R3) §5.2.1`\n"
+        "- Use tables (| col1 | col2 |) when comparing across jurisdictions or criteria\n"
+        "- Always bold the guideline source when citing: e.g., **ICH E6(R3) Section 5.2.1**\n"
+        "- Keep paragraphs short (2-4 sentences max) for scannability\n"
+    )
+
     if not doc_excerpt:
         # No document text available — answer generally
         prompt = (
@@ -291,6 +314,7 @@ def direct_chat(
             f"When referencing guidelines, always include the specific guideline code "
             f"(e.g., 'ICH E6(R3) Section 5.2.1', 'FDA Adaptive Designs Guidance'). "
             f"If you need a document to give a specific answer, ask the user to upload one.\n\n"
+            f"{_FORMAT_INSTRUCTIONS}\n"
             f"IMPORTANT: You are ONLY authorized to answer questions related to clinical trials, "
             f"regulatory compliance, protocol design, drug development, payer/HTA strategy, "
             f"and biomedical/pharmaceutical topics. If the user asks a question that is "
@@ -310,6 +334,7 @@ def direct_chat(
             f"Cite specific sections when possible. Be thorough but concise. "
             f"When referencing guidelines, always include the specific guideline code "
             f"(e.g., 'ICH E6(R3) Section 5.2.1', 'FDA Adaptive Designs Guidance'). \n\n"
+            f"{_FORMAT_INSTRUCTIONS}\n"
             f"IMPORTANT: You are ONLY authorized to answer questions related to clinical trials, "
             f"regulatory compliance, protocol design, drug development, payer/HTA strategy, "
             f"and biomedical/pharmaceutical topics. If the user asks a question that is "
@@ -446,6 +471,19 @@ def _build_chat_prompt(
         "(e.g., 'ICH E6(R3) Section 5.2.1', 'FDA Adaptive Designs Guidance'). "
     )
 
+    format_instructions = (
+        "RESPONSE FORMATTING — You MUST format your response using Markdown for readability:\n"
+        "- Use **bold** for key terms, guideline codes, and important conclusions\n"
+        "- Use ## headings to organize distinct topics or sections in longer answers\n"
+        "- Use bullet points (- or *) for lists of findings, requirements, or recommendations\n"
+        "- Use numbered lists (1. 2. 3.) for sequential steps or ranked items\n"
+        "- Use > blockquotes for direct quotations from guidelines\n"
+        "- Use `inline code` for specific regulatory codes like `ICH E6(R3) §5.2.1`\n"
+        "- Use tables (| col1 | col2 |) when comparing across jurisdictions or criteria\n"
+        "- Always bold the guideline source when citing: e.g., **ICH E6(R3) Section 5.2.1**\n"
+        "- Keep paragraphs short (2-4 sentences max) for scannability\n"
+    )
+
     topic_guardrail = (
         "IMPORTANT: You are ONLY authorized to answer questions related to clinical trials, "
         "regulatory compliance, protocol design, drug development, payer/HTA strategy, "
@@ -466,6 +504,7 @@ def _build_chat_prompt(
             f"helpfully based on your clinical trial expertise. "
             f"{guideline_instruction}"
             f"If you need a document to give a specific answer, ask the user to upload one.\n\n"
+            f"{format_instructions}\n"
             f"{topic_guardrail}\n\n"
             f"User question: {query}"
         )
@@ -475,6 +514,7 @@ def _build_chat_prompt(
         f"Answer their question using the document context below. "
         f"Cite specific sections when possible. Be thorough but concise. "
         f"{guideline_instruction}\n\n"
+        f"{format_instructions}\n"
         f"{topic_guardrail}\n\n"
         f"--- DOCUMENT CONTEXT ---\n{doc_excerpt}\n--- END CONTEXT ---\n\n"
         f"User question: {query}"

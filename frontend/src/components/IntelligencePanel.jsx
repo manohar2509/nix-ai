@@ -672,7 +672,7 @@ function FindingCard({ type, title, text, section, severity, suggestion, guideli
             </div>
           )}
 
-          <GuidelineRefBadge refs={guidelineRefs} />
+          <GuidelineRefBadge refs={guidelineRefs?.map(r => typeof r === 'string' ? { code: r } : r)} />
 
           {hasExpandedContent && !expanded && (
             <div className="text-[11px] text-brand-600 mt-2 font-semibold flex items-center gap-1">

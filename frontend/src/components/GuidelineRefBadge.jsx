@@ -60,9 +60,12 @@ function isSafeUrl(url) {
 export default function GuidelineRefBadge({ refs }) {
   if (!refs || refs.length === 0) return null;
 
+  // Normalize: plain strings become {code: string} so all downstream access is safe
+  const normalized = refs.map(r => (typeof r === 'string' ? { code: r } : r || { code: '' }));
+
   return (
     <div className="flex flex-wrap gap-1.5 mt-2">
-      {refs.map((ref, i) => {
+      {normalized.map((ref, i) => {
         const sourceType = inferSourceType(ref);
         const config = SOURCE_CONFIG[sourceType] || SOURCE_CONFIG.default;
         const hasUrl = isSafeUrl(ref.url);

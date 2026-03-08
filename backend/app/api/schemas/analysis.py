@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -47,6 +47,16 @@ class Finding(BaseModel):
     suggested_clause: Optional[str] = None
 
 
+class KeyGuideline(BaseModel):
+    """Enriched guideline reference in jurisdiction scores."""
+    code: str = ""
+    url: Optional[str] = None
+    title: Optional[str] = None
+    source_type: Optional[str] = None
+    section: Optional[str] = None
+    relevance: Optional[str] = None
+
+
 class JurisdictionScore(BaseModel):
     """Per-jurisdiction regulatory compliance score (REQ-2)."""
     jurisdiction: str = ""
@@ -56,7 +66,7 @@ class JurisdictionScore(BaseModel):
     risk_level: str = "medium"
     blockers: list[str] = []
     adaptations: list[str] = []
-    key_guidelines: list[str] = []
+    key_guidelines: list[Union[str, KeyGuideline]] = []
 
 
 class PayerGap(BaseModel):
@@ -68,6 +78,7 @@ class PayerGap(BaseModel):
     severity: str = "medium"
     recommendation: str = ""
     impact_on_reimbursement: str = ""
+    guideline_refs: list[GuidelineRef] = []
 
 
 # ── Responses ────────────────────────────────────────────────────
