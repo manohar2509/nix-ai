@@ -186,9 +186,15 @@ def process_document_analysis(payload: dict) -> None:
         payer_gaps          = analysis_result.get("payer_gaps", []) or []
         hta_body_scores     = analysis_result.get("hta_body_scores", {}) or {}
 
-        # 5b. Enrich findings with ICH guideline URLs
-        from app.services.regulatory_engine import enrich_guideline_urls
+        # 5b. Enrich findings, jurisdiction key_guidelines, and payer_gaps with official URLs
+        from app.services.regulatory_engine import (
+            enrich_guideline_urls,
+            enrich_jurisdiction_guidelines,
+            enrich_payer_gap_refs,
+        )
         findings = enrich_guideline_urls(findings)
+        jurisdiction_scores = enrich_jurisdiction_guidelines(jurisdiction_scores)
+        payer_gaps = enrich_payer_gap_refs(payer_gaps)
 
         # 5c. Find the analysis record and update it
         analysis = dynamo_service.get_analysis_for_document(doc_id)

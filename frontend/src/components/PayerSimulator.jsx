@@ -19,6 +19,7 @@ const decisionStyle = {
   'Cover with conditions': { color: 'text-amber-600', bg: 'bg-amber-50', icon: AlertTriangle },
   'Restrict with PA': { color: 'text-orange-600', bg: 'bg-orange-50', icon: ShieldAlert },
   'Deny': { color: 'text-red-600', bg: 'bg-red-50', icon: XCircle },
+  'Unknown': { color: 'text-slate-600', bg: 'bg-slate-50', icon: AlertTriangle },
 };
 
 export default function PayerSimulator({ docId, generatedAt }) {
@@ -27,16 +28,20 @@ export default function PayerSimulator({ docId, generatedAt }) {
   const setSim = useAppStore(s => s.setPayerSimulation);
   const setLoading = useAppStore(s => s.setIsPayerSimLoading);
   const [tab, setTab] = useState('insurers');
+  const [error, setError] = useState(null);
 
   const simulate = async () => {
     if (!docId) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await strategicService.simulatePayer(docId);
       setSim(result);
       useAppStore.getState().updateStrategicTimestamp('payer_simulation', new Date().toISOString());
     } catch (err) {
       console.error('Payer simulation failed:', err);
+      const msg = err?.response?.data?.detail || err?.userMessage || 'Failed to simulate payer decisions. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -63,6 +68,12 @@ export default function PayerSimulator({ docId, generatedAt }) {
         </div>
         <h3 className="text-slate-700 font-bold mb-1">Payer Coverage Forecast</h3>
         <p className="text-slate-400 text-sm max-w-sm mb-4">Predict how UnitedHealthcare, Anthem, NICE, IQWiG and other major payers will evaluate your protocol — with denial probabilities and revenue-at-risk estimates.</p>
+        {error && (
+          <div className="mb-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 max-w-sm">
+            <div className="flex items-center gap-1.5 font-semibold mb-0.5"><ShieldAlert size={12} /> Simulation Failed</div>
+            {error}
+          </div>
+        )}
         <button onClick={simulate} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Simulate Coverage Decisions
         </button>
@@ -135,7 +146,7 @@ export default function PayerSimulator({ docId, generatedAt }) {
       {tab === 'insurers' && (
         <div className="space-y-2">
           {insurers.map((ins, i) => {
-            const ds = decisionStyle[ins.predicted_coverage_decision] || decisionStyle['Restrict with PA'];
+            const ds = decisionStyle[ins.predicted_coverage_decision] || decisionStyle['Unknown'];
             const DecisionIcon = ds.icon;
             return (
               <div key={i} className={cn('p-3 rounded-lg border', ds.bg, 'border-slate-200')}>

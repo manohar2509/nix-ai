@@ -4,7 +4,7 @@ import {
   TrendingUp, Activity, Clock, ChevronRight, RefreshCw, Zap, BarChart3,
   CheckCircle, XCircle, Loader2, Eye, Upload, ArrowUpRight, ArrowDownRight,
   MessageSquare, BookOpen, Info, HelpCircle, ChevronDown, Hash, Briefcase,
-  AlertCircle, Sparkles, Download,
+  AlertCircle, Sparkles, Download, GitCompare,
 } from 'lucide-react';
 import { useAuth, useAppStore } from '../stores/useAppStore';
 import { analyticsService } from '../services/analyticsService';
@@ -37,6 +37,7 @@ export default function DashboardView() {
   const { user } = useAuth();
   const setActiveView = useAppStore((s) => s.setActiveView);
   const setCurrentDocument = useAppStore((s) => s.setCurrentDocument);
+  const setShowUploadDialog = useAppStore((s) => s.setShowUploadDialog);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -117,18 +118,26 @@ export default function DashboardView() {
   const handleOpenRegScore = () => { openDrawer('regScore'); };
   const handleOpenPayScore = () => { openDrawer('payScore'); };
   const handleOpenRiskDetail = (severity) => { openDrawer('riskSeverity', severity); };
-  const handleOpenDocComparison = (doc) => {
-    setCurrentDocument({ id: doc.documentId, name: doc.documentName, status: 'analyzed' });
+  const handleOpenDocComparison = async (doc) => {
+    // Fetch full document to avoid incomplete state in EditorWindow
+    try {
+      const fullDoc = await documentService.getDocument(doc.documentId);
+      setCurrentDocument(fullDoc);
+    } catch {
+      // Fallback: use partial data (EditorWindow will refetch content)
+      setCurrentDocument({ id: doc.documentId, name: doc.documentName, status: 'analyzed', s3_key: '' });
+    }
     setActiveView('protocol');
   };
   const handleOpenScoreTrendItem = (point) => {
     openDrawer('scoreTrendItem', point);
   };
   const handleOpenActivityItem = async (item) => {
-    if (item.jobId) {
+    const jobId = item.jobId || item.id;
+    if (jobId) {
       openDrawer('jobDetail', item);
       try {
-        const jobDetail = await jobService.getJobStatus(item.jobId);
+        const jobDetail = await jobService.getJobStatus(jobId);
         setDrawer(prev => ({ ...prev, context: { ...item, ...jobDetail } }));
       } catch { /* keep original */ }
     }
@@ -544,7 +553,7 @@ export default function DashboardView() {
               Analysis History
             </button>
             <button
-              onClick={() => setActiveView('protocol')}
+              onClick={() => { setShowUploadDialog(true); setActiveView('protocol'); }}
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-brand-700 bg-white rounded-xl hover:bg-brand-50 transition-colors shadow-sm"
             >
               <Upload size={16} />
@@ -1280,6 +1289,9 @@ function ActivityItem({ item, onClick }) {
     ANALYZE_DOCUMENT: <BarChart3 size={14} className="text-brand-500" />,
     KB_SYNC: <RefreshCw size={14} className="text-purple-500" />,
     SYNTHETIC_GENERATION: <Zap size={14} className="text-amber-500" />,
+    COMPARE_PROTOCOLS: <GitCompare size={14} className="text-indigo-500" />,
+    SIMULATE_AMENDMENT: <Sparkles size={14} className="text-teal-500" />,
+    RUN_BOARDROOM_DEBATE: <MessageSquare size={14} className="text-violet-500" />,
   };
 
   const timeAgo = item.createdAt ? formatTimeAgo(item.createdAt) : '';
@@ -1361,7 +1373,14 @@ function InfoBanner({ text }) {
 }
 
 function formatJobType(type) {
-  const map = { ANALYZE_DOCUMENT: 'Protocol Analysis', KB_SYNC: 'Reference Library Sync', SYNTHETIC_GENERATION: 'Synthetic Generation' };
+  const map = {
+    ANALYZE_DOCUMENT: 'Protocol Analysis',
+    KB_SYNC: 'Reference Library Sync',
+    SYNTHETIC_GENERATION: 'Synthetic Generation',
+    COMPARE_PROTOCOLS: 'Protocol Comparison',
+    SIMULATE_AMENDMENT: 'Amendment Simulation',
+    RUN_BOARDROOM_DEBATE: 'Boardroom Debate',
+  };
   return map[type] || type || 'Unknown';
 }
 

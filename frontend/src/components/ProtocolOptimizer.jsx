@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wand2, Loader2, ArrowRight, CheckCircle, Copy, Check } from 'lucide-react';
+import { Wand2, Loader2, ArrowRight, CheckCircle, Copy, Check, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
 import GuidelineRefBadge from './GuidelineRefBadge';
@@ -13,25 +13,43 @@ export default function ProtocolOptimizer({ docId, generatedAt }) {
   const setLoading = useAppStore(s => s.setIsOptimizing);
   const [expandedId, setExpandedId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [error, setError] = useState(null);
 
   const optimize = async () => {
     if (!docId) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await strategicService.optimizeProtocol(docId);
       setOpt(result);
       useAppStore.getState().updateStrategicTimestamp('optimization', new Date().toISOString());
     } catch (err) {
       console.error('Optimize failed:', err);
+      const msg = err?.response?.data?.detail || err?.userMessage || 'Failed to generate optimizations. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const copyText = (text, id) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+  const copyText = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // Fallback for non-HTTPS or permission-denied contexts
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
   };
 
   if (isLoading) {
@@ -55,6 +73,12 @@ export default function ProtocolOptimizer({ docId, generatedAt }) {
         </div>
         <h3 className="text-slate-700 font-bold mb-1">Protocol Rewrite Suggestions</h3>
         <p className="text-slate-400 text-sm max-w-sm mb-4">Generate specific protocol text rewrites for each finding — with original text, improved text, and the exact guideline citation justifying each change.</p>
+        {error && (
+          <div className="mb-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 max-w-sm">
+            <div className="flex items-center gap-1.5 font-semibold mb-0.5"><AlertTriangle size={12} /> Optimization Failed</div>
+            {error}
+          </div>
+        )}
         <button onClick={optimize} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Generate Optimizations
         </button>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Eye, Loader2, AlertTriangle, CheckCircle, Clock, Bell, Shield, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Eye, Loader2, AlertTriangle, CheckCircle, Clock, Bell, Shield, ArrowRight, ExternalLink, Info } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
 import CacheStatusBanner from './CacheStatusBanner';
@@ -24,16 +24,30 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
   const setWatchdog = useAppStore(s => s.setWatchdogAlerts);
   const setLoading = useAppStore(s => s.setIsWatchdogLoading);
   const [expandedId, setExpandedId] = useState(null);
+  const [error, setError] = useState(null);
+  const prevDocIdRef = useRef(docId);
+
+  // Clear stale watchdog data when document changes
+  useEffect(() => {
+    if (prevDocIdRef.current !== docId) {
+      prevDocIdRef.current = docId;
+      setWatchdog(null);
+      setError(null);
+    }
+  }, [docId, setWatchdog]);
 
   const scan = async () => {
     if (!docId) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await strategicService.runWatchdog(docId);
       setWatchdog(result);
       useAppStore.getState().updateStrategicTimestamp('watchdog', new Date().toISOString());
     } catch (err) {
       console.error('Watchdog failed:', err);
+      const msg = err?.response?.data?.detail || err?.userMessage || 'Failed to run compliance scan. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -60,6 +74,12 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
         </div>
         <h3 className="text-slate-700 font-bold mb-1">Regulatory Change Scanner</h3>
         <p className="text-slate-400 text-sm max-w-sm mb-4">Scan your protocol against recent regulatory updates (ICH E6(R3), FDA Diversity Plans, EU HTA Regulation, etc.) to detect compliance drift and required changes.</p>
+        {error && (
+          <div className="mb-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 max-w-sm">
+            <div className="flex items-center gap-1.5 font-semibold mb-0.5"><AlertTriangle size={12} /> Scan Failed</div>
+            {error}
+          </div>
+        )}
         <button onClick={scan} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Run Compliance Scan
         </button>
@@ -86,9 +106,9 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-slate-400">Score change:</span>
             <span className={cn('text-lg font-black',
-              watchdog.score_delta < 0 ? 'text-red-600' : 'text-emerald-600'
+              (watchdog.score_delta ?? 0) < 0 ? 'text-red-600' : 'text-emerald-600'
             )}>
-              {watchdog.score_delta > 0 ? '+' : ''}{watchdog.score_delta}
+              {(watchdog.score_delta ?? 0) > 0 ? '+' : ''}{watchdog.score_delta ?? 0}
             </span>
           </div>
         </div>
@@ -133,7 +153,21 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <span>{us.icon}</span>
-                        <span className="text-xs font-bold text-slate-800">{alert.guideline_code}</span>
+                        {alert.url ? (
+                          <a
+                            href={alert.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs font-bold text-brand-700 hover:text-brand-900 underline decoration-dotted underline-offset-2 flex items-center gap-0.5"
+                            title={`Open official ${alert.source_type || ''} document: ${alert.guideline_code}`}
+                          >
+                            {alert.guideline_code}
+                            <ExternalLink size={9} className="opacity-50" />
+                          </a>
+                        ) : (
+                          <span className="text-xs font-bold text-slate-800">{alert.guideline_code}</span>
+                        )}
                         <span className={cn('text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase', us.badge)}>
                           {alert.urgency?.replace('_', ' ')}
                         </span>
@@ -217,6 +251,19 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
           </div>
         </div>
       )}
+
+      {/* AI provenance & disclaimer */}
+      <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/60">
+        <div className="flex items-start gap-2">
+          <Info size={12} className="text-slate-400 shrink-0 mt-0.5" />
+          <div className="text-[11px] text-slate-500 leading-relaxed">
+            <span className="font-semibold text-slate-600">AI-Generated Analysis:</span>{' '}
+            Compliance assessments are produced by AI regulatory agents cross-referencing your protocol against
+            published ICH, FDA, and EU regulatory updates. Click any guideline code to verify against the official source.
+            This does not constitute regulatory or legal advice — always consult your regulatory affairs team.
+          </div>
+        </div>
+      </div>
 
       <CacheStatusBanner
         generatedAt={generatedAt}

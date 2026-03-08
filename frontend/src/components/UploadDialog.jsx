@@ -26,8 +26,25 @@ const ACCEPTED_TYPES = {
 };
 const ACCEPTED_EXTENSIONS = '.pdf,.txt,.csv,.json,.docx,.doc';
 
+// Derive content type from extension when file.type is empty (some browsers)
+const EXTENSION_TO_MIME = {
+  pdf: 'application/pdf',
+  txt: 'text/plain',
+  csv: 'text/csv',
+  json: 'application/json',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  doc: 'application/msword',
+};
+
+function resolveContentType(file) {
+  if (file.type && file.type !== 'application/octet-stream') return file.type;
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  return EXTENSION_TO_MIME[ext] || 'application/octet-stream';
+}
+
 export function UploadDialog({ isOpen, onClose }) {
   const fileInputRef = useRef(null);
+  const abortRef = useRef(null); // Tracks in-flight XHR for cancellation
   
   const [file, setFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -77,20 +94,25 @@ export function UploadDialog({ isOpen, onClose }) {
 
     setIsUploading(true);
     setError(null);
+    setUploadProgress(0);
 
     try {
-      // Step 1: Get presigned URL
-      console.log('Getting presigned URL for:', file.name);
+      // Step 1: Get presigned URL (use resolved content type for empty file.type)
+      const contentType = resolveContentType(file);
+      console.log('Getting presigned URL for:', file.name, 'type:', contentType);
       const { url, key } = await documentService.getPresignedUrl(
         file.name,
-        file.type
+        contentType
       );
 
       // Step 2: Upload to S3 with progress tracking
       console.log('Uploading to S3...');
-      await documentService.uploadToS3(file, url, (progress) => {
+      const uploadPromise = documentService.uploadToS3(file, url, (progress) => {
         setUploadProgress(progress);
-      });
+      }, contentType);
+      abortRef.current = uploadPromise.abort; // Store abort handle for cancellation
+      await uploadPromise;
+      abortRef.current = null;
 
       // Step 3: Register document in metadata DB
       console.log('Registering document in metadata DB...');
@@ -132,18 +154,29 @@ export function UploadDialog({ isOpen, onClose }) {
       handleClose();
     } catch (err) {
       console.error('Upload failed:', err);
-      setError('Upload could not be completed. Please try again.');
-      showToast({
-        type: 'error',
-        title: 'Upload unsuccessful',
-        message: 'Something went wrong during the upload. Please try again.',
-      });
+      // Provide a specific error if possible, otherwise generic
+      const errorMessage = err.message === 'Upload cancelled'
+        ? 'Upload was cancelled.'
+        : err.message || 'Upload could not be completed. Please try again.';
+      setError(errorMessage);
+      if (err.message !== 'Upload cancelled') {
+        showToast({
+          type: 'error',
+          title: 'Upload unsuccessful',
+          message: 'Something went wrong during the upload. Please try again.',
+        });
+      }
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleClose = () => {
+    // Abort any in-flight S3 upload to prevent phantom documents
+    if (abortRef.current) {
+      try { abortRef.current(); } catch { /* ignore abort errors */ }
+      abortRef.current = null;
+    }
     setFile(null);
     setUploadProgress(0);
     setError(null);
@@ -233,7 +266,7 @@ export function UploadDialog({ isOpen, onClose }) {
                     />
                   </div>
                   <p className="text-xs text-slate-500 text-center">
-                    {uploadProgress}% uploaded
+                    {uploadProgress >= 100 ? 'Finalizing registration...' : `${uploadProgress}% uploaded`}
                   </p>
                 </div>
               )}

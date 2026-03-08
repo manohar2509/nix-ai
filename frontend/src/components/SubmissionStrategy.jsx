@@ -5,7 +5,7 @@ import * as strategicService from '../services/strategicService';
 import CacheStatusBanner from './CacheStatusBanner';
 import { cn } from '../utils/cn';
 
-const flagMap = { FDA: '🇺🇸', EMA: '🇪🇺', PMDA: '🇯🇵', 'Health Canada': '🇨🇦', MHRA: '🇬🇧', NMPA: '🇨🇳', TGA: '🇦🇺' };
+const flagMap = { FDA: '🇺🇸', EMA: '🇪🇺', PMDA: '🇯🇵', 'Health Canada': '🇨🇦', MHRA: '🇬🇧', NMPA: '🇨🇳', TGA: '🇦🇺', KFDA: '🇰🇷', Swissmedic: '🇨🇭', ANVISA: '🇧🇷' };
 
 export default function SubmissionStrategy({ docId, generatedAt }) {
   const strategy = useAppStore(s => s.submissionStrategy);
@@ -13,16 +13,20 @@ export default function SubmissionStrategy({ docId, generatedAt }) {
   const setStrategy = useAppStore(s => s.setSubmissionStrategy);
   const setLoading = useAppStore(s => s.setIsStrategyLoading);
   const [tab, setTab] = useState('order');
+  const [error, setError] = useState(null);
 
   const generate = async () => {
     if (!docId) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await strategicService.getSubmissionStrategy(docId);
       setStrategy(result);
       useAppStore.getState().updateStrategicTimestamp('submission_strategy', new Date().toISOString());
     } catch (err) {
       console.error('Strategy failed:', err);
+      const msg = err?.response?.data?.detail || err?.userMessage || 'Failed to generate filing strategy. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -49,6 +53,12 @@ export default function SubmissionStrategy({ docId, generatedAt }) {
         </div>
         <h3 className="text-slate-700 font-bold mb-1">Global Filing Strategy</h3>
         <p className="text-slate-400 text-sm max-w-sm mb-4">Optimize your global filing order across FDA, EMA, PMDA and other agencies — with a unified "golden protocol" that satisfies all jurisdictions and identifies accelerated pathways.</p>
+        {error && (
+          <div className="mb-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 max-w-sm">
+            <div className="flex items-center gap-1.5 font-semibold mb-0.5"><AlertTriangle size={12} /> Strategy Failed</div>
+            {error}
+          </div>
+        )}
         <button onClick={generate} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Generate Strategy
         </button>

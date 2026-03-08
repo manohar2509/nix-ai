@@ -40,9 +40,11 @@ async def get_guidelines(user: CurrentUser = Depends(get_current_user)):
     """Return the full ICH guideline reference database."""
     try:
         return {"guidelines": analysis_service.get_ich_guidelines()}
+    except NixAIException:
+        raise
     except Exception as exc:
         logger.error("Get guidelines failed: %s", exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get guidelines: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load guidelines. Please try again.")
 
 
 # ── REQ-2: Jurisdiction Compass ─────────────────────────────────
@@ -62,7 +64,7 @@ async def get_jurisdiction_scores(
         raise
     except Exception as exc:
         logger.error("Get jurisdiction scores failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get jurisdiction scores: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load jurisdiction scores. Please try again.")
 
 
 # ── REQ-3: Amendment Simulation ─────────────────────────────────
@@ -79,7 +81,7 @@ async def trigger_simulation(
         raise
     except Exception as exc:
         logger.error("Trigger simulation failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to trigger simulation: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to start simulation. Please try again.")
 
 
 @router.get("/documents/{doc_id}/simulations")
@@ -94,7 +96,7 @@ async def list_simulations(
         raise
     except Exception as exc:
         logger.error("List simulations failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to list simulations: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load simulations. Please try again.")
 
 
 # ── REQ-4: Risk Timeline ────────────────────────────────────────
@@ -110,7 +112,7 @@ async def get_timeline(
         raise
     except Exception as exc:
         logger.error("Get timeline failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get timeline: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load timeline. Please try again.")
 
 
 # ── REQ-5: Payer Evidence Gaps ──────────────────────────────────
@@ -131,7 +133,7 @@ async def get_payer_gaps(
         raise
     except Exception as exc:
         logger.error("Get payer gaps failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get payer gaps: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load payer evidence gaps. Please try again.")
 
 
 # ── REQ-6: Protocol Comparison ──────────────────────────────────
@@ -147,7 +149,7 @@ async def trigger_comparison(
         raise
     except Exception as exc:
         logger.error("Trigger comparison failed: %s", exc)
-        raise HTTPException(status_code=500, detail=f"Failed to trigger comparison: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to start comparison. Please try again.")
 
 
 @router.get("/comparisons")
@@ -161,7 +163,7 @@ async def list_comparisons(
         raise
     except Exception as exc:
         logger.error("List comparisons failed: %s", exc)
-        raise HTTPException(status_code=500, detail=f"Failed to list comparisons: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load comparisons. Please try again.")
 
 
 @router.get("/comparisons/{cmp_id}")
@@ -176,7 +178,7 @@ async def get_comparison(
         raise
     except Exception as exc:
         logger.error("Get comparison failed for %s: %s", cmp_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get comparison: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load comparison result. Please try again.")
 
 
 # ── REQ-8: Submission Readiness Report ──────────────────────────
@@ -188,12 +190,14 @@ async def generate_report(
 ):
     """Generate a comprehensive submission readiness report."""
     try:
-        return analysis_service.generate_report(user, doc_id, sections=body.sections)
+        return analysis_service.generate_report(
+            user, doc_id, sections=body.sections, report_format=body.format
+        )
     except NixAIException:
         raise
     except Exception as exc:
         logger.error("Generate report failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to generate report. Please try again.")
 
 
 # ── REQ-10: Benchmarking ────────────────────────────────────────
@@ -211,4 +215,4 @@ async def get_benchmark(
         raise
     except Exception as exc:
         logger.error("Get benchmark failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get benchmark: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load benchmark data. Please try again.")

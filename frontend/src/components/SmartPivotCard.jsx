@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, AlertTriangle, TrendingUp } from 'lucide-react';
+import GuidelineRefBadge from './GuidelineRefBadge';
 import { cn } from '../utils/cn';
 
 export default function SmartPivotCard({ findings = [] }) {
@@ -50,6 +51,18 @@ export default function SmartPivotCard({ findings = [] }) {
                 <p className="text-sm text-slate-700 leading-relaxed">
                   {frictionText}
                 </p>
+
+                {/* Jurisdiction tags */}
+                {topFinding.jurisdictions_affected?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {topFinding.jurisdictions_affected.map((j, i) => (
+                      <span key={i} className="text-[11px] px-2 py-0.5 rounded-md bg-white/60 text-slate-600 font-medium border border-slate-200/60">{j}</span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Guideline citations — so users can verify the top finding */}
+                <GuidelineRefBadge refs={topFinding.guideline_refs} />
               </div>
             </div>
 

@@ -39,6 +39,7 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.config import get_settings
 from app.core.exceptions import NixAIException
 from app.services import dynamo_service, sqs_service, strategic_service
+from app.services.strategic_service import AnalysisRequiredError, NotAuthorizedError
 
 import logging
 import threading
@@ -96,7 +97,7 @@ async def run_council(
 ):
     """Launch multi-agent adversarial debate on a protocol (synchronous)."""
     try:
-        result = strategic_service.run_adversarial_council(doc_id)
+        result = strategic_service.run_adversarial_council(doc_id, user_id=user.user_id)
         return CouncilResponse(**result)
     except NixAIException:
         raise
@@ -274,7 +275,7 @@ async def get_friction_map(
 ):
     """Generate section-by-section regulatory vs commercial friction map."""
     try:
-        result = strategic_service.generate_friction_map(doc_id)
+        result = strategic_service.generate_friction_map(doc_id, user_id=user.user_id)
         return FrictionMapResponse(**result)
     except NixAIException:
         raise
@@ -291,7 +292,7 @@ async def get_cost_analysis(
 ):
     """Estimate trial costs and per-finding cost impacts."""
     try:
-        result = strategic_service.analyze_trial_costs(doc_id)
+        result = strategic_service.analyze_trial_costs(doc_id, user_id=user.user_id)
         return CostAnalysisResponse(**result)
     except NixAIException:
         raise
@@ -308,7 +309,7 @@ async def simulate_payer(
 ):
     """Predict insurer and HTA body coverage decisions."""
     try:
-        result = strategic_service.simulate_payer_decisions(doc_id)
+        result = strategic_service.simulate_payer_decisions(doc_id, user_id=user.user_id)
         return PayerSimulationResponse(**result)
     except NixAIException:
         raise
@@ -325,7 +326,7 @@ async def get_submission_strategy(
 ):
     """Optimize global submission order and generate golden protocol changes."""
     try:
-        result = strategic_service.generate_submission_strategy(doc_id)
+        result = strategic_service.generate_submission_strategy(doc_id, user_id=user.user_id)
         return SubmissionStrategyResponse(**result)
     except NixAIException:
         raise
@@ -342,7 +343,7 @@ async def optimize(
 ):
     """Generate specific protocol text rewrites to resolve findings."""
     try:
-        result = strategic_service.optimize_protocol(doc_id)
+        result = strategic_service.optimize_protocol(doc_id, user_id=user.user_id)
         return ProtocolOptimizationResponse(**result)
     except NixAIException:
         raise
@@ -359,7 +360,7 @@ async def get_investor_report(
 ):
     """Generate VC/investor due diligence package."""
     try:
-        result = strategic_service.generate_investor_report(doc_id)
+        result = strategic_service.generate_investor_report(doc_id, user_id=user.user_id)
         return InvestorReportResponse(**result)
     except NixAIException:
         raise
@@ -376,7 +377,7 @@ async def run_watchdog(
 ):
     """Scan protocol against recent regulatory updates."""
     try:
-        result = strategic_service.run_compliance_watchdog(doc_id)
+        result = strategic_service.run_compliance_watchdog(doc_id, user_id=user.user_id)
         return WatchdogResponse(**result)
     except NixAIException:
         raise
@@ -393,7 +394,7 @@ async def get_clauses(
 ):
     """Extract suggested regulatory clauses from analysis findings."""
     try:
-        result = strategic_service.get_smart_clauses(doc_id)
+        result = strategic_service.get_smart_clauses(doc_id, user_id=user.user_id)
         return ClauseLibraryResponse(**result)
     except NixAIException:
         raise
@@ -425,7 +426,7 @@ async def get_cross_protocol(
 ):
     """Find patterns across all analyzed protocols."""
     try:
-        result = strategic_service.get_cross_protocol_intelligence()
+        result = strategic_service.get_cross_protocol_intelligence(user_id=user.user_id)
         return CrossProtocolResponse(**result)
     except NixAIException:
         raise

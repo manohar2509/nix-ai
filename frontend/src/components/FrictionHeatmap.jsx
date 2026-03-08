@@ -31,16 +31,20 @@ export default function FrictionHeatmap({ docId, generatedAt }) {
   const setFriction = useAppStore(s => s.setFrictionMap);
   const setLoading = useAppStore(s => s.setIsFrictionLoading);
   const [selectedSection, setSelectedSection] = useState(null);
+  const [error, setError] = useState(null);
 
   const generate = async () => {
     if (!docId) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await strategicService.getFrictionMap(docId);
       setFriction(result);
       useAppStore.getState().updateStrategicTimestamp('friction_map', new Date().toISOString());
     } catch (err) {
       console.error('Friction map failed:', err);
+      const msg = err?.response?.data?.detail || err?.userMessage || 'Failed to generate friction map. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -67,6 +71,12 @@ export default function FrictionHeatmap({ docId, generatedAt }) {
         </div>
         <h3 className="text-slate-700 font-bold mb-1">Regulatory vs. Commercial Conflict Map</h3>
         <p className="text-slate-400 text-sm max-w-sm mb-4">Identify protocol sections where regulatory requirements and commercial objectives pull in opposite directions — and find the best resolution path.</p>
+        {error && (
+          <div className="mb-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 max-w-sm">
+            <div className="flex items-center gap-1.5 font-semibold mb-0.5"><AlertTriangle size={12} /> Generation Failed</div>
+            {error}
+          </div>
+        )}
         <button onClick={generate} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Generate Friction Map
         </button>

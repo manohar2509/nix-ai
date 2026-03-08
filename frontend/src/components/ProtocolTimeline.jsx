@@ -31,6 +31,7 @@ export default function ProtocolTimeline({ docId }) {
   const { timeline } = useRegulatory();
   const store = useAppStore();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (docId) loadTimeline();
@@ -38,11 +39,13 @@ export default function ProtocolTimeline({ docId }) {
 
   const loadTimeline = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getTimeline(docId);
       store.setTimeline(data.events || []);
     } catch (err) {
       console.error('Failed to load timeline:', err);
+      setError(err?.response?.data?.detail || err.message || 'Failed to load timeline');
     } finally {
       setLoading(false);
     }
@@ -60,7 +63,19 @@ export default function ProtocolTimeline({ docId }) {
   if (!timeline.length) {
     return (
       <div className="text-center py-6 text-slate-500 text-sm">
-        <p>No timeline events yet.</p>
+        {error && (
+          <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600 text-left">
+            <div className="font-semibold mb-0.5">⚠️ Failed to load timeline</div>
+            <p>{error}</p>
+            <button
+              onClick={loadTimeline}
+              className="mt-2 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-semibold transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+        {!error && <p>No timeline events yet.</p>}
         <p className="text-xs mt-1 text-slate-400">Upload and analyze a protocol to see events.</p>
         <div className="mt-3 p-3 rounded-lg bg-brand-50/60 border border-brand-100/60 text-left">
           <div className="text-[11px] font-semibold text-brand-700 mb-1">📋 About the Activity Log</div>

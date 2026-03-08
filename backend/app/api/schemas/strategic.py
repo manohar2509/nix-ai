@@ -492,6 +492,7 @@ class WatchdogAlert(BaseModel):
     score_impact: float = 0
     urgency: str = ""
     url: str = ""
+    source_type: str = ""  # ICH | FDA | EU — for frontend badge coloring
 
 
 class WatchdogAction(BaseModel):

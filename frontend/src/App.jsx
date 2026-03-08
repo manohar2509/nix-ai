@@ -37,6 +37,18 @@ function DashboardLayout() {
   const { isAnalyzing, lastAnalysis } = useAnalysis();
   const activeView = useAppStore((state) => state.activeView);
 
+  // Global upload dialog trigger (allows any view like Dashboard to open upload)
+  const showUploadDialog = useAppStore((state) => state.showUploadDialog);
+  const setShowUploadDialog = useAppStore((state) => state.setShowUploadDialog);
+
+  // Sync global trigger → local state, then reset the trigger
+  React.useEffect(() => {
+    if (showUploadDialog) {
+      setShowUpload(true);
+      setShowUploadDialog(false);
+    }
+  }, [showUploadDialog, setShowUploadDialog]);
+
   // Load cached strategic intelligence results when document changes
   // This ensures page reloads don't lose AI-generated content
   useStrategicCache(currentDocument?.id);
@@ -55,16 +67,34 @@ function DashboardLayout() {
   // Helper: re-fetch document list from backend (source of truth)
   const _refreshDocuments = useCallback(async () => {
     try {
+      // Skip refresh if a delete is in progress (prevent race condition)
+      const storeState = useAppStore.getState();
+      const recentlyDeleted = storeState._recentlyDeletedIds || [];
+
       const docs = await documentService.listDocuments();
-      setDocuments(docs);
+      setDocuments(docs); // store's setDocuments auto-filters recently deleted IDs
+
+      // After successful refresh, clear the recently-deleted guard
+      // (backend now reflects the deletion via ConsistentRead)
+      if (recentlyDeleted.length > 0) {
+        // Only clear IDs that are confirmed gone from the backend response
+        const stillDeletedIds = recentlyDeleted.filter(
+          (id) => docs.find((d) => d.id === id)
+        );
+        useAppStore.setState({ _recentlyDeletedIds: stillDeletedIds });
+      }
+
+      // Get the filtered documents from the store (after setDocuments filtering)
+      const filteredDocs = useAppStore.getState().documents;
+
       // If current document was deleted on the backend, clear it
-      if (currentDocument && !docs.find((d) => d.id === currentDocument.id)) {
-        setCurrentDocument(docs.length > 0 ? docs[0] : null);
+      if (currentDocument && !filteredDocs.find((d) => d.id === currentDocument.id)) {
+        setCurrentDocument(filteredDocs.length > 0 ? filteredDocs[0] : null);
         setLastAnalysis(null);
       }
       // If current document status changed (e.g. worker finished), update it
       if (currentDocument) {
-        const updated = docs.find((d) => d.id === currentDocument.id);
+        const updated = filteredDocs.find((d) => d.id === currentDocument.id);
         if (updated && updated.status !== currentDocument.status) {
           setCurrentDocument(updated);
         }
@@ -117,9 +147,9 @@ function DashboardLayout() {
   // The useStrategicCache hook will then re-populate from the backend cache.
   const prevDocRef = React.useRef(null);
   useEffect(() => {
-    if (!currentDocument?.id) return;
-    if (prevDocRef.current && prevDocRef.current !== currentDocument.id) {
-      // Document changed — clear old strategic state
+    const curId = currentDocument?.id || null;
+    // If document changed (including becoming null after deletion), clear strategic state
+    if (prevDocRef.current && prevDocRef.current !== curId) {
       const store = useAppStore.getState();
       store.setFrictionMap(null);
       store.setCostAnalysis(null);
@@ -133,7 +163,7 @@ function DashboardLayout() {
       store.setStrategicTimestamps({});
       store.clearDebate();
     }
-    prevDocRef.current = currentDocument.id;
+    prevDocRef.current = curId;
   }, [currentDocument?.id]);
 
   // Real analysis flow — calls backend → Bedrock → returns results

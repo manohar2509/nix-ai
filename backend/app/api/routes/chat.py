@@ -41,7 +41,7 @@ async def send_message(
         raise
     except Exception as exc:
         logger.error("Chat send_message failed for doc %s: %s", body.document_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to send message: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to process your message. Please try again.")
 
 
 @router.post("/chat/stream")
@@ -72,7 +72,7 @@ async def send_message_stream(
         raise
     except Exception as exc:
         logger.error("Chat stream failed for doc %s: %s", body.document_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to start chat stream: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to start chat stream. Please try again.")
 
 
 @router.get("/documents/{doc_id}/chat", response_model=ChatHistoryResponse)
@@ -88,7 +88,7 @@ async def get_chat_history(
         raise
     except Exception as exc:
         logger.error("Get chat history failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get chat history: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load chat history. Please try again.")
 
 
 @router.get("/chat/{message_id}/citations")
@@ -104,7 +104,7 @@ async def get_message_citations(
         raise
     except Exception as exc:
         logger.error("Get citations failed for message %s: %s", message_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to get citations: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to load citations. Please try again.")
 
 
 @router.post("/chat/{message_id}/feedback")
@@ -120,7 +120,7 @@ async def submit_feedback(
         raise
     except Exception as exc:
         logger.error("Submit feedback failed for message %s: %s", message_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to submit feedback: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to submit feedback. Please try again.")
 
 
 @router.delete("/documents/{doc_id}/chat")
@@ -135,4 +135,4 @@ async def clear_chat_history(
         raise
     except Exception as exc:
         logger.error("Clear chat history failed for doc %s: %s", doc_id, exc)
-        raise HTTPException(status_code=500, detail=f"Failed to clear chat history: {str(exc)[:200]}")
+        raise HTTPException(status_code=500, detail="Failed to clear chat history. Please try again.")

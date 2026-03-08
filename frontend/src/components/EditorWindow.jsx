@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Upload } from 'lucide-react';
+import { useAppStore } from '../stores/useAppStore';
 import { cn } from '../utils/cn';
 
 export default function EditorWindow({ hasAnalyzed, currentDocument }) {
   const [documentContent, setDocumentContent] = useState(null);
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const setShowUploadDialog = useAppStore((state) => state.setShowUploadDialog);
 
   // Map internal status to user-friendly labels
   const statusLabel = (s) => {
@@ -48,9 +50,16 @@ export default function EditorWindow({ hasAnalyzed, currentDocument }) {
           <Upload size={32} className="text-slate-300" />
         </div>
         <h3 className="text-slate-700 font-semibold mb-1">No Protocol Selected</h3>
-        <p className="text-slate-400 text-sm max-w-[260px] text-center leading-relaxed">
+        <p className="text-slate-400 text-sm max-w-[260px] text-center leading-relaxed mb-4">
           Upload a clinical trial protocol or select an existing one from the sidebar to begin regulatory analysis.
         </p>
+        <button
+          onClick={() => setShowUploadDialog(true)}
+          className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-brand-600 to-brand-500 rounded-lg hover:from-brand-500 hover:to-brand-400 shadow-md shadow-brand-600/20 hover:shadow-lg transition-all"
+        >
+          <Upload size={15} />
+          Upload Protocol
+        </button>
       </div>
     );
   }

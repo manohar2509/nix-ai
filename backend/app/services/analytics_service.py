@@ -522,10 +522,18 @@ def _build_recent_activity(jobs: list[dict], docs: list[dict]) -> list[dict]:
     for j in sorted_jobs[:10]:
         job_type = j.get("type", "UNKNOWN")
         status = j.get("status", "UNKNOWN")
-        doc_id = (j.get("params") or {}).get("document_id", "")
+        params = j.get("params") or {}
+        doc_id = params.get("document_id", "")
         doc_name = doc_map.get(doc_id, "")
+        # For comparison jobs, build a label from document_ids
+        if not doc_name and job_type == "COMPARE_PROTOCOLS":
+            doc_ids = params.get("document_ids", [])
+            names = [doc_map.get(did, "") for did in doc_ids if doc_map.get(did)]
+            doc_name = ", ".join(names[:3]) or f"{len(doc_ids)} protocols"
+        job_id = j.get("id", "")
         recent.append({
-            "id": j.get("id", ""),
+            "id": job_id,
+            "jobId": job_id,
             "type": job_type,
             "status": status,
             "description": _job_description(job_type, status, doc_name),
@@ -619,6 +627,9 @@ def _job_description(job_type: str, status: str, doc_name: str) -> str:
         "ANALYZE_DOCUMENT": "Document analysis",
         "KB_SYNC": "Knowledge base sync",
         "SYNTHETIC_GENERATION": "Synthetic data generation",
+        "COMPARE_PROTOCOLS": "Protocol comparison",
+        "SIMULATE_AMENDMENT": "Amendment simulation",
+        "RUN_BOARDROOM_DEBATE": "Boardroom debate",
     }
     status_labels = {
         "QUEUED": "queued",

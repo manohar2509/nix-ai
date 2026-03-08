@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Copy, Check, Search, Filter } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { BookOpen, Copy, Check, Search, Filter, AlertTriangle, Info } from 'lucide-react';
 import { useAppStore } from '../stores/useAppStore';
 import * as strategicService from '../services/strategicService';
+import GuidelineRefBadge from './GuidelineRefBadge';
 import { cn } from '../utils/cn';
 
 export default function SmartClauseLibrary({ docId }) {
@@ -11,30 +12,53 @@ export default function SmartClauseLibrary({ docId }) {
   const [filterSeverity, setFilterSeverity] = useState('all');
   const [copiedId, setCopiedId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const prevDocIdRef = useRef(docId);
 
   useEffect(() => {
+    if (prevDocIdRef.current !== docId) {
+      prevDocIdRef.current = docId;
+      setClauseLib(null);
+      setError(null);
+    }
     if (docId && !clauseLib) {
       loadClauses();
     }
-  }, [docId]);
+  }, [docId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadClauses = async () => {
     if (!docId) return;
     setLoading(true);
+    setError(null);
     try {
       const result = await strategicService.getClauses(docId);
       setClauseLib(result);
     } catch (err) {
       console.error('Clause load failed:', err);
+      const msg = err?.response?.data?.detail || err?.userMessage || 'Failed to load clause library.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const copyClause = (text, id) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+  const copyClause = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
   };
 
   if (loading) {
@@ -63,6 +87,12 @@ export default function SmartClauseLibrary({ docId }) {
         </div>
         <h3 className="text-slate-700 font-semibold mb-1">Smart Clause Library</h3>
         <p className="text-slate-400 text-sm max-w-xs">No suggested clauses found. Run an analysis first to generate regulatory-ready protocol language.</p>
+        {error && (
+          <div className="mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 max-w-xs">
+            <div className="flex items-center gap-1 font-semibold mb-0.5"><AlertTriangle size={11} /> Error</div>
+            {error}
+          </div>
+        )}
         {docId && (
           <button onClick={loadClauses} className="mt-3 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors">
             Load Clauses
@@ -152,12 +182,12 @@ export default function SmartClauseLibrary({ docId }) {
               <p className="text-[10px] text-slate-500 mb-1">{clause.suggestion}</p>
             )}
 
-            <div className="flex flex-wrap gap-1">
-              {clause.guideline_refs?.map((ref, i) => (
-                <span key={i} className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{typeof ref === 'string' ? ref : ref.code}</span>
-              ))}
+            <div className="flex flex-wrap gap-1 items-center">
+              {clause.guideline_refs?.length > 0 && (
+                <GuidelineRefBadge refs={clause.guideline_refs.map(r => typeof r === 'string' ? { code: r } : r)} />
+              )}
               {clause.jurisdictions?.map((j, i) => (
-                <span key={i} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{j}</span>
+                <span key={i} className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">{j}</span>
               ))}
             </div>
           </div>
@@ -165,6 +195,18 @@ export default function SmartClauseLibrary({ docId }) {
         {filtered.length === 0 && (
           <p className="text-xs text-slate-400 text-center py-4">No clauses match your filter criteria.</p>
         )}
+      </div>
+
+      {/* AI provenance disclaimer */}
+      <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/60">
+        <div className="flex items-start gap-2">
+          <Info size={12} className="text-slate-400 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            <span className="font-semibold text-slate-600">AI-Generated Clauses:</span>{' '}
+            Protocol language is suggested by AI based on guideline citations. Click any reference badge to verify
+            against the official source. Always have your regulatory affairs team review before incorporating into your protocol.
+          </p>
+        </div>
       </div>
     </div>
   );

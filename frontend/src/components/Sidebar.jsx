@@ -18,32 +18,40 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
   const showToast = useAppStore((state) => state.showToast);
   const [showDocList, setShowDocList] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const removeDocument = useAppStore((state) => state.removeDocument);
   const syncInFlightRef = useRef(false);
 
   const handleDeleteDocument = async (e, docId) => {
     e.stopPropagation();
+    // Ignore clicks while a delete is already in flight
+    if (deletingId) return;
     if (confirmDeleteId === docId) {
+      setDeletingId(docId);
       try {
-        await documentService.deleteDocument(docId);
-        // Store auto-selects next doc and clears stale analysis/chat
+        // 1. Optimistically remove from UI FIRST for instant feedback
         removeDocument(docId);
-        // Refresh from backend to ensure consistency
+        setConfirmDeleteId(null);
+        // 2. Fire backend delete (already removed from UI, so user sees instant deletion)
+        await documentService.deleteDocument(docId);
+        showToast({ type: 'success', title: 'Protocol removed', message: 'The protocol has been deleted from your workspace.' });
+      } catch (err) {
+        // Backend failed — re-fetch to restore the document
         try {
           const freshDocs = await documentService.listDocuments();
           const store = useAppStore.getState();
+          // Remove the doc ID from the recently-deleted guard so re-fetch restores it
+          store.setState({
+            _recentlyDeletedIds: (store._recentlyDeletedIds || []).filter((id) => id !== docId),
+          });
           store.setDocuments(freshDocs);
-          // If store auto-selected a doc, ensure it still exists on backend
-          if (store.currentDocument && !freshDocs.find(d => d.id === store.currentDocument.id)) {
-            store.setCurrentDocument(freshDocs.length > 0 ? freshDocs[0] : null);
-            store.setLastAnalysis(null);
+          if (!store.currentDocument && freshDocs.length > 0) {
+            store.setCurrentDocument(freshDocs[0]);
           }
-        } catch { /* optimistic removal already handled */ }
-        showToast({ type: 'success', title: 'Protocol removed', message: 'The protocol has been deleted from your workspace.' });
-        setConfirmDeleteId(null);
-      } catch (err) {
+        } catch { /* ignore re-fetch failure */ }
         showToast({ type: 'error', title: 'Unable to delete', message: 'Could not remove the protocol. Please try again.' });
-        setConfirmDeleteId(null);
+      } finally {
+        setDeletingId(null);
       }
     } else {
       setConfirmDeleteId(docId);
@@ -187,13 +195,16 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
                   <button
                     key={doc.id}
                     onClick={() => {
+                      if (deletingId === doc.id) return;
                       onSelectDocument(doc);
                     }}
                     className={cn(
                       'flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-xs transition-all truncate group',
-                      currentDocument?.id === doc.id
-                        ? 'bg-brand-500/20 text-brand-200 ring-1 ring-brand-500/30'
-                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                      deletingId === doc.id
+                        ? 'opacity-40 pointer-events-none'
+                        : currentDocument?.id === doc.id
+                          ? 'bg-brand-500/20 text-brand-200 ring-1 ring-brand-500/30'
+                          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                     )}
                   >
                     <FileText size={13} className="shrink-0" />

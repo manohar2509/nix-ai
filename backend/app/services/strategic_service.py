@@ -27,13 +27,35 @@ import json
 import logging
 import re
 
-from app.core.exceptions import DocumentNotFoundError
+from app.core.exceptions import DocumentNotFoundError, NixAIException
 from app.core.resilience import CACHE_TTL_STRATEGIC
 from app.services import bedrock_service, dynamo_service, s3_service
 from app.services.regulatory_engine import (
     ALL_REFERENCES_PROMPT_BLOCK,
+    FDA_GUIDANCE,
+    HTA_BODY_REFS,
     ICH_GUIDELINES,
 )
+
+
+class NotAuthorizedError(NixAIException):
+    """Raised when a user attempts to access a document they do not own."""
+    def __init__(self, doc_id: str):
+        super().__init__(
+            f"Not authorized to access document {doc_id}",
+            status_code=403,
+            error_code="NOT_AUTHORIZED",
+        )
+
+
+class AnalysisRequiredError(NixAIException):
+    """Raised when a strategic feature is invoked before core analysis exists."""
+    def __init__(self, doc_id: str):
+        super().__init__(
+            "Please run the core regulatory analysis first before using intelligence features.",
+            status_code=400,
+            error_code="ANALYSIS_REQUIRED",
+        )
 
 logger = logging.getLogger(__name__)
 
@@ -131,15 +153,33 @@ CMS MEDICARE COMMON DENIAL REASONS:
 # ════════════════════════════════════════════════════════════════
 # HELPER: Get document text + analysis for any feature
 # ════════════════════════════════════════════════════════════════
-def _get_doc_context(doc_id: str) -> dict:
-    """Fetch document text and analysis — used by all features."""
+def _get_doc_context(doc_id: str, user_id: str | None = None) -> dict:
+    """Fetch document text and analysis — used by all features.
+
+    Args:
+        doc_id: The document ID to fetch.
+        user_id: If provided, verify the user owns the document.
+
+    Raises:
+        DocumentNotFoundError: Document does not exist.
+        NotAuthorizedError: User does not own the document.
+        AnalysisRequiredError: No analysis exists for the document.
+    """
     doc = dynamo_service.get_document(doc_id)
     if not doc:
         raise DocumentNotFoundError(doc_id)
 
+    # ── Ownership check ──
+    if user_id and doc.get("user_id") and doc["user_id"] != user_id:
+        raise NotAuthorizedError(doc_id)
+
     s3_key = doc.get("s3_key", "")
     document_text = s3_service.extract_text_from_s3_object(s3_key) if s3_key else ""
     analysis = dynamo_service.get_analysis_for_document(doc_id)
+
+    # ── Analysis guard — strategic features need real data to ground on ──
+    if not analysis or not analysis.get("findings"):
+        raise AnalysisRequiredError(doc_id)
 
     return {
         "doc": doc,
@@ -150,27 +190,81 @@ def _get_doc_context(doc_id: str) -> dict:
 
 
 def _parse_json_response(raw: str) -> dict:
-    """Extract JSON from Bedrock response."""
-    json_match = re.search(r'\{[\s\S]*\}', raw)
-    if json_match:
-        try:
-            return json.loads(json_match.group())
-        except json.JSONDecodeError:
-            pass
-    # Try array
-    json_match = re.search(r'\[[\s\S]*\]', raw)
-    if json_match:
-        try:
-            return {"items": json.loads(json_match.group())}
-        except json.JSONDecodeError:
-            pass
+    """Extract JSON from Bedrock response using brace-counting.
+
+    The greedy regex r'{[\\s\\S]*}' can match from the first '{' to the
+    LAST '}', capturing garbage after the JSON object.  Instead, walk
+    the string and track brace depth so we grab exactly the first
+    complete top-level object (or array).
+    """
+    # 1. Try to find a top-level JSON object via brace counting
+    start = raw.find("{")
+    if start != -1:
+        depth = 0
+        in_string = False
+        escape_next = False
+        for i in range(start, len(raw)):
+            ch = raw[i]
+            if escape_next:
+                escape_next = False
+                continue
+            if ch == "\\":
+                escape_next = True
+                continue
+            if ch == '"':
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    candidate = raw[start : i + 1]
+                    try:
+                        return json.loads(candidate)
+                    except json.JSONDecodeError:
+                        break  # fall through to array attempt
+
+    # 2. Try top-level JSON array
+    start = raw.find("[")
+    if start != -1:
+        depth = 0
+        in_string = False
+        escape_next = False
+        for i in range(start, len(raw)):
+            ch = raw[i]
+            if escape_next:
+                escape_next = False
+                continue
+            if ch == "\\":
+                escape_next = True
+                continue
+            if ch == '"':
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+                if depth == 0:
+                    candidate = raw[start : i + 1]
+                    try:
+                        return {"items": json.loads(candidate)}
+                    except json.JSONDecodeError:
+                        break
+
+    logger.warning("Failed to parse JSON from Bedrock response (len=%d)", len(raw))
     return {}
 
 
 # ════════════════════════════════════════════════════════════════
 # FEATURE 1: ADVERSARIAL COUNCIL — AI Debate Engine
 # ════════════════════════════════════════════════════════════════
-def run_adversarial_council(doc_id: str) -> dict:
+def run_adversarial_council(doc_id: str, user_id: str | None = None) -> dict:
     """
     Generate a multi-agent debate about a protocol between:
     - Dr. No (The Regulator) — argues for safety/compliance
@@ -180,7 +274,7 @@ def run_adversarial_council(doc_id: str) -> dict:
 
     Uses REAL protocol text + REAL analysis findings + REAL guidelines.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     doc_text = ctx["text"][:8000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
@@ -314,12 +408,12 @@ Respond with ONLY valid JSON."""
 # ════════════════════════════════════════════════════════════════
 # FEATURE 2: STRATEGIC FRICTION HEATMAP
 # ════════════════════════════════════════════════════════════════
-def generate_friction_map(doc_id: str) -> dict:
+def generate_friction_map(doc_id: str, user_id: str | None = None) -> dict:
     """
     Map protocol sections to regulatory risk, commercial risk, and friction scores.
     Friction = conflict between regulatory and commercial requirements.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     doc_text = ctx["text"][:10000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
@@ -409,12 +503,12 @@ Respond with ONLY valid JSON."""
 # ════════════════════════════════════════════════════════════════
 # FEATURE 3: TRIAL COST ARCHITECT
 # ════════════════════════════════════════════════════════════════
-def analyze_trial_costs(doc_id: str) -> dict:
+def analyze_trial_costs(doc_id: str, user_id: str | None = None) -> dict:
     """
     Estimate trial costs based on protocol parameters and generate
     per-finding cost impact analysis.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     doc_text = ctx["text"][:8000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
@@ -548,12 +642,12 @@ Respond with ONLY valid JSON."""
 # ════════════════════════════════════════════════════════════════
 # FEATURE 4: SYNTHETIC PAYER SIMULATOR
 # ════════════════════════════════════════════════════════════════
-def simulate_payer_decisions(doc_id: str) -> dict:
+def simulate_payer_decisions(doc_id: str, user_id: str | None = None) -> dict:
     """
     Predict insurance coverage decisions and denial rates
     for each major US insurer and HTA body.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     doc_text = ctx["text"][:6000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
@@ -668,12 +762,12 @@ Respond with ONLY valid JSON."""
 # ════════════════════════════════════════════════════════════════
 # FEATURE 5: REGULATORY ARBITRAGE / SUBMISSION STRATEGY
 # ════════════════════════════════════════════════════════════════
-def generate_submission_strategy(doc_id: str) -> dict:
+def generate_submission_strategy(doc_id: str, user_id: str | None = None) -> dict:
     """
     Optimize global submission order and generate a 'golden protocol'
     that satisfies all jurisdictions simultaneously.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     doc_text = ctx["text"][:6000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
@@ -788,12 +882,12 @@ Respond with ONLY valid JSON."""
 # ════════════════════════════════════════════════════════════════
 # FEATURE 6: PROTOCOL OPTIMIZER
 # ════════════════════════════════════════════════════════════════
-def optimize_protocol(doc_id: str) -> dict:
+def optimize_protocol(doc_id: str, user_id: str | None = None) -> dict:
     """
     Generate specific protocol text rewrites to resolve findings.
     Each optimization includes original text, new text, and justification.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     doc_text = ctx["text"][:10000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
@@ -888,12 +982,12 @@ Respond with ONLY valid JSON."""
 # ════════════════════════════════════════════════════════════════
 # FEATURE 7: DEAL ROOM / INVESTOR REPORT
 # ════════════════════════════════════════════════════════════════
-def generate_investor_report(doc_id: str) -> dict:
+def generate_investor_report(doc_id: str, user_id: str | None = None) -> dict:
     """
     Generate a VC/investor-ready due diligence package aggregating
     all analysis data into an executive format.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     doc_text = ctx["text"][:4000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
@@ -1022,7 +1116,8 @@ Respond with ONLY valid JSON."""
 # FEATURE 8: COMPLIANCE WATCHDOG
 # ════════════════════════════════════════════════════════════════
 
-# Real recent regulatory updates
+# Real recent regulatory updates — each entry carries a direct URL so the
+# frontend can link users to the official source document for verification.
 RECENT_UPDATES = [
     {
         "id": "UPDATE-001",
@@ -1031,6 +1126,7 @@ RECENT_UPDATES = [
         "date": "2025-06-13",
         "severity": "high",
         "body": "ICH",
+        "url": "https://database.ich.org/sites/default/files/ICH_M14_Step2_DraftGuideline_2025_0613.pdf",
     },
     {
         "id": "UPDATE-002",
@@ -1039,6 +1135,7 @@ RECENT_UPDATES = [
         "date": "2025-01-06",
         "severity": "critical",
         "body": "ICH",
+        "url": "https://database.ich.org/sites/default/files/ICH_E6%28R3%29_Step4_FinalGuideline_2025_0106_ErrorCorrections_2025_1024.pdf",
     },
     {
         "id": "UPDATE-003",
@@ -1047,6 +1144,7 @@ RECENT_UPDATES = [
         "date": "2025-06-27",
         "severity": "high",
         "body": "ICH",
+        "url": "https://database.ich.org/sites/default/files/ICH_E20EWG_Step3_DraftGuideline_2025_0627.pdf",
     },
     {
         "id": "UPDATE-004",
@@ -1055,6 +1153,7 @@ RECENT_UPDATES = [
         "date": "2024-06-26",
         "severity": "critical",
         "body": "FDA",
+        "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/diversity-plans-improve-enrollment-participants-underrepresented-populations-clinical-studies",
     },
     {
         "id": "UPDATE-005",
@@ -1063,6 +1162,7 @@ RECENT_UPDATES = [
         "date": "2024-11-21",
         "severity": "high",
         "body": "ICH",
+        "url": "https://database.ich.org/sites/default/files/ICH_M11_Step4_Guideline_2024_1121.pdf",
     },
     {
         "id": "UPDATE-006",
@@ -1071,6 +1171,7 @@ RECENT_UPDATES = [
         "date": "2025-01-12",
         "severity": "critical",
         "body": "EU",
+        "url": "https://health.ec.europa.eu/health-technology-assessment/regulation-health-technology-assessment_en",
     },
     {
         "id": "UPDATE-007",
@@ -1079,6 +1180,7 @@ RECENT_UPDATES = [
         "date": "2024-09-12",
         "severity": "medium",
         "body": "FDA",
+        "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/decentralized-clinical-trials-drugs-biological-products-and-devices",
     },
     {
         "id": "UPDATE-008",
@@ -1087,16 +1189,17 @@ RECENT_UPDATES = [
         "date": "2025-11-19",
         "severity": "medium",
         "body": "ICH",
+        "url": "https://database.ich.org/sites/default/files/ICH_E22_Step2_draftGuideline_Assembly_Endorsed_FINAL_2025_1119.pdf",
     },
 ]
 
 
-def run_compliance_watchdog(doc_id: str) -> dict:
+def run_compliance_watchdog(doc_id: str, user_id: str | None = None) -> dict:
     """
     Scan a protocol against recent regulatory updates to detect
     compliance drift. Uses real recently published guidances.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     doc_text = ctx["text"][:6000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
@@ -1109,10 +1212,28 @@ def run_compliance_watchdog(doc_id: str) -> dict:
     analyzed_at = analysis.get("completed_at", "")
     reg_score = analysis.get("regulator_score", 0)
 
+    # Build a concise summary of the existing findings for grounding
+    existing_findings = analysis.get("findings", [])
+    findings_summary = ""
+    if existing_findings:
+        top_findings = existing_findings[:8]
+        findings_lines = []
+        for f in top_findings:
+            refs = ", ".join(r.get("code", "") for r in f.get("guideline_refs", [])[:3])
+            findings_lines.append(
+                f"  - [{f.get('severity', 'medium').upper()}] {f.get('title', '')} "
+                f"(Section: {f.get('section', 'N/A')}, Refs: {refs or 'N/A'})"
+            )
+        findings_summary = "\n".join(findings_lines)
+
     updates_text = "\n".join(
         f"- [{u['code']}] {u['title']} (Published: {u['date']}, Severity: {u['severity']}, Body: {u['body']})"
         for u in RECENT_UPDATES
     )
+
+    findings_block = ""
+    if findings_summary:
+        findings_block = f"\n- Key findings already identified:\n{findings_summary}"
 
     prompt = f"""You are a regulatory compliance watchdog. Check if this protocol is affected by recent regulatory updates.
 
@@ -1124,7 +1245,7 @@ PROTOCOL EXCERPT:
 CURRENT ANALYSIS:
 - Regulator Score: {reg_score}/100
 - Analyzed at: {analyzed_at}
-- Number of findings: {len(analysis.get("findings", []))}
+- Number of findings: {len(existing_findings)}{findings_block}
 
 RECENT REGULATORY UPDATES (REAL — published 2024-2026):
 {updates_text}
@@ -1181,15 +1302,34 @@ Respond with ONLY valid JSON."""
         raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
-        # Enrich with the static update metadata
+        # Enrich alerts with official source URLs and source_type for
+        # frontend color-coding.  Priority: 1) direct URL from RECENT_UPDATES
+        # (authoritative), 2) ICH/FDA/HTA reference databases.
         if "alerts" in result:
             for alert in result["alerts"]:
                 update_id = alert.get("update_id", "")
                 for u in RECENT_UPDATES:
                     if u["id"] == update_id:
-                        alert["url"] = ICH_GUIDELINES.get(
-                            u["code"].replace("ICH ", ""), {}
-                        ).get("url", "")
+                        code = u["code"]
+                        body = u.get("body", "")
+                        # 1. Use the direct URL carried on the update entry
+                        url = u.get("url", "")
+                        # 2. Fallback: resolve from reference databases
+                        if not url:
+                            if body == "ICH":
+                                url = ICH_GUIDELINES.get(code.replace("ICH ", ""), {}).get("url", "")
+                            elif body == "FDA":
+                                for fda_key, fda_info in FDA_GUIDANCE.items():
+                                    if fda_key.lower() in code.lower() or code.lower() in fda_info["title"].lower():
+                                        url = fda_info.get("url", "")
+                                        break
+                            elif body == "EU":
+                                for hta_key, hta_info in HTA_BODY_REFS.items():
+                                    if hta_key.lower() in code.lower():
+                                        url = hta_info.get("url", "")
+                                        break
+                        alert["url"] = url
+                        alert["source_type"] = body  # ICH | FDA | EU — for badge coloring
                         break
 
         # Cache the result
@@ -1205,12 +1345,12 @@ Respond with ONLY valid JSON."""
 # ════════════════════════════════════════════════════════════════
 # ENHANCEMENT: SMART CLAUSE LIBRARY
 # ════════════════════════════════════════════════════════════════
-def get_smart_clauses(doc_id: str) -> dict:
+def get_smart_clauses(doc_id: str, user_id: str | None = None) -> dict:
     """
     Extract all suggested clauses from analysis findings into a
     browsable, searchable clause library.
     """
-    ctx = _get_doc_context(doc_id)
+    ctx = _get_doc_context(doc_id, user_id)
     analysis = ctx["analysis"] or {}
     findings = analysis.get("findings", [])
 
@@ -1245,11 +1385,12 @@ def get_smart_clauses(doc_id: str) -> dict:
 # ════════════════════════════════════════════════════════════════
 # ENHANCEMENT: CROSS-PROTOCOL INTELLIGENCE
 # ════════════════════════════════════════════════════════════════
-def get_cross_protocol_intelligence() -> dict:
+def get_cross_protocol_intelligence(user_id: str | None = None) -> dict:
     """
-    Aggregate findings across ALL analyzed protocols to identify patterns.
+    Aggregate findings across analyzed protocols to identify patterns.
+    When user_id is provided, only includes that user's protocols.
     """
-    # Scan all analyses from DynamoDB
+    # Scan analyses from DynamoDB
     from app.core.aws_clients import get_dynamodb_table
     from boto3.dynamodb.conditions import Attr
 
@@ -1257,9 +1398,10 @@ def get_cross_protocol_intelligence() -> dict:
     analyses = []
 
     try:
-        resp = table.scan(
-            FilterExpression=Attr("entity").eq("ANALYSIS") & Attr("status").eq("COMPLETE"),
-        )
+        filter_expr = Attr("entity").eq("ANALYSIS") & Attr("status").eq("COMPLETE")
+        if user_id:
+            filter_expr = filter_expr & Attr("user_id").eq(user_id)
+        resp = table.scan(FilterExpression=filter_expr)
         analyses = resp.get("Items", [])
     except Exception as exc:
         logger.warning("Cross-protocol scan failed: %s", exc)

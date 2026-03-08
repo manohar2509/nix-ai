@@ -72,14 +72,18 @@ def send_message(
                 rag_result.get("text", ""), ICH_GUIDELINES, FDA_GUIDANCE, HTA_BODY_REFS
             )
 
-    # 4. Persist the AI response
+    # 4. Persist the AI response (include grounding metadata for history reload)
     ai_msg = dynamo_service.create_chat_message(
         doc_id=effective_doc_id,
         user_id="assistant",
         role="assistant",
         text=rag_result["text"],
         citations=rag_result.get("citations", []),
-        metadata={"session_id": rag_result.get("session_id")},
+        metadata={
+            "session_id": rag_result.get("session_id"),
+            "kb_grounded": rag_result.get("kb_grounded"),
+            "grounding_source": rag_result.get("grounding_source"),
+        },
     )
 
     # 5. Return response matching frontend schema
@@ -87,6 +91,8 @@ def send_message(
         "id": ai_msg["id"],
         "text": rag_result["text"],
         "citations": rag_result.get("citations", []),
+        "kb_grounded": rag_result.get("kb_grounded"),
+        "grounding_source": rag_result.get("grounding_source"),
         "metadata": {
             "user_message_id": user_msg["id"],
             "session_id": rag_result.get("session_id"),
@@ -141,6 +147,8 @@ def get_history(user: CurrentUser, doc_id: str) -> list[dict]:
             "role": m["role"],
             "text": m["text"],
             "citations": m.get("citations", []),
+            "kb_grounded": m.get("metadata", {}).get("kb_grounded"),
+            "grounding_source": m.get("metadata", {}).get("grounding_source"),
             "created_at": m.get("created_at", ""),
         }
         for m in messages
@@ -239,12 +247,15 @@ def send_message_stream(
             for i in range(0, len(full_text), chunk_size):
                 yield _sse({"event": "token", "text": full_text[i:i + chunk_size]})
             # Done — persist and finish
-            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, rag_citations)
+            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, rag_citations,
+                               kb_grounded=True, grounding_source="document_library")
             yield _sse({
                 "event": "done",
                 "messageId": ai_msg_id,
                 "fullText": full_text,
                 "citations": rag_citations,
+                "kb_grounded": True,
+                "grounding_source": "document_library",
             })
             return
     except Exception as exc:
@@ -274,12 +285,15 @@ def send_message_stream(
             )
 
             # Persist the complete response
-            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, inline_citations)
+            _persist_ai_message(effective_doc_id, ai_msg_id, full_text, inline_citations,
+                               kb_grounded=False, grounding_source="regulatory_authority")
             yield _sse({
                 "event": "done",
                 "messageId": ai_msg_id,
                 "fullText": full_text,
                 "citations": inline_citations,
+                "kb_grounded": False,
+                "grounding_source": "regulatory_authority",
             })
         except Exception as exc:
             error_str = str(exc)
@@ -302,20 +316,27 @@ def _sse(data: dict) -> str:
 
 
 def _persist_ai_message(
-    doc_id: str, msg_id: str, text: str, citations: list
+    doc_id: str, msg_id: str, text: str, citations: list,
+    kb_grounded: bool | None = None, grounding_source: str | None = None,
 ) -> None:
     """Save the AI response to DynamoDB after streaming completes.
 
     Uses the pre-generated msg_id so the frontend's reference stays valid.
+    Stores grounding metadata so history reload can show correct citation badges.
     """
     try:
+        metadata = {}
+        if kb_grounded is not None:
+            metadata["kb_grounded"] = kb_grounded
+        if grounding_source:
+            metadata["grounding_source"] = grounding_source
         dynamo_service.create_chat_message(
             doc_id=doc_id,
             user_id="assistant",
             role="assistant",
             text=text,
             citations=citations,
-            metadata={},
+            metadata=metadata,
             message_id=msg_id,  # Use the pre-generated ID the frontend already has
         )
     except Exception as exc:

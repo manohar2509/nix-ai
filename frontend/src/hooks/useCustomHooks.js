@@ -17,16 +17,37 @@ export function useJobPolling(jobId, onComplete, onFailed, interval = 2000) {
   const moveJobToFailed = useAppStore((state) => state.moveJobToFailed);
   const intervalRef = useRef(null);
   const isPollingRef = useRef(false);
+  const attemptRef = useRef(0);
+  const consecutiveErrorsRef = useRef(0);
+
+  // Max polling attempts — prevents infinite polling if a job gets stuck.
+  // 90 attempts × 2s interval = 3 minutes before giving up.
+  const MAX_ATTEMPTS = 90;
+  const MAX_CONSECUTIVE_ERRORS = 5;
 
   const startPolling = useCallback(async () => {
     if (isPollingRef.current) return;
     isPollingRef.current = true;
+    attemptRef.current = 0;
+    consecutiveErrorsRef.current = 0;
 
     const { jobService } = await import('../services/jobService');
 
     const poll = async () => {
+      attemptRef.current += 1;
+
+      // Safety cap: stop polling after MAX_ATTEMPTS
+      if (attemptRef.current > MAX_ATTEMPTS) {
+        isPollingRef.current = false;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        moveJobToFailed(jobId, 'Job timed out — the operation took too long. Please try again.');
+        onFailed?.({ status: 'FAILED', error: 'Polling timeout' });
+        return;
+      }
+
       try {
         const status = await jobService.getJobStatus(jobId);
+        consecutiveErrorsRef.current = 0; // Reset on success
 
         if (status.status === 'COMPLETE') {
           isPollingRef.current = false;
@@ -37,6 +58,12 @@ export function useJobPolling(jobId, onComplete, onFailed, interval = 2000) {
           isPollingRef.current = false;
           moveJobToFailed(jobId, status.error);
           onFailed?.(status);
+          if (intervalRef.current) clearInterval(intervalRef.current);
+        } else if (status.status === 'NOT_FOUND') {
+          // Job doesn't exist — treat as terminal failure
+          isPollingRef.current = false;
+          moveJobToFailed(jobId, 'Job not found. It may have expired or been removed.');
+          onFailed?.({ status: 'FAILED', error: 'Job not found' });
           if (intervalRef.current) clearInterval(intervalRef.current);
         } else {
           // Update progress
@@ -49,14 +76,25 @@ export function useJobPolling(jobId, onComplete, onFailed, interval = 2000) {
         }
       } catch (error) {
         console.error('Job polling error:', error);
+        consecutiveErrorsRef.current += 1;
+
+        // Stop polling after too many consecutive network errors
+        if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+          isPollingRef.current = false;
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          moveJobToFailed(jobId, 'Lost connection while checking job status. Please refresh and try again.');
+          onFailed?.({ status: 'FAILED', error: 'Consecutive polling errors' });
+        }
       }
     };
 
     // Initial poll
     await poll();
 
-    // Set up interval
-    intervalRef.current = setInterval(poll, interval);
+    // Set up interval (only if still polling after initial poll)
+    if (isPollingRef.current) {
+      intervalRef.current = setInterval(poll, interval);
+    }
   }, [jobId, updateActiveJob, moveJobToCompleted, moveJobToFailed, onComplete, onFailed, interval]);
 
   const stopPolling = useCallback(() => {
@@ -87,21 +125,40 @@ export function useDocumentUpload() {
     const { documentService } = await import('../services/documentService');
 
     try {
-      if (!file.type.includes('pdf')) {
-        throw new Error('Only PDF files are supported');
+      // Validate file type — must match UploadDialog accepted formats
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      const validExts = ['pdf', 'txt', 'csv', 'json', 'docx', 'doc'];
+      const validTypes = [
+        'application/pdf', 'text/plain', 'text/csv', 'application/json',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+      ];
+      if (!validTypes.includes(file.type) && !validExts.includes(ext)) {
+        throw new Error('Unsupported file type. Accepted: PDF, TXT, CSV, JSON, DOCX');
       }
       if (file.size > 50 * 1024 * 1024) {
         throw new Error('File size must be less than 50MB');
       }
 
+      // Resolve content type (some browsers return empty file.type)
+      const EXTENSION_TO_MIME = {
+        pdf: 'application/pdf', txt: 'text/plain', csv: 'text/csv',
+        json: 'application/json',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        doc: 'application/msword',
+      };
+      const contentType = (file.type && file.type !== 'application/octet-stream')
+        ? file.type
+        : (EXTENSION_TO_MIME[ext] || 'application/octet-stream');
+
       // Get presigned URL
       const { url, key } = await documentService.getPresignedUrl(
         file.name,
-        file.type
+        contentType
       );
 
       // Upload to S3
-      await documentService.uploadToS3(file, url);
+      await documentService.uploadToS3(file, url, undefined, contentType);
 
       // Register document
       const doc = await documentService.registerDocument(

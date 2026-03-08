@@ -42,7 +42,19 @@ function inferSourceType(ref) {
   if (code.startsWith('NICE') || code.startsWith('IQWiG') || code.startsWith('CADTH') || code.startsWith('PBAC') || code.startsWith('AMNOG')) return 'HTA';
   if (code.startsWith('FDA') || code.startsWith('21 CFR')) return 'FDA';
   if (code.startsWith('EMA') || code.startsWith('CHMP') || code.startsWith('EMEA')) return 'EMA';
-  return 'ICH';
+  if (code.startsWith('ICH') || code.startsWith('E6') || code.startsWith('E8') || code.startsWith('E9') || code.startsWith('E17') || code.startsWith('M4')) return 'ICH';
+  return 'default';
+}
+
+/** Only allow http/https URLs to prevent XSS via javascript: or data: URIs */
+function isSafeUrl(url) {
+  if (!url || url === '#') return false;
+  try {
+    const parsed = new URL(url, 'https://placeholder.invalid');
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 export default function GuidelineRefBadge({ refs }) {
@@ -53,7 +65,7 @@ export default function GuidelineRefBadge({ refs }) {
       {refs.map((ref, i) => {
         const sourceType = inferSourceType(ref);
         const config = SOURCE_CONFIG[sourceType] || SOURCE_CONFIG.default;
-        const hasUrl = ref.url && ref.url !== '#';
+        const hasUrl = isSafeUrl(ref.url);
 
         // Tooltip: full title + section + relevance for hover context
         const tooltip = [
