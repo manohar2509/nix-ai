@@ -28,6 +28,7 @@ import logging
 import re
 
 from app.core.exceptions import DocumentNotFoundError
+from app.core.resilience import CACHE_TTL_STRATEGIC
 from app.services import bedrock_service, dynamo_service, s3_service
 from app.services.regulatory_engine import (
     ALL_REFERENCES_PROMPT_BLOCK,
@@ -183,6 +184,12 @@ def run_adversarial_council(doc_id: str) -> dict:
     doc_text = ctx["text"][:8000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
+    # ── Return cached result if analysis hasn't changed ──
+    cached = _check_cache(doc_id, "council", analysis)
+    if cached:
+        logger.info("Returning cached council result for doc %s", doc_id)
+        return cached
+
     findings_json = json.dumps(analysis.get("findings", [])[:8], default=str)[:3000]
     payer_gaps_json = json.dumps(analysis.get("payer_gaps", [])[:5], default=str)[:2000]
     jurisdiction_json = json.dumps(analysis.get("jurisdiction_scores", [])[:3], default=str)[:2000]
@@ -283,7 +290,7 @@ CRITICAL: Base ALL arguments on the REAL findings and data provided. Do not inve
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
         if not result.get("rounds"):
@@ -315,6 +322,12 @@ def generate_friction_map(doc_id: str) -> dict:
     ctx = _get_doc_context(doc_id)
     doc_text = ctx["text"][:10000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
+
+    # ── Return cached result if analysis hasn't changed ──
+    cached = _check_cache(doc_id, "friction_map", analysis)
+    if cached:
+        logger.info("Returning cached friction_map result for doc %s", doc_id)
+        return cached
 
     findings_json = json.dumps(analysis.get("findings", []), default=str)[:4000]
     payer_gaps_json = json.dumps(analysis.get("payer_gaps", []), default=str)[:2000]
@@ -380,7 +393,7 @@ CRITICAL: Map findings from the analysis to specific protocol sections. Use REAL
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
         # Cache the result
@@ -404,6 +417,12 @@ def analyze_trial_costs(doc_id: str) -> dict:
     ctx = _get_doc_context(doc_id)
     doc_text = ctx["text"][:8000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
+
+    # ── Return cached result if analysis hasn't changed ──
+    cached = _check_cache(doc_id, "cost_analysis", analysis)
+    if cached:
+        logger.info("Returning cached cost_analysis result for doc %s", doc_id)
+        return cached
 
     findings_json = json.dumps(analysis.get("findings", [])[:10], default=str)[:3000]
 
@@ -513,7 +532,7 @@ CRITICAL: Use REAL protocol parameters from the text. Calculate costs using the 
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
         # Cache the result
@@ -537,6 +556,12 @@ def simulate_payer_decisions(doc_id: str) -> dict:
     ctx = _get_doc_context(doc_id)
     doc_text = ctx["text"][:6000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
+
+    # ── Return cached result if analysis hasn't changed ──
+    cached = _check_cache(doc_id, "payer_simulation", analysis)
+    if cached:
+        logger.info("Returning cached payer_simulation result for doc %s", doc_id)
+        return cached
 
     payer_gaps = json.dumps(analysis.get("payer_gaps", []), default=str)[:3000]
     hta_scores = json.dumps(analysis.get("hta_body_scores", {}), default=str)
@@ -627,7 +652,7 @@ CRITICAL: Base ALL predictions on the REAL payer gaps identified in the analysis
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
         # Cache the result
@@ -651,6 +676,12 @@ def generate_submission_strategy(doc_id: str) -> dict:
     ctx = _get_doc_context(doc_id)
     doc_text = ctx["text"][:6000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
+
+    # ── Return cached result if analysis hasn't changed ──
+    cached = _check_cache(doc_id, "submission_strategy", analysis)
+    if cached:
+        logger.info("Returning cached submission_strategy result for doc %s", doc_id)
+        return cached
 
     jurisdiction_scores = json.dumps(analysis.get("jurisdiction_scores", []), default=str)[:3000]
     findings = json.dumps(analysis.get("findings", [])[:8], default=str)[:2000]
@@ -741,7 +772,7 @@ Return JSON:
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
         # Cache the result
@@ -765,6 +796,12 @@ def optimize_protocol(doc_id: str) -> dict:
     ctx = _get_doc_context(doc_id)
     doc_text = ctx["text"][:10000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
+
+    # ── Return cached result if analysis hasn't changed ──
+    cached = _check_cache(doc_id, "optimization", analysis)
+    if cached:
+        logger.info("Returning cached optimization result for doc %s", doc_id)
+        return cached
 
     findings = analysis.get("findings", [])
     findings_json = json.dumps(findings[:10], default=str)[:4000]
@@ -835,7 +872,7 @@ CRITICAL: The original_text MUST be real text from the protocol (quote it accura
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
         # Cache the result
@@ -859,6 +896,12 @@ def generate_investor_report(doc_id: str) -> dict:
     ctx = _get_doc_context(doc_id)
     doc_text = ctx["text"][:4000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
+
+    # ── Return cached result if analysis hasn't changed ──
+    cached = _check_cache(doc_id, "investor_report", analysis)
+    if cached:
+        logger.info("Returning cached investor_report result for doc %s", doc_id)
+        return cached
 
     # Gather all available data
     sims = dynamo_service.get_simulations_for_document(doc_id)
@@ -962,7 +1005,7 @@ Return JSON:
 
 Respond with ONLY valid JSON."""
 
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
         # Cache the result
@@ -1057,6 +1100,12 @@ def run_compliance_watchdog(doc_id: str) -> dict:
     doc_text = ctx["text"][:6000] if ctx["text"] else ""
     analysis = ctx["analysis"] or {}
 
+    # ── Return cached result if analysis hasn't changed ──
+    cached = _check_cache(doc_id, "watchdog", analysis)
+    if cached:
+        logger.info("Returning cached watchdog result for doc %s", doc_id)
+        return cached
+
     analyzed_at = analysis.get("completed_at", "")
     reg_score = analysis.get("regulator_score", 0)
 
@@ -1129,7 +1178,7 @@ CRITICAL: For each update, genuinely assess whether the protocol's design, endpo
 Respond with ONLY valid JSON."""
 
     try:
-        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE)
+        raw = bedrock_service.invoke_model(prompt, max_tokens=4000, temperature=STRATEGIC_TEMPERATURE, cache_ttl=CACHE_TTL_STRATEGIC)
         result = _parse_json_response(raw)
 
         # Enrich with the static update metadata

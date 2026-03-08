@@ -15,6 +15,7 @@ import ComparisonView from './components/ComparisonView';
 import DealRoomView from './components/DealRoomView';
 import { UploadDialog } from './components/UploadDialog';
 import Toast from './components/Toast';
+import PlatformTour from './components/PlatformTour';
 import { useAppStore, useDocuments, useAnalysis } from './stores/useAppStore';
 import { analysisService } from './services/analysisService';
 import { documentService } from './services/documentService';
@@ -38,7 +39,10 @@ function DashboardLayout() {
 
   // Load cached strategic intelligence results when document changes
   // This ensures page reloads don't lose AI-generated content
-  const { cacheTimestamps } = useStrategicCache(currentDocument?.id);
+  useStrategicCache(currentDocument?.id);
+
+  // Read timestamps from Zustand (survives tab switches, updated on regenerate)
+  const cacheTimestamps = useAppStore((state) => state.strategicTimestamps);
 
   const setIsAnalyzing = useAppStore((state) => state.setIsAnalyzing);
   const setLastAnalysis = useAppStore((state) => state.setLastAnalysis);
@@ -126,6 +130,7 @@ function DashboardLayout() {
       store.setInvestorReport(null);
       store.setCouncilSession(null);
       store.setClauseLibrary(null);
+      store.setStrategicTimestamps({});
       store.clearDebate();
     }
     prevDocRef.current = currentDocument.id;
@@ -187,7 +192,7 @@ function DashboardLayout() {
       _refreshDocuments();
     } catch (err) {
       updateDocument(currentDocument.id, { status: 'error' });
-      showToast({ type: 'error', title: 'Analysis failed', message: err.message || 'The regulatory analysis could not be completed. Please try again.' });
+      showToast({ type: 'error', title: 'Analysis unsuccessful', message: 'The regulatory analysis could not be completed. Please try again.' });
       // Refresh document list to get backend truth (may have been set to 'error' by worker)
       _refreshDocuments();
     } finally {
@@ -329,6 +334,7 @@ function DashboardLayout() {
 
       <UploadDialog isOpen={showUpload} onClose={() => setShowUpload(false)} />
       <Toast />
+      <PlatformTour />
     </div>
   );
 }

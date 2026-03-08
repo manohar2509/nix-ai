@@ -67,7 +67,7 @@ export default function ChatInterface({ currentDocument }) {
       setShowSuggestions(true);
       showToast({ type: 'success', title: 'Conversation cleared', message: 'Chat history has been removed.' });
     } catch {
-      showToast({ type: 'error', title: 'Clear failed', message: 'Could not clear conversation history.' });
+      showToast({ type: 'error', title: 'Unable to clear', message: 'Could not clear conversation history. Please try again.' });
     }
   };
 
@@ -187,7 +187,7 @@ export default function ChatInterface({ currentDocument }) {
             text: 'Sorry, I encountered an error processing your request. Please try again.',
             isStreaming: false,
           });
-          showToast({ type: 'error', title: 'Chat error', message: errorMsg });
+          showToast({ type: 'error', title: 'Unable to respond', message: 'Something went wrong. Please try sending your message again.' });
         },
       });
     } catch (err) {
@@ -196,7 +196,7 @@ export default function ChatInterface({ currentDocument }) {
         text: 'Sorry, I encountered an error processing your request. Please try again.',
         isStreaming: false,
       });
-      showToast({ type: 'error', title: 'Chat error', message: err.message || 'Failed to get response' });
+      showToast({ type: 'error', title: 'Unable to respond', message: 'Something went wrong. Please try sending your message again.' });
     } finally {
       setIsChatLoading(false);
     }

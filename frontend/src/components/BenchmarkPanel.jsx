@@ -61,7 +61,7 @@ export default function BenchmarkPanel({ docId }) {
       const data = await getBenchmark(docId, indication, phase);
       store.setBenchmark(data);
     } catch (err) {
-      setError(err.message || 'Benchmarking failed');
+      setError('Benchmarking could not be completed. Please try again.');
     } finally {
       store.setIsBenchmarking(false);
     }

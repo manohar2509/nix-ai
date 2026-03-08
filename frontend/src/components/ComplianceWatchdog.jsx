@@ -24,7 +24,6 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
   const setWatchdog = useAppStore(s => s.setWatchdogAlerts);
   const setLoading = useAppStore(s => s.setIsWatchdogLoading);
   const [expandedId, setExpandedId] = useState(null);
-  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const scan = async () => {
     if (!docId) return;
@@ -32,7 +31,7 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
     try {
       const result = await strategicService.runWatchdog(docId);
       setWatchdog(result);
-      setLocalGeneratedAt(new Date().toISOString());
+      useAppStore.getState().updateStrategicTimestamp('watchdog', new Date().toISOString());
     } catch (err) {
       console.error('Watchdog failed:', err);
     } finally {
@@ -59,8 +58,8 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
         <div className="h-20 w-20 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <Eye size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Compliance Watchdog</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Scan your protocol against recent regulatory updates (ICH E6(R3), FDA Diversity Plans, EU HTA Regulation, etc.) to detect compliance drift.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Regulatory Change Scanner</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Scan your protocol against recent regulatory updates (ICH E6(R3), FDA Diversity Plans, EU HTA Regulation, etc.) to detect compliance drift and required changes.</p>
         <button onClick={scan} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Run Compliance Scan
         </button>
@@ -220,7 +219,7 @@ export default function ComplianceWatchdog({ docId, generatedAt }) {
       )}
 
       <CacheStatusBanner
-        generatedAt={localGeneratedAt || generatedAt}
+        generatedAt={generatedAt}
         onRegenerate={scan}
         isLoading={isLoading}
         label="compliance scan"

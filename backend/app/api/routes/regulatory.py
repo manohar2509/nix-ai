@@ -36,7 +36,7 @@ router = APIRouter(prefix="/regulatory", tags=["regulatory"])
 
 # ── REQ-1: ICH Guideline Database ───────────────────────────────
 @router.get("/guidelines")
-async def get_guidelines():
+async def get_guidelines(user: CurrentUser = Depends(get_current_user)):
     """Return the full ICH guideline reference database."""
     try:
         return {"guidelines": analysis_service.get_ich_guidelines()}

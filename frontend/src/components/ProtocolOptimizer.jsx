@@ -13,7 +13,6 @@ export default function ProtocolOptimizer({ docId, generatedAt }) {
   const setLoading = useAppStore(s => s.setIsOptimizing);
   const [expandedId, setExpandedId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
-  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const optimize = async () => {
     if (!docId) return;
@@ -21,7 +20,7 @@ export default function ProtocolOptimizer({ docId, generatedAt }) {
     try {
       const result = await strategicService.optimizeProtocol(docId);
       setOpt(result);
-      setLocalGeneratedAt(new Date().toISOString());
+      useAppStore.getState().updateStrategicTimestamp('optimization', new Date().toISOString());
     } catch (err) {
       console.error('Optimize failed:', err);
     } finally {
@@ -54,8 +53,8 @@ export default function ProtocolOptimizer({ docId, generatedAt }) {
         <div className="h-20 w-20 bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <Wand2 size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Protocol Optimizer</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Generate specific protocol text rewrites for each finding. See original text, optimized text, and guideline justification side-by-side.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Protocol Rewrite Suggestions</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Generate specific protocol text rewrites for each finding — with original text, improved text, and the exact guideline citation justifying each change.</p>
         <button onClick={optimize} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Generate Optimizations
         </button>
@@ -201,7 +200,7 @@ export default function ProtocolOptimizer({ docId, generatedAt }) {
       })}
 
       <CacheStatusBanner
-        generatedAt={localGeneratedAt || generatedAt}
+        generatedAt={generatedAt}
         onRegenerate={optimize}
         isLoading={isLoading}
         label="protocol optimization"

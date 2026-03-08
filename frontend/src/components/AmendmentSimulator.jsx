@@ -5,7 +5,7 @@
  * and see the projected impact on regulatory/payer scores.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAppStore, useRegulatory } from '../stores/useAppStore';
 import { triggerSimulation, listSimulations } from '../services/regulatoryService';
 import { analysisService } from '../services/analysisService';
@@ -27,6 +27,14 @@ export default function AmendmentSimulator({ docId }) {
   const store = useAppStore();
   const [amendmentText, setAmendmentText] = useState('');
   const [error, setError] = useState(null);
+  const pollIntervalRef = useRef(null);
+
+  // Cleanup poll interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   // Load existing simulations when component mounts or document changes
   useEffect(() => {
@@ -57,22 +65,24 @@ export default function AmendmentSimulator({ docId }) {
       } else {
         // Poll for completion
         const jobId = result.jobId;
-        const pollInterval = setInterval(async () => {
+        pollIntervalRef.current = setInterval(async () => {
           try {
             const status = await analysisService.getAnalysisStatus(jobId);
             if (status.status === 'COMPLETE' || status.status === 'FAILED') {
-              clearInterval(pollInterval);
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
               await refreshSimulations();
             }
-          } catch (e) {
-            clearInterval(pollInterval);
+          } catch {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
           }
         }, 2000);
       }
 
       setAmendmentText('');
     } catch (err) {
-      setError(err.message || 'Simulation failed');
+      setError('The simulation could not be completed. Please try again.');
     } finally {
       store.setIsSimulating(false);
     }

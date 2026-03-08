@@ -296,7 +296,11 @@ def _execute_simulation_inline(job: dict, doc_id: str, sim_id: str, amendment_te
         return {"jobId": job["id"], "simId": sim_id, "status": "COMPLETE", "inline": True}
     except Exception as exc:
         logger.error("Inline simulation failed: %s", exc)
-        return {"jobId": job["id"], "simId": sim_id, "status": "FAILED", "inline": True}
+        dynamo_service.update_job(job["id"], {
+            "status": "FAILED",
+            "error": str(exc),
+        })
+        return {"jobId": job["id"], "simId": sim_id, "status": "FAILED", "error": str(exc), "inline": True}
 
 
 def get_simulations(user: CurrentUser, doc_id: str) -> list[dict]:
@@ -367,7 +371,11 @@ def _execute_comparison_inline(job: dict, cmp_id: str, document_ids: list[str], 
         return {"jobId": job["id"], "cmpId": cmp_id, "status": "COMPLETE", "inline": True}
     except Exception as exc:
         logger.error("Inline comparison failed: %s", exc)
-        return {"jobId": job["id"], "cmpId": cmp_id, "status": "FAILED", "inline": True}
+        dynamo_service.update_job(job["id"], {
+            "status": "FAILED",
+            "error": str(exc),
+        })
+        return {"jobId": job["id"], "cmpId": cmp_id, "status": "FAILED", "error": str(exc), "inline": True}
 
 
 def get_comparisons(user: CurrentUser) -> list[dict]:

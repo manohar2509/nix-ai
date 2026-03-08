@@ -15,13 +15,61 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Generator, Optional
 
 from app.core.aws_clients import get_bedrock_agent_client, get_bedrock_runtime_client
 from app.core.config import get_settings
 from app.core.exceptions import BedrockError
+from app.core.resilience import (
+    BEDROCK_RETRY_CONFIG,
+    CACHE_TTL_ANALYSIS,
+    CACHE_TTL_CHAT,
+    CACHE_TTL_RAG,
+    CACHE_TTL_STRATEGIC,
+    bedrock_agent_circuit,
+    bedrock_circuit,
+    bedrock_rate_limiter,
+    llm_cache,
+    resilient_bedrock_call,
+    CircuitBreakerError,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_json_object(text: str) -> str | None:
+    """Extract the first complete top-level JSON object from *text*.
+
+    Uses brace-counting instead of a greedy regex so we don't accidentally
+    swallow text after the closing `}`.
+    """
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if escape:
+            escape = False
+            continue
+        if ch == "\\" and in_string:
+            escape = True
+            continue
+        if ch == '"' and not escape:
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None
 
 # Supported document formats for Bedrock Converse API DocumentBlock
 DOCUMENT_FORMATS = {
@@ -114,8 +162,27 @@ def rag_chat(
     if session_id:
         request_params["sessionId"] = session_id
 
+    # ── Check LLM cache for identical queries ──
+    cache_key = f"rag|{query}|{user_name}|{user_org}"
+    cached = llm_cache.get(cache_key, model_id="rag", extra="rag_chat")
+    if cached:
+        try:
+            cached_result = json.loads(cached)
+            logger.info("RAG cache HIT for query: %s", query[:60])
+            return cached_result
+        except (json.JSONDecodeError, TypeError):
+            pass  # Cache corrupted, proceed with fresh call
+
+    def _do_rag_call():
+        return client.retrieve_and_generate(**request_params)
+
     try:
-        response = client.retrieve_and_generate(**request_params)
+        # Use circuit breaker + rate limiter for the RAG call
+        if not bedrock_rate_limiter.acquire(timeout=15.0):
+            logger.warning("Rate limiter timeout for RAG call")
+            raise BedrockError("Service temporarily busy. Please try again in a few seconds.")
+
+        response = bedrock_agent_circuit.call(_do_rag_call)
 
         text = response.get("output", {}).get("text", "")
         citations = _extract_citations(response)
@@ -139,7 +206,7 @@ def rag_chat(
             "Bedrock RAG success: %d chars, %d citations",
             len(text), len(citations),
         )
-        return {
+        result = {
             "text": text,
             "citations": citations,
             "session_id": new_session_id,
@@ -147,6 +214,24 @@ def rag_chat(
             "grounding_source": "document_library",  # From the team's uploaded Document Library
             "kb_grounded": True,
         }
+
+        # Cache the successful result
+        try:
+            llm_cache.put(cache_key, json.dumps(result, default=str),
+                         model_id="rag", ttl=CACHE_TTL_RAG, extra="rag_chat")
+        except Exception:
+            pass  # Cache write failure is non-critical
+
+        return result
+
+    except CircuitBreakerError as cbe:
+        logger.error("Bedrock RAG circuit breaker OPEN: %s", cbe)
+        raise BedrockError(
+            "AI service is temporarily unavailable due to high error rate. "
+            f"Automatic recovery in {cbe.reset_time:.0f}s. Please try again shortly."
+        )
+    except BedrockError:
+        raise
     except Exception as exc:
         logger.error("Bedrock RAG failed: %s", exc)
         raise BedrockError(str(exc))
@@ -488,15 +573,36 @@ def _ensure_ich_urls_loaded() -> None:
 # 2.  Direct Model Invocation — Converse API (all models)
 # ════════════════════════════════════════════════════════════════
 def invoke_model(
-    prompt: str, max_tokens: int = 2000, temperature: float = 0.3
+    prompt: str, max_tokens: int = 2000, temperature: float = 0.3,
+    cache_ttl: int = CACHE_TTL_STRATEGIC, use_cache: bool = True,
 ) -> str:
     """
     Call Bedrock Converse API directly (no Knowledge Base).
     Works with all Bedrock models: Amazon Nova, Anthropic Claude, etc.
     Used by the Worker Lambda for synthetic data generation & analysis.
+
+    Resilience features:
+    - LLM response caching (skip redundant calls)
+    - Exponential backoff with jitter (handle throttling)
+    - Circuit breaker (prevent cascading failures)
+    - Rate limiting (stay under Bedrock API limits)
     """
     settings = get_settings()
     client = get_bedrock_runtime_client()
+    model_id = settings.BEDROCK_MODEL_ID
+
+    # ── Check LLM cache ──
+    if use_cache:
+        cached = llm_cache.get(
+            prompt, model_id=model_id,
+            temperature=temperature, max_tokens=max_tokens,
+        )
+        if cached is not None:
+            logger.info(
+                "LLM cache HIT: model=%s, prompt_len=%d",
+                model_id, len(prompt),
+            )
+            return cached
 
     messages = [
         {
@@ -505,9 +611,9 @@ def invoke_model(
         }
     ]
 
-    try:
-        response = client.converse(
-            modelId=settings.BEDROCK_MODEL_ID,
+    def _do_converse():
+        return client.converse(
+            modelId=model_id,
             messages=messages,
             inferenceConfig={
                 "maxTokens": max_tokens,
@@ -516,25 +622,87 @@ def invoke_model(
             },
         )
 
-        # Extract text from the Converse API response
-        output_message = response.get("output", {}).get("message", {})
-        content_blocks = output_message.get("content", [])
-        result_text = ""
-        for block in content_blocks:
-            if "text" in block:
-                result_text += block["text"]
+    # ── Rate limit → Circuit breaker → Retry with backoff ──
+    last_exception = None
+    for attempt in range(BEDROCK_RETRY_CONFIG.max_retries + 1):
+        try:
+            # Rate limit
+            if not bedrock_rate_limiter.acquire(timeout=15.0):
+                logger.warning("Rate limiter timeout for invoke_model")
+                raise BedrockError("Service temporarily busy. Please try again in a few seconds.")
 
-        logger.info(
-            "Bedrock Converse: model=%s, input_tokens=%s, output_tokens=%s",
-            settings.BEDROCK_MODEL_ID,
-            response.get("usage", {}).get("inputTokens", "?"),
-            response.get("usage", {}).get("outputTokens", "?"),
-        )
-        return result_text
+            # Circuit breaker wraps the actual call
+            response = bedrock_circuit.call(_do_converse)
 
-    except Exception as exc:
-        logger.error("Bedrock Converse failed: %s", exc)
-        raise BedrockError(str(exc))
+            # Extract text from the Converse API response
+            output_message = response.get("output", {}).get("message", {})
+            content_blocks = output_message.get("content", [])
+            result_text = ""
+            for block in content_blocks:
+                if "text" in block:
+                    result_text += block["text"]
+
+            logger.info(
+                "Bedrock Converse: model=%s, input_tokens=%s, output_tokens=%s, attempt=%d",
+                model_id,
+                response.get("usage", {}).get("inputTokens", "?"),
+                response.get("usage", {}).get("outputTokens", "?"),
+                attempt + 1,
+            )
+
+            # ── Cache the successful response ──
+            if use_cache and result_text:
+                try:
+                    llm_cache.put(
+                        prompt, result_text, model_id=model_id,
+                        temperature=temperature, max_tokens=max_tokens,
+                        ttl=cache_ttl,
+                    )
+                except Exception:
+                    pass  # Cache write failure is non-critical
+
+            return result_text
+
+        except CircuitBreakerError as cbe:
+            logger.error("Bedrock circuit breaker OPEN: %s", cbe)
+            raise BedrockError(
+                "AI service is temporarily unavailable due to high error rate. "
+                f"Automatic recovery in {cbe.reset_time:.0f}s."
+            )
+        except BedrockError:
+            raise
+        except Exception as exc:
+            last_exception = exc
+            # Check if retryable
+            error_code = getattr(exc, "response", {}).get("Error", {}).get("Code", "")
+            is_throttle = error_code in (
+                "ThrottlingException", "TooManyRequestsException",
+                "ServiceUnavailableException", "ModelTimeoutException",
+                "ProvisionedThroughputExceededException",
+            )
+            is_server_error = getattr(exc, "response", {}).get(
+                "ResponseMetadata", {}
+            ).get("HTTPStatusCode", 0) >= 500
+
+            if attempt < BEDROCK_RETRY_CONFIG.max_retries and (is_throttle or is_server_error):
+                import random as _random
+                delay = min(
+                    BEDROCK_RETRY_CONFIG.base_delay * (2 ** attempt),
+                    BEDROCK_RETRY_CONFIG.max_delay,
+                )
+                delay = _random.uniform(0, delay)  # Full jitter
+                logger.warning(
+                    "Bedrock Converse attempt %d/%d failed (%s: %s). Retrying in %.2fs...",
+                    attempt + 1, BEDROCK_RETRY_CONFIG.max_retries + 1,
+                    type(exc).__name__, error_code or str(exc)[:100], delay,
+                )
+                time.sleep(delay)
+                continue
+
+            logger.error("Bedrock Converse failed after %d attempts: %s", attempt + 1, exc)
+            raise BedrockError(str(exc))
+
+    raise BedrockError(str(last_exception))
 
 
 def invoke_model_stream(
@@ -544,6 +712,9 @@ def invoke_model_stream(
     Call Bedrock ConverseStream API for streaming responses.
     Yields text chunks as they arrive.
     Works with all Bedrock models: Amazon Nova, Anthropic Claude, etc.
+
+    Resilience: Rate limiting + circuit breaker (no cache for streaming).
+    Retry is handled at the caller level for streaming.
     """
     settings = get_settings()
     client = get_bedrock_runtime_client()
@@ -555,16 +726,24 @@ def invoke_model_stream(
         }
     ]
 
+    # Rate limit before streaming call
+    if not bedrock_rate_limiter.acquire(timeout=15.0):
+        logger.warning("Rate limiter timeout for streaming call")
+        raise BedrockError("Service temporarily busy. Please try again in a few seconds.")
+
     try:
-        streaming_response = client.converse_stream(
-            modelId=settings.BEDROCK_MODEL_ID,
-            messages=messages,
-            inferenceConfig={
-                "maxTokens": max_tokens,
-                "temperature": temperature,
-                "topP": 0.9,
-            },
-        )
+        def _do_stream():
+            return client.converse_stream(
+                modelId=settings.BEDROCK_MODEL_ID,
+                messages=messages,
+                inferenceConfig={
+                    "maxTokens": max_tokens,
+                    "temperature": temperature,
+                    "topP": 0.9,
+                },
+            )
+
+        streaming_response = bedrock_circuit.call(_do_stream)
 
         for chunk in streaming_response.get("stream", []):
             if "contentBlockDelta" in chunk:
@@ -572,6 +751,14 @@ def invoke_model_stream(
                 if "text" in delta:
                     yield delta["text"]
 
+    except CircuitBreakerError as cbe:
+        logger.error("Bedrock streaming circuit breaker OPEN: %s", cbe)
+        raise BedrockError(
+            "AI service is temporarily unavailable. "
+            f"Automatic recovery in {cbe.reset_time:.0f}s."
+        )
+    except BedrockError:
+        raise
     except Exception as exc:
         logger.error("Bedrock ConverseStream failed: %s", exc)
         raise BedrockError(str(exc))
@@ -693,8 +880,8 @@ def analyze_document_native(
         }
     ]
 
-    try:
-        response = client.converse(
+    def _do_native_analysis():
+        return client.converse(
             modelId=settings.BEDROCK_MODEL_ID,
             messages=messages,
             inferenceConfig={
@@ -704,41 +891,76 @@ def analyze_document_native(
             },
         )
 
-        output_message = response.get("output", {}).get("message", {})
-        content_blocks = output_message.get("content", [])
-        result_text = ""
-        for block in content_blocks:
-            if "text" in block:
-                result_text += block["text"]
+    # ── Rate limit + Circuit breaker + Retry ──
+    last_exception = None
+    for attempt in range(BEDROCK_RETRY_CONFIG.max_retries + 1):
+        try:
+            if not bedrock_rate_limiter.acquire(timeout=20.0):
+                raise BedrockError("Service temporarily busy. Please try again.")
 
-        logger.info(
-            "Bedrock native document analysis: model=%s, format=%s, "
-            "size=%d bytes, input_tokens=%s, output_tokens=%s",
-            settings.BEDROCK_MODEL_ID,
-            doc_format,
-            len(document_bytes),
-            response.get("usage", {}).get("inputTokens", "?"),
-            response.get("usage", {}).get("outputTokens", "?"),
-        )
+            response = bedrock_circuit.call(_do_native_analysis)
 
-        # Parse JSON response
-        json_match = re.search(r'\{[\s\S]*\}', result_text)
-        if json_match:
-            result = json.loads(json_match.group())
-            result["extraction_method"] = "native_document_block"
-            return result
+            output_message = response.get("output", {}).get("message", {})
+            content_blocks = output_message.get("content", [])
+            result_text = ""
+            for block in content_blocks:
+                if "text" in block:
+                    result_text += block["text"]
 
-        return {
-            "summary": result_text,
-            "regulatorScore": 0,
-            "payerScore": 0,
-            "findings": [],
-            "extraction_method": "native_document_block",
-        }
+            logger.info(
+                "Bedrock native document analysis: model=%s, format=%s, "
+                "size=%d bytes, input_tokens=%s, output_tokens=%s, attempt=%d",
+                settings.BEDROCK_MODEL_ID,
+                doc_format,
+                len(document_bytes),
+                response.get("usage", {}).get("inputTokens", "?"),
+                response.get("usage", {}).get("outputTokens", "?"),
+                attempt + 1,
+            )
 
-    except Exception as exc:
-        logger.error("Native document analysis failed: %s", exc)
-        raise BedrockError(str(exc))
+            # Parse JSON response
+            json_str = _extract_json_object(result_text)
+            if json_str:
+                result = json.loads(json_str)
+                result["extraction_method"] = "native_document_block"
+                return result
+
+            return {
+                "summary": result_text,
+                "regulatorScore": 0,
+                "payerScore": 0,
+                "findings": [],
+                "extraction_method": "native_document_block",
+            }
+
+        except CircuitBreakerError as cbe:
+            raise BedrockError(
+                f"AI service temporarily unavailable. Recovery in {cbe.reset_time:.0f}s."
+            )
+        except BedrockError:
+            raise
+        except Exception as exc:
+            last_exception = exc
+            error_code = getattr(exc, "response", {}).get("Error", {}).get("Code", "")
+            is_retryable = error_code in (
+                "ThrottlingException", "TooManyRequestsException",
+                "ServiceUnavailableException", "ModelTimeoutException",
+            )
+            if attempt < BEDROCK_RETRY_CONFIG.max_retries and is_retryable:
+                import random as _random
+                delay = min(BEDROCK_RETRY_CONFIG.base_delay * (2 ** attempt), BEDROCK_RETRY_CONFIG.max_delay)
+                delay = _random.uniform(0, delay)
+                logger.warning(
+                    "Native analysis attempt %d/%d failed (%s). Retrying in %.2fs...",
+                    attempt + 1, BEDROCK_RETRY_CONFIG.max_retries + 1, error_code, delay,
+                )
+                time.sleep(delay)
+                continue
+
+            logger.error("Native document analysis failed after %d attempts: %s", attempt + 1, exc)
+            raise BedrockError(str(exc))
+
+    raise BedrockError(str(last_exception))
 
 
 def analyze_document(document_text: str, preferences: dict | None = None) -> dict:
@@ -746,6 +968,8 @@ def analyze_document(document_text: str, preferences: dict | None = None) -> dic
     LEGACY: Send extracted text to Bedrock for regulatory + payer analysis.
     Used as fallback when native DocumentBlock analysis is not available
     (unsupported format, oversized file, or model doesn't support documents).
+
+    Resilience: Uses invoke_model which has built-in caching, retry, and circuit breaker.
     """
     from app.services.regulatory_engine import build_enhanced_analysis_prompt
     prompt = build_enhanced_analysis_prompt(preferences) + f"""
@@ -757,19 +981,24 @@ Document text:
 
 Respond with ONLY valid JSON. No markdown, no explanation."""
 
+    raw = ""
     try:
-        raw = invoke_model(prompt, max_tokens=3000, temperature=0.2)
+        raw = invoke_model(prompt, max_tokens=3000, temperature=0.2,
+                           cache_ttl=CACHE_TTL_ANALYSIS)
         # Try to parse as JSON
-        json_match = re.search(r'\{[\s\S]*\}', raw)
-        if json_match:
-            result = json.loads(json_match.group())
+        json_str = _extract_json_object(raw)
+        if json_str:
+            result = json.loads(json_str)
             result["extraction_method"] = "text_fallback"
             return result
         return {"summary": raw, "regulatorScore": 0, "payerScore": 0, "findings": [], "extraction_method": "text_fallback"}
     except BedrockError:
         raise
     except json.JSONDecodeError:
-        return {"summary": raw[:500], "regulatorScore": 0, "payerScore": 0, "findings": [], "extraction_method": "text_fallback"}
+        return {"summary": raw[:500] if raw else "Analysis response could not be parsed", "regulatorScore": 0, "payerScore": 0, "findings": [], "extraction_method": "text_fallback"}
+    except Exception as exc:
+        logger.error("analyze_document unexpected error: %s", exc)
+        raise BedrockError(f"Document analysis failed: {str(exc)[:200]}")
 
 
 # ════════════════════════════════════════════════════════════════

@@ -20,7 +20,6 @@ export default function CostArchitect({ docId, generatedAt }) {
   const setCost = useAppStore(s => s.setCostAnalysis);
   const setLoading = useAppStore(s => s.setIsCostLoading);
   const [tab, setTab] = useState('overview');
-  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const analyze = async () => {
     if (!docId) return;
@@ -28,7 +27,7 @@ export default function CostArchitect({ docId, generatedAt }) {
     try {
       const result = await strategicService.getCostAnalysis(docId);
       setCost(result);
-      setLocalGeneratedAt(new Date().toISOString());
+      useAppStore.getState().updateStrategicTimestamp('cost_analysis', new Date().toISOString());
     } catch (err) {
       console.error('Cost analysis failed:', err);
     } finally {
@@ -55,8 +54,8 @@ export default function CostArchitect({ docId, generatedAt }) {
         <div className="h-20 w-20 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <Calculator size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Trial Cost Architect</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Estimate full trial costs, see per-finding cost impacts, and compare optimization scenarios — using real industry benchmarks.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Trial Cost Forecast</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Estimate total trial costs, see the financial impact of each finding, and compare cost-reduction scenarios — benchmarked against real industry data.</p>
         <button onClick={analyze} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Analyze Costs
         </button>
@@ -235,7 +234,7 @@ export default function CostArchitect({ docId, generatedAt }) {
       )}
 
       <CacheStatusBanner
-        generatedAt={localGeneratedAt || generatedAt}
+        generatedAt={generatedAt}
         onRegenerate={analyze}
         isLoading={isLoading}
         label="cost analysis"

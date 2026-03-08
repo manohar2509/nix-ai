@@ -60,9 +60,28 @@ async def get_cached_results(
     generated intelligence panels without burning tokens.
 
     Returns a dict keyed by feature name → {result, generated_at, analysis_hash}.
+
+    Also includes the latest COMPLETED boardroom debate so the AI Expert Panel
+    transcript is restored on page reload without re-running the debate.
     """
     try:
         cached = dynamo_service.get_all_strategic_results(doc_id)
+
+        # If no council_debate in strategic cache, fall back to the most recent
+        # completed DEBATE entity.  This handles debates that completed before
+        # the strategic-cache-on-completion fix was deployed.
+        if "council_debate" not in cached:
+            try:
+                latest = dynamo_service.get_latest_debate_for_document(doc_id, user.user_id)
+                if latest and latest.get("status") == "COMPLETED":
+                    cached["council_debate"] = {
+                        "result": latest,
+                        "generated_at": latest.get("completed_at") or latest.get("updated_at"),
+                        "analysis_hash": "",
+                    }
+            except Exception as debate_exc:
+                logger.warning("Could not fetch latest debate for %s: %s", doc_id, debate_exc)
+
         return {"cached": cached, "doc_id": doc_id}
     except Exception as exc:
         logger.error("Failed to fetch cached strategic results for %s: %s", doc_id, exc)

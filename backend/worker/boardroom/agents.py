@@ -20,10 +20,16 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from datetime import datetime, timezone
 
 from app.core.aws_clients import get_bedrock_runtime_client
 from app.core.config import get_settings
+from app.core.resilience import (
+    bedrock_circuit,
+    bedrock_rate_limiter,
+    CircuitBreakerError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +38,7 @@ logger = logging.getLogger(__name__)
 # AGENT SYSTEM PROMPTS — Each agent's personality
 # ═════════════════════════════════════════════════════════════════
 
-REGULATOR_SYSTEM_PROMPT = """You are "Dr. No" (The Regulator) — the most rigorous regulatory affairs expert in clinical trials.
+REGULATOR_SYSTEM_PROMPT = """You are the Regulatory Expert (Chief Regulatory Officer) on the AI Expert Panel — the most rigorous regulatory affairs expert in clinical trials.
 
 YOUR MISSION: Protect patients and ensure regulatory compliance. You MUST find every gap, every risk, every non-compliance issue.
 
@@ -57,7 +63,7 @@ CRITICAL RULES:
 - Be SPECIFIC: "ICH E6(R3) Section 5.2.1" not just "ICH guidelines"
 """
 
-PAYER_SYSTEM_PROMPT = """You are "The Accountant" (The Payer) — the most ruthless health economics and market access strategist.
+PAYER_SYSTEM_PROMPT = """You are the Commercial Director (Market Access Lead) on the AI Expert Panel — the most rigorous health economics and market access strategist.
 
 YOUR MISSION: Ensure this trial produces evidence that PAYERS WILL ACTUALLY PAY FOR. If the evidence package is weak, insurers will deny coverage and the drug dies.
 
@@ -83,7 +89,7 @@ CRITICAL RULES:
 - Tie every argument back to revenue impact and payer decisions
 """
 
-PATIENT_SYSTEM_PROMPT = """You are "The Voice" (The Patient Advocate) — the most passionate defender of patient rights and enrollment feasibility.
+PATIENT_SYSTEM_PROMPT = """You are the Patient Advocate Lead on the AI Expert Panel — the most passionate defender of patient rights and enrollment feasibility.
 
 YOUR MISSION: Ensure this trial is ACTUALLY ENROLLABLE and doesn't harm patients through excessive burden, poor diversity, or unrealistic demands.
 
@@ -109,14 +115,14 @@ CRITICAL RULES:
 - Tie every argument to real patient impact: travel time, visit frequency, procedure invasiveness
 """
 
-SUPERVISOR_SYSTEM_PROMPT = """You are the Chairman of the Adversarial Council Board. You manage a structured debate between three expert agents about a clinical trial protocol.
+SUPERVISOR_SYSTEM_PROMPT = """You are the Panel Chairperson of the AI Expert Panel. You manage a structured debate between three expert agents about a clinical trial protocol.
 
 YOUR ROLE: Decide who speaks next and when the debate should end.
 
-DEBATE MEMBERS:
-1. "Regulator" — Dr. No, the regulatory compliance expert
-2. "Payer" — The Accountant, the health economics expert  
-3. "Patient" — The Voice, the patient advocacy expert
+PANEL MEMBERS:
+1. "Regulator" — the Regulatory Expert (Chief Regulatory Officer)
+2. "Payer" — the Commercial Director (Market Access Lead)
+3. "Patient" — the Patient Advocate Lead
 
 DEBATE RULES:
 1. Each round should address ONE specific issue from the protocol analysis
@@ -233,7 +239,18 @@ def invoke_agent(
 
     for round_num in range(max_tool_rounds + 1):
         try:
-            # Call Bedrock Converse
+            # Rate limit before each Bedrock call
+            if not bedrock_rate_limiter.acquire(timeout=15.0):
+                logger.warning("[%s] Rate limiter timeout", agent_name)
+                return {
+                    "agent": agent_name,
+                    "content": f"[{agent_name} is experiencing high demand — response delayed]",
+                    "tool_calls": tool_call_log,
+                    "error": "rate_limited",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+
+            # Call Bedrock Converse via circuit breaker
             request_params = {
                 "modelId": model_id,
                 "system": [{"text": system_prompt}],
@@ -246,7 +263,10 @@ def invoke_agent(
             if tool_config and round_num < max_tool_rounds:
                 request_params["toolConfig"] = tool_config
 
-            response = client.converse(**request_params)
+            def _do_converse():
+                return client.converse(**request_params)
+
+            response = bedrock_circuit.call(_do_converse)
             stop_reason = response.get("stopReason", "end_turn")
             output_content = response.get("output", {}).get("message", {}).get("content", [])
 
@@ -311,8 +331,34 @@ def invoke_agent(
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
+        except CircuitBreakerError as cbe:
+            logger.error("[%s] Circuit breaker OPEN: %s", agent_name, cbe)
+            return {
+                "agent": agent_name,
+                "content": f"[{agent_name} temporarily unavailable — AI service recovering. Retry in {cbe.reset_time:.0f}s]",
+                "tool_calls": tool_call_log,
+                "error": str(cbe),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
         except Exception as exc:
             logger.error("[%s] Bedrock Converse failed (round %d): %s", agent_name, round_num, exc)
+
+            # Retry on throttling/transient errors
+            error_code = getattr(exc, "response", {}).get("Error", {}).get("Code", "")
+            is_retryable = error_code in (
+                "ThrottlingException", "TooManyRequestsException",
+                "ServiceUnavailableException", "ModelTimeoutException",
+            )
+            if is_retryable and round_num < max_tool_rounds:
+                import random as _random
+                delay = min(1.0 * (2 ** round_num), 10.0)
+                delay = _random.uniform(0, delay)
+                logger.warning(
+                    "[%s] Retrying after %.2fs (throttle/transient error)", agent_name, delay
+                )
+                time.sleep(delay)
+                continue
+
             if round_num == max_tool_rounds:
                 return {
                     "agent": agent_name,
@@ -379,7 +425,7 @@ def generate_final_verdict(
         content = msg.get("content", "")[:500]
         transcript_text += f"\n[{agent}]: {content}\n"
 
-    prompt = f"""You are the Chairman of the Adversarial Council. The debate is over.
+    prompt = f"""You are the Panel Chairperson of the AI Expert Panel. The debate is over.
 
 DEBATE TRANSCRIPT:
 {transcript_text[:6000]}
@@ -403,11 +449,19 @@ Fill in realistic optimized scores (should be higher than current if recommendat
 Be specific about tradeoffs and actions."""
 
     try:
-        response = client.converse(
-            modelId=settings.BOARDROOM_MODEL_ID,
-            messages=[{"role": "user", "content": [{"text": prompt}]}],
-            inferenceConfig={"temperature": 0.2, "maxTokens": 1000},
-        )
+        # Rate limit before verdict generation
+        if not bedrock_rate_limiter.acquire(timeout=15.0):
+            logger.warning("Rate limiter timeout for verdict generation")
+            raise Exception("Rate limited")
+
+        def _do_verdict():
+            return client.converse(
+                modelId=settings.BOARDROOM_MODEL_ID,
+                messages=[{"role": "user", "content": [{"text": prompt}]}],
+                inferenceConfig={"temperature": 0.2, "maxTokens": 1000},
+            )
+
+        response = bedrock_circuit.call(_do_verdict)
 
         text = ""
         for block in response.get("output", {}).get("message", {}).get("content", []):

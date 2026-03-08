@@ -48,13 +48,13 @@ export default function CacheStatusBanner({ generatedAt, onRegenerate, isLoading
             <span className="text-slate-500">
               This {label} was generated{' '}
               <span className="font-semibold text-slate-700">{timestamp}</span>
-              {' '}and is cached for consistency.
+              {' '}and is saved for your reference.
             </span>
           </>
         ) : (
           <>
             <Clock size={12} className="text-slate-400 shrink-0" />
-            <span className="text-slate-400">Results will be cached after generation.</span>
+            <span className="text-slate-400">Results will be saved after generation.</span>
           </>
         )}
       </div>
@@ -68,7 +68,7 @@ export default function CacheStatusBanner({ generatedAt, onRegenerate, isLoading
               ? 'text-slate-300 cursor-not-allowed'
               : 'text-brand-600 hover:bg-brand-50 hover:text-brand-700'
           )}
-          title={`Regenerate this ${label} with a fresh AI analysis`}
+          title={`Regenerate this ${label} with the latest data`}
         >
           <RotateCcw size={10} className={cn(isLoading && 'animate-spin')} />
           Regenerate

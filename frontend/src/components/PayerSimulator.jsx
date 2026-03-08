@@ -27,7 +27,6 @@ export default function PayerSimulator({ docId, generatedAt }) {
   const setSim = useAppStore(s => s.setPayerSimulation);
   const setLoading = useAppStore(s => s.setIsPayerSimLoading);
   const [tab, setTab] = useState('insurers');
-  const [localGeneratedAt, setLocalGeneratedAt] = useState(null);
 
   const simulate = async () => {
     if (!docId) return;
@@ -35,7 +34,7 @@ export default function PayerSimulator({ docId, generatedAt }) {
     try {
       const result = await strategicService.simulatePayer(docId);
       setSim(result);
-      setLocalGeneratedAt(new Date().toISOString());
+      useAppStore.getState().updateStrategicTimestamp('payer_simulation', new Date().toISOString());
     } catch (err) {
       console.error('Payer simulation failed:', err);
     } finally {
@@ -62,8 +61,8 @@ export default function PayerSimulator({ docId, generatedAt }) {
         <div className="h-20 w-20 bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-200">
           <CreditCard size={28} className="text-slate-400" />
         </div>
-        <h3 className="text-slate-700 font-bold mb-1">Synthetic Payer Simulator</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-4">Predict how UnitedHealthcare, Anthem, NICE, IQWiG and others will evaluate your protocol — before you finalize it.</p>
+        <h3 className="text-slate-700 font-bold mb-1">Payer Coverage Forecast</h3>
+        <p className="text-slate-400 text-sm max-w-sm mb-4">Predict how UnitedHealthcare, Anthem, NICE, IQWiG and other major payers will evaluate your protocol — with denial probabilities and revenue-at-risk estimates.</p>
         <button onClick={simulate} className="px-5 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors shadow-sm">
           Simulate Coverage Decisions
         </button>
@@ -227,7 +226,7 @@ export default function PayerSimulator({ docId, generatedAt }) {
       )}
 
       <CacheStatusBanner
-        generatedAt={localGeneratedAt || generatedAt}
+        generatedAt={generatedAt}
         onRegenerate={simulate}
         isLoading={isLoading}
         label="payer simulation"

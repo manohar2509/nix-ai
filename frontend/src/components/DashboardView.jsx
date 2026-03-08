@@ -63,7 +63,7 @@ export default function DashboardView() {
       const result = await analyticsService.getDashboard();
       setData(result);
     } catch (err) {
-      setError(err.message || 'Failed to load dashboard');
+      setError('Unable to load the dashboard. Please try again.');
       // Use empty defaults so UI still renders
       setData({
         summary: { totalDocuments: 0, totalAnalyses: 0, totalJobs: 0, avgRegulatorScore: 0, avgPayerScore: 0, totalFindings: 0 },

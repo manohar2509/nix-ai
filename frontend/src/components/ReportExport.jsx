@@ -26,7 +26,7 @@ export default function ReportExport({ docId, docName }) {
       store.setReport(data);
       setShowReport(true);
     } catch (err) {
-      setError(err.message || 'Report generation failed');
+      setError('Unable to generate the report. Please try again.');
     } finally {
       store.setIsGeneratingReport(false);
     }

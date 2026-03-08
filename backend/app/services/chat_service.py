@@ -159,8 +159,8 @@ def submit_feedback(user: CurrentUser, message_id: str, feedback: str) -> dict:
     """Record feedback on an AI message (for analytics / RLHF)."""
     msg = dynamo_service.get_chat_message(message_id)
     if not msg:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="Message not found")
+        from app.core.exceptions import MessageNotFoundError
+        raise MessageNotFoundError(message_id)
 
     # Persist feedback in the message's metadata
     metadata = msg.get("metadata", {})
@@ -282,8 +282,18 @@ def send_message_stream(
                 "citations": inline_citations,
             })
         except Exception as exc:
-            logger.error("Streaming chat failed: %s", exc)
-            yield _sse({"event": "error", "message": str(exc)})
+            error_str = str(exc)
+            logger.error("Streaming chat failed: %s", error_str)
+            # Provide user-friendly error messages
+            if "ThrottlingException" in error_str or "Too many requests" in error_str:
+                user_msg_text = "The AI service is experiencing high demand. Please try again in a few seconds."
+            elif "circuit" in error_str.lower():
+                user_msg_text = "The AI service is temporarily unavailable. Please try again shortly."
+            elif "timeout" in error_str.lower() or "timed out" in error_str.lower():
+                user_msg_text = "The request took too long. Please try a shorter or simpler question."
+            else:
+                user_msg_text = "An unexpected error occurred while generating the response. Please try again."
+            yield _sse({"event": "error", "message": user_msg_text, "retryable": True})
 
 
 def _sse(data: dict) -> str:
@@ -294,7 +304,10 @@ def _sse(data: dict) -> str:
 def _persist_ai_message(
     doc_id: str, msg_id: str, text: str, citations: list
 ) -> None:
-    """Save the AI response to DynamoDB after streaming completes."""
+    """Save the AI response to DynamoDB after streaming completes.
+
+    Uses the pre-generated msg_id so the frontend's reference stays valid.
+    """
     try:
         dynamo_service.create_chat_message(
             doc_id=doc_id,
@@ -302,7 +315,8 @@ def _persist_ai_message(
             role="assistant",
             text=text,
             citations=citations,
-            metadata={"message_id_override": msg_id},
+            metadata={},
+            message_id=msg_id,  # Use the pre-generated ID the frontend already has
         )
     except Exception as exc:
         logger.error("Failed to persist streamed AI message: %s", exc)

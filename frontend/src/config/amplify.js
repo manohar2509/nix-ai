@@ -11,6 +11,16 @@
 
 const region = import.meta.env.VITE_COGNITO_REGION || 'us-east-1';
 
+// Warn in dev if Cognito env vars are missing — empty strings cause silent auth failures
+if (import.meta.env.DEV) {
+  if (!import.meta.env.VITE_COGNITO_USER_POOL_ID) {
+    console.warn('[Amplify] VITE_COGNITO_USER_POOL_ID is not set — authentication will not work');
+  }
+  if (!import.meta.env.VITE_COGNITO_CLIENT_ID) {
+    console.warn('[Amplify] VITE_COGNITO_CLIENT_ID is not set — authentication will not work');
+  }
+}
+
 export const amplifyConfig = {
   Auth: {
     Cognito: {

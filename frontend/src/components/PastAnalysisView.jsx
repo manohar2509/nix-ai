@@ -31,7 +31,7 @@ export default function PastAnalysisView() {
       const result = await analyticsService.getAnalysisHistory();
       setAnalyses(result.analyses || []);
     } catch (err) {
-      setError(err.message || 'Failed to load analysis history');
+      setError('Unable to load analysis history. Please try again.');
       setAnalyses([]);
     } finally {
       setLoading(false);

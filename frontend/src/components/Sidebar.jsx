@@ -42,7 +42,7 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
         showToast({ type: 'success', title: 'Protocol removed', message: 'The protocol has been deleted from your workspace.' });
         setConfirmDeleteId(null);
       } catch (err) {
-        showToast({ type: 'error', title: 'Delete failed', message: err.message || 'Could not remove the protocol.' });
+        showToast({ type: 'error', title: 'Unable to delete', message: 'Could not remove the protocol. Please try again.' });
         setConfirmDeleteId(null);
       }
     } else {
@@ -73,22 +73,22 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
 
       // ── Case 1: Deduplicated — an active job already exists ──
       if (response.deduplicated) {
-        showToast({ type: 'info', title: 'KB Sync already running', message: `Job ${response.jobId} is already in progress` });
+        showToast({ type: 'info', title: 'Sync already running', message: 'A knowledge base sync is already in progress. Please wait for it to complete.' });
         return;
       }
 
       // ── Case 2: Inline execution (local dev — already finished) ──
       if (response.inline) {
         if (response.status === 'COMPLETE') {
-          showToast({ type: 'success', title: 'KB Sync complete', message: 'Knowledge base re-indexed successfully' });
+          showToast({ type: 'success', title: 'Sync complete', message: 'Knowledge base updated successfully.' });
         } else if (response.status === 'FAILED') {
-          showToast({ type: 'error', title: 'KB Sync failed', message: response.error || 'Check backend logs' });
+          showToast({ type: 'error', title: 'Sync unsuccessful', message: 'The knowledge base sync could not be completed. Please try again later.' });
         }
         return;
       }
 
       // ── Case 3: SQS-queued (production) — poll with backoff ──
-      showToast({ type: 'success', title: 'KB Sync started', message: `Job ${response.jobId} queued` });
+      showToast({ type: 'success', title: 'Sync started', message: 'Knowledge base sync is being processed...' });
       const { jobService } = await import('../services/jobService');
       const delays = [2000, 3000, 5000, 5000, 8000, 8000, 10000, 10000]; // ~51s total
       let status = response.status || 'QUEUED';
@@ -100,14 +100,14 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
       }
 
       if (status === 'COMPLETE') {
-        showToast({ type: 'success', title: 'KB Sync complete', message: 'Knowledge base updated' });
+        showToast({ type: 'success', title: 'Sync complete', message: 'Knowledge base updated successfully.' });
       } else if (status === 'FAILED') {
-        showToast({ type: 'error', title: 'KB Sync failed', message: 'Check logs for details' });
+        showToast({ type: 'error', title: 'Sync unsuccessful', message: 'The knowledge base sync could not be completed. Please try again later.' });
       } else {
-        showToast({ type: 'info', title: 'KB Sync still processing', message: 'Running in the background. Check Job Monitor for updates.' });
+        showToast({ type: 'info', title: 'Sync in progress', message: 'The sync is still processing. You can check the status in the Job Monitor.' });
       }
     } catch (err) {
-      showToast({ type: 'error', title: 'KB Sync failed', message: err.message });
+      showToast({ type: 'error', title: 'Sync unsuccessful', message: 'Something went wrong while syncing the knowledge base. Please try again.' });
     } finally {
       setIsKbSyncing(false);
       syncInFlightRef.current = false;
@@ -120,7 +120,7 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
   const orgName = user?.organization || '';
 
   return (
-    <aside className="w-20 lg:w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 relative">
+    <aside data-tour="sidebar" className="w-20 lg:w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 transition-all duration-300 relative">
       {/* Top gradient accent */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-400/60 to-transparent" />
 
@@ -147,20 +147,21 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
         <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2 hidden lg:block">
           Workflow
         </div>
-        <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" badge="Home" active={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')} tooltip="Overview of all your clinical trial protocols, scores, and recent activity" />
-        <NavItem icon={<FileText size={18} />} label="Protocol Review" badge="Core" active={activeView === 'protocol'} onClick={() => setActiveView('protocol')} tooltip="Upload → Analyze → View findings, scores, and AI insights for your protocol" />
-        <NavItem icon={<GitCompare size={18} />} label="Compare Protocols" active={activeView === 'comparison'} onClick={() => setActiveView('comparison')} tooltip="Side-by-side comparison of multiple protocol designs" />
+        <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" badge="Home" active={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')} tooltip="Overview of all your clinical trial protocols, scores, and recent activity" dataTour="dashboard-nav" />
+        <NavItem icon={<FileText size={18} />} label="Protocol Review" badge="Core" active={activeView === 'protocol'} onClick={() => setActiveView('protocol')} tooltip="Upload → Analyze → View findings, scores, and AI insights for your protocol" dataTour="protocol-nav" />
+        <NavItem icon={<GitCompare size={18} />} label="Compare Protocols" active={activeView === 'comparison'} onClick={() => setActiveView('comparison')} tooltip="Side-by-side comparison of multiple protocol designs" dataTour="compare-nav" />
 
         {/* ── Reports Section ── */}
         <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-3 mt-4 mb-2 hidden lg:block">
           Reports
         </div>
-        <NavItem icon={<History size={18} />} label="Analysis History" active={activeView === 'history'} onClick={() => { setActiveView('history'); }} tooltip="Browse past regulatory and payer analyses" />
-        <NavItem icon={<Briefcase size={18} />} label="Deal Room" active={activeView === 'dealroom'} onClick={() => setActiveView('dealroom')} tooltip="Investor-ready report with portfolio risk analysis and regulatory scorecard" />
+        <NavItem icon={<History size={18} />} label="Analysis History" active={activeView === 'history'} onClick={() => { setActiveView('history'); }} tooltip="Browse past regulatory and payer analyses" dataTour="history-nav" />
+        <NavItem icon={<Briefcase size={18} />} label="Deal Room" active={activeView === 'dealroom'} onClick={() => setActiveView('dealroom')} tooltip="Investor-ready report with portfolio risk analysis and regulatory scorecard" dataTour="dealroom-nav" />
 
         {/* Upload Button */}
         <button
           onClick={onUpload}
+          data-tour="upload-btn"
           className="flex items-center gap-3 w-full p-2.5 rounded-lg transition-all duration-200 bg-brand-500/15 hover:bg-brand-500/25 text-brand-300 group mt-3 border border-brand-500/20"
         >
           <Upload size={18} className="shrink-0" />
@@ -270,7 +271,7 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
         )}
 
         <div className="pt-3 mt-3 border-t border-slate-800/60">
-          <NavItem icon={<Settings size={20} />} label="Settings" active={activeView === 'settings'} onClick={() => setActiveView('settings')} tooltip="Configure analysis preferences, thresholds, and display options" />
+          <NavItem icon={<Settings size={20} />} label="Settings" active={activeView === 'settings'} onClick={() => setActiveView('settings')} tooltip="Configure analysis preferences, thresholds, and display options" dataTour="settings-nav" />
         </div>
       </nav>
 
@@ -314,11 +315,12 @@ export default function Sidebar({ onUpload, onSelectDocument, documents = [], cu
   );
 }
 
-function NavItem({ icon, label, active, adminItem, onClick, tooltip, badge }) {
+function NavItem({ icon, label, active, adminItem, onClick, tooltip, badge, dataTour }) {
   return (
     <button
       onClick={onClick}
       title={tooltip}
+      data-tour={dataTour}
       className={cn(
         'flex items-center gap-3 w-full p-2.5 rounded-lg transition-all duration-200 group relative',
         active

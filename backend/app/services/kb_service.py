@@ -623,9 +623,12 @@ def unsync_kb_document(kb_doc_id: str) -> dict:
         except Exception as exc:
             logger.warning("Failed to move KB file for unsync (non-blocking): %s", exc)
 
+    # Update s3_key to reflect the new location so other reads don't 404
+    new_key = original_key.replace("documents/", "unsynced/", 1) if original_key.startswith("documents/") else original_key
     dynamo_service.update_kb_document(kb_doc_id, {
         "status": "unsynced",
         "bedrock_sync_pending": False,
+        "s3_key": new_key,
         "original_s3_key": original_key,  # preserve for resync
     })
     logger.info("Unsynced KB document %s", kb_doc_id)

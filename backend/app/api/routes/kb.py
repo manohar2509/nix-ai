@@ -16,7 +16,7 @@ ARCHITECTURE:
   User documents go to nixai-clinical-uploads bucket → PRIVATE, never in RAG.
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.schemas.kb import (
     KBDocumentItem,
@@ -237,6 +237,10 @@ async def bulk_delete_kb_documents(
 ):
     """Delete multiple KB documents at once."""
     doc_ids = body.get("document_ids", [])
+    if not doc_ids or not isinstance(doc_ids, list):
+        raise HTTPException(status_code=400, detail="document_ids must be a non-empty list")
+    if len(doc_ids) > 50:
+        raise HTTPException(status_code=400, detail="Cannot delete more than 50 documents at once")
     return kb_service.bulk_delete_kb_documents(doc_ids, user)
 
 

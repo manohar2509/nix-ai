@@ -19,6 +19,40 @@ const MODE = {
   NEW_PASSWORD: 'newPassword',
 };
 
+/**
+ * Sanitize auth error messages to avoid exposing technical details to users.
+ * Maps known Cognito/auth error codes to user-friendly messages.
+ */
+function sanitizeAuthError(err) {
+  const code = err?.code || err?.name || '';
+  const msg = err?.message || '';
+
+  // Common Cognito error codes → user-friendly messages
+  const errorMap = {
+    'UserNotFoundException': 'No account found with this email address.',
+    'NotAuthorizedException': 'Incorrect email or password. Please try again.',
+    'UsernameExistsException': 'An account with this email already exists.',
+    'CodeMismatchException': 'Invalid verification code. Please check and try again.',
+    'ExpiredCodeException': 'This verification code has expired. Please request a new one.',
+    'LimitExceededException': 'Too many attempts. Please wait a moment and try again.',
+    'InvalidPasswordException': 'Password does not meet requirements. It must be at least 8 characters with a mix of letters and numbers.',
+    'InvalidParameterException': 'Please check your input and try again.',
+    'TooManyRequestsException': 'Too many requests. Please wait a moment and try again.',
+    'UserNotConfirmedException': 'Please verify your email address first.',
+    'CodeDeliveryFailureException': 'Unable to send verification code. Please try again later.',
+  };
+
+  if (errorMap[code]) return errorMap[code];
+
+  // For password policy errors, make them user-friendly
+  if (msg.toLowerCase().includes('password') && msg.toLowerCase().includes('policy')) {
+    return 'Password does not meet requirements. It must be at least 8 characters with a mix of uppercase, lowercase, and numbers.';
+  }
+
+  // Generic fallback — never show raw technical messages
+  return 'Something went wrong. Please try again.';
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -89,14 +123,13 @@ export default function LoginPage() {
         switchMode(MODE.VERIFY);
         setError('Please verify your email address first.');
       } else {
-        setError(err.message);
+        setError(sanitizeAuthError(err));
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ─── SIGN UP ───
   const handleSignUp = async (e) => {
     e?.preventDefault();
     if (!email.trim() || !password.trim() || !fullName.trim()) {
@@ -130,11 +163,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('[SignUp] Error:', err);
-      // Show details alongside message for debugging
-      const msg = err.details && err.details !== err.message
-        ? `${err.message} (${err.details})`
-        : err.message;
-      setError(msg);
+      setError(sanitizeAuthError(err));
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +184,7 @@ export default function LoginPage() {
       setSuccessMessage('Email verified successfully! Please sign in.');
       setVerificationCode('');
     } catch (err) {
-      setError(err.message);
+      setError(sanitizeAuthError(err));
     } finally {
       setIsLoading(false);
     }
@@ -172,7 +201,7 @@ export default function LoginPage() {
       await authService.resendVerificationCode(email);
       setSuccessMessage('New verification code sent to your email.');
     } catch (err) {
-      setError(err.message);
+      setError(sanitizeAuthError(err));
     } finally {
       setIsLoading(false);
     }
@@ -192,7 +221,7 @@ export default function LoginPage() {
       switchMode(MODE.RESET_PASSWORD);
       setSuccessMessage('Password reset code sent to your email.');
     } catch (err) {
-      setError(err.message);
+      setError(sanitizeAuthError(err));
     } finally {
       setIsLoading(false);
     }
@@ -214,7 +243,7 @@ export default function LoginPage() {
       setVerificationCode('');
       setNewPassword('');
     } catch (err) {
-      setError(err.message);
+      setError(sanitizeAuthError(err));
     } finally {
       setIsLoading(false);
     }
@@ -253,7 +282,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('[NewPassword] Error:', err);
-      setError(err.message);
+      setError(sanitizeAuthError(err));
     } finally {
       setIsLoading(false);
     }

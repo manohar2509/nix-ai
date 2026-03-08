@@ -14,8 +14,8 @@ import CacheStatusBanner from './CacheStatusBanner';
 // ═════════════════════════════════════════════════════════════════
 const AGENT_CONFIG = {
   Chairman: {
-    name: 'Chairman',
-    role: 'Board Chairman',
+    name: 'Panel Chair',
+    role: 'Panel Chairperson',
     icon: Users,
     color: 'text-slate-600',
     bg: 'bg-slate-50',
@@ -25,8 +25,8 @@ const AGENT_CONFIG = {
     avatar: '🎩',
   },
   Regulator: {
-    name: 'Dr. No',
-    role: 'The Regulator',
+    name: 'Regulatory Expert',
+    role: 'Chief Regulatory Officer',
     icon: Shield,
     color: 'text-red-600',
     bg: 'bg-red-50',
@@ -36,8 +36,8 @@ const AGENT_CONFIG = {
     avatar: '🛡️',
   },
   Payer: {
-    name: 'The Accountant',
-    role: 'The Payer',
+    name: 'Commercial Director',
+    role: 'Market Access Lead',
     icon: DollarSign,
     color: 'text-amber-600',
     bg: 'bg-amber-50',
@@ -47,8 +47,8 @@ const AGENT_CONFIG = {
     avatar: '💰',
   },
   Patient: {
-    name: 'The Voice',
-    role: 'Patient Advocate',
+    name: 'Patient Advocate',
+    role: 'Patient & Community Lead',
     icon: Heart,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
@@ -108,7 +108,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
       setIsDebatePolling(true);
     } catch (err) {
       console.error('Failed to start debate:', err);
-      setDebateError(err.response?.data?.detail || 'Failed to start async debate. Falling back to sync mode...');
+      setDebateError(err.response?.data?.detail || 'Unable to start the expert panel. Trying an alternative approach...');
       // Fallback to sync council
       fallbackToSync();
     }
@@ -123,7 +123,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
       setCouncil(result);
     } catch (err) {
       console.error('Council (sync) failed:', err);
-      setDebateError('Both async and sync council failed. Please try again.');
+      setDebateError('The expert panel is temporarily unavailable. Please try again in a moment.');
     } finally {
       setLoading(false);
     }
@@ -135,6 +135,12 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
 
     const poll = async () => {
       try {
+        // Skip polling if this is a cached/restored debate (id = 'restored')
+        if (activeDebateId === 'restored') {
+          setIsDebatePolling(false);
+          return;
+        }
+
         const status = await strategicService.getDebateStatus(activeDebateId);
         setDebateStatus(status);
 
@@ -165,18 +171,21 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
           }
         }
 
-        // Stop polling when complete
+        // Stop polling when complete and record the cache timestamp
         if (status.status === 'COMPLETED' || status.status === 'FAILED') {
           setIsDebatePolling(false);
+          if (status.status === 'COMPLETED') {
+            useAppStore.getState().updateStrategicTimestamp('council', new Date().toISOString());
+          }
         }
       } catch (err) {
         console.error('Poll failed:', err);
         const httpStatus = err.response?.status;
         if (httpStatus === 404) {
-          setDebateError('Debate not found. It may have been deleted.');
+          setDebateError('This expert panel session is no longer available. Please start a new session.');
           setIsDebatePolling(false);
         } else if (httpStatus === 403) {
-          setDebateError('Not authorized to view this debate.');
+          setDebateError('You do not have permission to view this session.');
           setIsDebatePolling(false);
         }
         // For network/500 errors — keep polling (transient failures)
@@ -221,6 +230,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
   // ═══════════════════════════════════════════════════════════════
   // RENDER: Empty state (no debate yet)
   // ═══════════════════════════════════════════════════════════════
+  // Show empty state only when no debate is active, loading, or restored from cache
   if (!activeDebateId && !debateStatus && !councilSession && !isCouncilLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -237,17 +247,17 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
             <Zap size={10} className="text-white" />
           </div>
         </div>
-        <h3 className="text-slate-800 font-bold text-lg mb-1">Virtual Boardroom</h3>
+        <h3 className="text-slate-800 font-bold text-lg mb-1">AI Expert Panel</h3>
         <p className="text-slate-400 text-sm max-w-sm mb-2">
-          Launch a real-time multi-agent debate. Three AI agents with specialized tools
-          will analyze your protocol from regulatory, financial, and patient perspectives.
+          Convene a real-time multi-expert debate. Three specialized AI experts
+          will rigorously analyze your protocol from regulatory, commercial, and patient perspectives.
         </p>
         <div className="flex gap-2 items-center text-[10px] text-slate-400 mb-5">
-          <span className="flex items-center gap-1"><Shield size={10} className="text-red-500" /> FDA/ICH Search</span>
+          <span className="flex items-center gap-1"><Shield size={10} className="text-red-500" /> Regulatory Expert</span>
           <span>•</span>
-          <span className="flex items-center gap-1"><DollarSign size={10} className="text-amber-500" /> Cost Calculator</span>
+          <span className="flex items-center gap-1"><DollarSign size={10} className="text-amber-500" /> Commercial Director</span>
           <span>•</span>
-          <span className="flex items-center gap-1"><Heart size={10} className="text-emerald-500" /> Burden Scorer</span>
+          <span className="flex items-center gap-1"><Heart size={10} className="text-emerald-500" /> Patient Advocate</span>
         </div>
         <button
           onClick={handleStartDebate}
@@ -255,7 +265,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
         >
           <div className="flex items-center gap-2">
             <Play size={14} />
-            Convene Boardroom
+            Start Expert Panel
           </div>
         </button>
 
@@ -279,16 +289,18 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
   // ═══════════════════════════════════════════════════════════════
   // RENDER: Loading (waiting for first poll)
   // ═══════════════════════════════════════════════════════════════
-  if (isCouncilLoading || (activeDebateId && !debateStatus)) {
+  // Note: 'restored' is a synthetic ID used for cache-restored debates —
+  // debateStatus is already populated for those, so skip the spinner.
+  if (isCouncilLoading || (activeDebateId && activeDebateId !== 'restored' && !debateStatus)) {
     return (
       <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
         <div className="relative mb-6">
           <div className="h-16 w-16 rounded-full border-[3px] border-slate-100 border-t-brand-600 animate-spin" />
           <Users size={20} className="absolute inset-0 m-auto text-brand-600" />
         </div>
-        <h3 className="text-slate-800 font-bold text-lg mb-1">Assembling the Boardroom</h3>
+        <h3 className="text-slate-800 font-bold text-lg mb-1">Preparing Expert Panel</h3>
         <p className="text-slate-400 text-sm max-w-xs text-center">
-          Loading protocol data and preparing agent tools...
+          Assembling expert panel and reviewing your protocol...
         </p>
       </div>
     );
@@ -317,9 +329,9 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
           <div className="flex items-center gap-2">
             <Users size={16} />
             <h3 className="font-bold text-sm">
-              {isComplete ? '✓ Boardroom Session Complete' :
-               isFailed ? '✗ Boardroom Session Failed' :
-               '● Live Boardroom Session'}
+              {isComplete ? '✓ Expert Panel Session Complete' :
+               isFailed ? '✗ Expert Panel Session Failed' :
+               '● Live Expert Panel Session'}
             </h3>
           </div>
           <div className="flex items-center gap-2">
@@ -500,7 +512,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
                   {turn.error && (
                     <div className="text-[10px] text-red-600 bg-red-50 rounded p-2 border border-red-200">
                       <AlertTriangle size={10} className="inline mr-1" />
-                      {turn.error}
+                      This expert encountered an issue during analysis.
                     </div>
                   )}
                 </div>
@@ -518,7 +530,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
               <span className="h-2 w-2 bg-brand-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
             <span className="text-[11px] text-slate-500 font-medium">
-              {status.current_topic ? `Analyzing: ${status.current_topic}` : 'Agent is thinking...'}
+              {status.current_topic ? `Analyzing: ${status.current_topic}` : 'Expert is deliberating...'}
             </span>
           </div>
         )}
@@ -534,9 +546,9 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center gap-2 text-red-600 mb-2">
             <AlertTriangle size={16} />
-            <span className="text-sm font-bold">Debate Failed</span>
+            <span className="text-sm font-bold">Session Encountered an Issue</span>
           </div>
-          <p className="text-xs text-red-500">{status.error || 'An unexpected error occurred.'}</p>
+          <p className="text-xs text-red-500">{'The expert panel could not complete its analysis. Please try running a new session.'}</p>
         </div>
       )}
 
@@ -544,9 +556,12 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
       {isComplete && (
         <CacheStatusBanner
           generatedAt={generatedAt}
-          onRegenerate={() => { clearDebate(); handleStartDebate(); }}
+          onRegenerate={() => {
+            clearDebate();
+            handleStartDebate();
+          }}
           isLoading={isActive}
-          label="boardroom debate"
+          label="expert panel session"
         />
       )}
 
@@ -563,7 +578,7 @@ export default function AdversarialCouncil({ docId, generatedAt }) {
           )}
         >
           <RotateCcw size={12} />
-          {isComplete ? 'New Session' : isFailed ? 'Retry' : 'Debating...'}
+          {isComplete ? 'Run New Session' : isFailed ? 'Retry Session' : 'Debating...'}
         </button>
       </div>
 
@@ -606,7 +621,7 @@ function VerdictCard({ verdict, isStandalone = false }) {
         <div className="bg-gradient-to-r from-brand-600 to-emerald-600 px-4 py-2.5">
           <div className="flex items-center gap-2 text-white">
             <CheckCircle2 size={14} />
-            <span className="text-xs font-bold">Final Verdict — Board Consensus</span>
+            <span className="text-xs font-bold">Final Verdict — Panel Consensus</span>
           </div>
         </div>
       )}
@@ -709,7 +724,7 @@ function LegacyCouncilView({ council, onRestart }) {
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-4 text-white">
         <div className="flex items-center gap-2 mb-2">
           <Users size={18} />
-          <h3 className="font-bold">Adversarial Council Session (Classic)</h3>
+          <h3 className="font-bold">Expert Panel Session (Classic)</h3>
         </div>
         <p className="text-slate-300 text-sm">{council.opening_summary}</p>
       </div>
@@ -772,7 +787,7 @@ function LegacyCouncilView({ council, onRestart }) {
         className="w-full py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-brand-600 to-brand-700 rounded-lg hover:from-brand-700 hover:to-brand-800 transition-all shadow-sm flex items-center justify-center gap-1.5"
       >
         <Zap size={12} />
-        Upgrade to Real-Time Boardroom Debate
+        Switch to Live Expert Panel (Real-Time)
       </button>
     </div>
   );

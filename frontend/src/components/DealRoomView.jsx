@@ -42,7 +42,7 @@ export default function DealRoomView() {
       setPortfolio(result);
     } catch (err) {
       console.error('Portfolio load failed:', err);
-      const msg = err?.response?.data?.error || err?.response?.data?.detail || err?.message || 'Failed to load portfolio';
+      const msg = 'Unable to load portfolio data. Please try again.';
       setPortfolioError(msg);
     } finally {
       setPortfolioLoading(false);
@@ -58,7 +58,7 @@ export default function DealRoomView() {
       setReport(result);
     } catch (err) {
       console.error('Report failed:', err);
-      const msg = err?.response?.data?.error || err?.response?.data?.detail || err?.message || 'Failed to generate investor report';
+      const msg = 'Unable to generate the investor report. Please try again.';
       setReportError(msg);
     } finally {
       setReportLoading(false);
@@ -158,7 +158,7 @@ export default function DealRoomView() {
             ) : portfolioError ? (
               <div className="text-center py-12">
                 <AlertTriangle size={32} className="mx-auto text-red-400 mb-3" />
-                <h3 className="text-slate-600 font-semibold mb-1">Portfolio Load Failed</h3>
+                <h3 className="text-slate-600 font-semibold mb-1">Unable to Load Portfolio</h3>
                 <p className="text-red-500 text-sm mb-4">{portfolioError}</p>
                 <button onClick={loadPortfolio} className="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-semibold hover:bg-brand-700 transition-colors">
                   Retry
