@@ -282,7 +282,9 @@ function SimulationCard({ simulation, onRetry }) {
                   {f.description && <p className="text-slate-600 mt-0.5">{f.description}</p>}
                   {f.guideline_refs?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {f.guideline_refs.map((ref, ri) => (
+                      {f.guideline_refs.map((rawRef, ri) => {
+                        const ref = typeof rawRef === 'string' ? { code: rawRef } : rawRef;
+                        return (
                         <a
                           key={ri}
                           href={ref.url || '#'}
@@ -294,7 +296,8 @@ function SimulationCard({ simulation, onRetry }) {
                         >
                           📋 {ref.code}{ref.section ? ` §${ref.section}` : ''}
                         </a>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                   {f.jurisdictions_affected?.length > 0 && (

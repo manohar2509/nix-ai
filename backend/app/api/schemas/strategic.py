@@ -42,7 +42,7 @@ class ScoreImpact(BaseModel):
 class AgentArgument(BaseModel):
     position: str = ""
     argument: str = ""
-    guideline_refs: list[str] = []
+    guideline_refs: list = []
     score_impact: Optional[dict] = None
     cost_impact: Optional[str] = None
     denial_risk: Optional[str] = None
@@ -153,7 +153,7 @@ class FrictionSection(BaseModel):
     commercial_detail: str = ""
     friction_explanation: str = ""
     related_finding_ids: list[str] = []
-    guideline_refs: list[str] = []
+    guideline_refs: list = []
     quick_fix: str = ""
     text_excerpt: str = ""
 
@@ -374,7 +374,7 @@ class OptimizationItem(BaseModel):
     optimized_text: str = ""
     change_summary: str = ""
     regulatory_justification: str = ""
-    guideline_refs: list[str] = []
+    guideline_refs: list = []
     projected_score_impact: dict = {}
     cost_impact: str = ""
     risk_level: str = ""

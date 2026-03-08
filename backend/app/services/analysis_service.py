@@ -176,20 +176,87 @@ def get_analysis_results(user: CurrentUser, doc_id: str) -> dict:
     if not analysis:
         raise AnalysisNotFoundError(doc_id)
 
+    # ── Normalise DynamoDB data for Pydantic response model ──
+    # key_guidelines may be enriched dicts or plain strings — both are valid.
+    # findings/payer_gaps guideline_refs may have extra fields — keep them.
+    jurisdiction_scores = _normalise_jurisdiction_scores(
+        analysis.get("jurisdiction_scores", [])
+    )
+    findings = _normalise_findings(analysis.get("findings", []))
+    payer_gaps = _normalise_payer_gaps(analysis.get("payer_gaps", []))
+
     return {
         "regulatorScore": analysis.get("regulator_score", 0),
         "payerScore": analysis.get("payer_score", 0),
-        "findings": analysis.get("findings", []),
+        "findings": findings,
         "summary": analysis.get("summary", ""),
         "analyzed_at": analysis.get("completed_at", ""),
         "extraction_method": analysis.get("extraction_method"),
         # REQ-2: Jurisdiction Compass
-        "jurisdiction_scores": analysis.get("jurisdiction_scores", []),
+        "jurisdiction_scores": jurisdiction_scores,
         "global_readiness_score": analysis.get("global_readiness_score", 0),
         # REQ-5: Payer Gaps
-        "payer_gaps": analysis.get("payer_gaps", []),
+        "payer_gaps": payer_gaps,
         "hta_body_scores": analysis.get("hta_body_scores", {}),
     }
+
+
+def _normalise_guideline_ref(ref) -> dict:
+    """Ensure a guideline ref is a dict with at least a 'code' key."""
+    if isinstance(ref, str):
+        return {"code": ref}
+    if isinstance(ref, dict):
+        ref.setdefault("code", "")
+        return ref
+    return {"code": str(ref)}
+
+
+def _normalise_jurisdiction_scores(scores: list) -> list:
+    """Normalise jurisdiction_scores so key_guidelines are always valid."""
+    for j in (scores or []):
+        if not isinstance(j, dict):
+            continue
+        raw = j.get("key_guidelines", [])
+        j["key_guidelines"] = [
+            _normalise_guideline_ref(g) for g in (raw or [])
+        ]
+        # Ensure compliance_score is a plain number
+        try:
+            j["compliance_score"] = float(j.get("compliance_score", 0) or 0)
+        except (ValueError, TypeError):
+            j["compliance_score"] = 0.0
+    return scores or []
+
+
+def _normalise_findings(findings: list) -> list:
+    """Normalise findings so guideline_refs are always dicts."""
+    for f in (findings or []):
+        if not isinstance(f, dict):
+            continue
+        raw = f.get("guideline_refs", [])
+        f["guideline_refs"] = [
+            _normalise_guideline_ref(r) for r in (raw or [])
+        ]
+        # Ensure confidence is int or None
+        conf = f.get("confidence")
+        if conf is not None:
+            try:
+                f["confidence"] = int(float(conf))
+            except (ValueError, TypeError):
+                f["confidence"] = None
+    return findings or []
+
+
+def _normalise_payer_gaps(gaps: list) -> list:
+    """Normalise payer_gaps so guideline_refs are always dicts."""
+    for g in (gaps or []):
+        if not isinstance(g, dict):
+            continue
+        raw = g.get("guideline_refs", [])
+        g["guideline_refs"] = [
+            _normalise_guideline_ref(r) for r in (raw or [])
+        ]
+    return gaps or []
 
 
 def retry_analysis(user: CurrentUser, job_id: str) -> dict:

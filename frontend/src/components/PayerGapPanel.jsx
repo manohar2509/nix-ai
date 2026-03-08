@@ -286,7 +286,7 @@ export default function PayerGapPanel({ docId }) {
                     {gap.guideline_refs?.length > 0 && (
                       <div>
                         <div className="text-[10px] text-slate-500 font-semibold mb-0.5">📋 Regulatory Basis</div>
-                        <GuidelineRefBadge refs={gap.guideline_refs} />
+                        <GuidelineRefBadge refs={gap.guideline_refs.map(r => typeof r === 'string' ? { code: r } : r)} />
                       </div>
                     )}
                   </div>

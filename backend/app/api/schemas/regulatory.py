@@ -16,7 +16,7 @@ Covers all new requirements:
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -57,6 +57,16 @@ class EnhancedFinding(BaseModel):
 # ════════════════════════════════════════════════════════════════
 # REQ-2: Multi-Jurisdiction Compass
 # ════════════════════════════════════════════════════════════════
+class KeyGuideline(BaseModel):
+    """Enriched guideline reference in jurisdiction scores."""
+    code: str = ""
+    url: Optional[str] = None
+    title: Optional[str] = None
+    source_type: Optional[str] = None
+    section: Optional[str] = None
+    relevance: Optional[str] = None
+
+
 class JurisdictionScore(BaseModel):
     """Per-jurisdiction compliance assessment."""
     jurisdiction: str           # FDA, EMA, PMDA, NMPA, Health_Canada, MHRA
@@ -66,7 +76,7 @@ class JurisdictionScore(BaseModel):
     risk_level: str = "medium"  # low | medium | high | critical
     blockers: list[str] = []    # hard blockers
     adaptations: list[str] = [] # recommended local adaptations
-    key_guidelines: list[str] = []  # applicable guideline codes
+    key_guidelines: list[Union[str, KeyGuideline]] = []  # plain codes or enriched objects
 
 
 class JurisdictionCompassResponse(BaseModel):
